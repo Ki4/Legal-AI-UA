@@ -1,3 +1,4 @@
+import { Button } from "@legal-ai/ui";
 import { useAuth } from "./auth";
 
 export function PendingApproval() {
@@ -5,21 +6,18 @@ export function PendingApproval() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas">
-      <div className="w-full max-w-sm space-y-4 rounded-xl border border-line bg-surface p-8 text-center">
+      <div className="w-full max-w-sm space-y-4 rounded-card border border-line bg-paper p-8 text-center shadow-card">
         <h1 className="text-xl font-semibold text-ink">Awaiting approval</h1>
-        <p className="text-sm text-ink-muted">
+        <p className="text-sm text-inkSoft">
           Your account has been created and is waiting for an administrator to approve it.
         </p>
-        <p className="text-sm text-ink-muted">{session?.user.email}</p>
-        <p className="text-sm text-ink-muted">
+        <p className="text-sm text-inkMute">{session?.user.email}</p>
+        <p className="text-sm text-inkSoft">
           After approval, sign out and sign in again — your role arrives with a fresh session.
         </p>
-        <button
-          onClick={() => void signOut()}
-          className="w-full rounded-md border border-line px-3 py-2 text-ink hover:bg-canvas"
-        >
+        <Button variant="secondary" className="w-full" onClick={() => void signOut()}>
           Sign out
-        </button>
+        </Button>
       </div>
     </div>
   );

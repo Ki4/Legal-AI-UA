@@ -1,30 +1,9 @@
 @import "tailwindcss";
+@import "@legal-ai/ui/tokens.css";
 
-/* Temporary neutral tokens. The real design system (packages/ui) replaces this
-   file's values; component code must only ever reference the semantic names. */
-@theme {
-  --color-canvas: #f6f7f9;
-  --color-surface: #ffffff;
-  --color-line: #e4e7ec;
-  --color-ink: #101828;
-  --color-ink-muted: #667085;
-  --color-accent: #4f46e5;
-  --color-accent-fg: #ffffff;
-  --color-danger: #dc2626;
-}
+@source "../../../packages/ui/src";
 
 @layer base {
-  .dark {
-    --color-canvas: #0c111d;
-    --color-surface: #161b26;
-    --color-line: #242936;
-    --color-ink: #f0f1f3;
-    --color-ink-muted: #94969c;
-    --color-accent: #818cf8;
-    --color-accent-fg: #1e1b4b;
-    --color-danger: #f87171;
-  }
-
   body {
     @apply bg-canvas text-ink antialiased;
   }

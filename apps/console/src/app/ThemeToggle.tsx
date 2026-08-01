@@ -1,19 +1,31 @@
+import { Button } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
 
+const STORAGE_KEY = "theme";
+
+/** Reads persisted theme without touching the DOM — used both here and by the
+ * pre-paint init in main.tsx so the two stay in sync. */
+function getStoredTheme(): "dark" | "light" {
+  return localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
+}
+
+/** Applies the theme to <html data-theme> before first paint, avoiding a flash
+ * of the wrong theme. Call once, synchronously, from main.tsx's module scope. */
+export function initTheme() {
+  document.documentElement.setAttribute("data-theme", getStoredTheme());
+}
+
 export function ThemeToggle() {
-  const [dark, setDark] = useState(() => localStorage.getItem("theme") === "dark");
+  const [dark, setDark] = useState(() => getStoredTheme() === "dark");
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("theme", dark ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    localStorage.setItem(STORAGE_KEY, dark ? "dark" : "light");
   }, [dark]);
 
   return (
-    <button
-      onClick={() => setDark(!dark)}
-      className="w-full rounded-md border border-line px-3 py-1.5 hover:bg-canvas"
-    >
+    <Button variant="secondary" className="w-full" onClick={() => setDark((current) => !current)}>
       {dark ? "Light theme" : "Dark theme"}
-    </button>
+    </Button>
   );
 }

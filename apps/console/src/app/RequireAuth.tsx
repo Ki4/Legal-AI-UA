@@ -9,7 +9,7 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-ink-muted">Loading…</div>
+      <div className="flex min-h-screen items-center justify-center text-inkSoft">Loading…</div>
     );
   }
 
@@ -23,7 +23,7 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
 
   if (roles && !roles.includes(role)) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-ink-muted">
+      <div className="flex min-h-screen items-center justify-center text-inkSoft">
         Access denied — this section requires a different role.
       </div>
     );

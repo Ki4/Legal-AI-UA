@@ -1,3 +1,4 @@
+import { Badge, Button } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
 import { supabase } from "../../../app/supabase";
 
@@ -52,36 +53,34 @@ export function TeamPage() {
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Team</h1>
-      {loading && <p className="text-sm text-ink-muted">Loading…</p>}
+      {loading && <p className="text-sm text-inkSoft">Loading…</p>}
       {error && <p className="text-sm text-danger">{error}</p>}
       <ul className="grid max-w-3xl gap-3">
         {profiles.map((profile) => (
-          <li key={profile.id} className="rounded-xl border border-line bg-surface p-4">
+          <li key={profile.id} className="rounded-card border border-line bg-paper p-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">{profile.full_name ?? profile.email}</div>
-                <div className="text-sm text-ink-muted">{profile.email}</div>
+                <div className="text-sm text-inkSoft">{profile.email}</div>
               </div>
-              <span className="rounded-full border border-line px-2 py-0.5 text-xs text-ink-muted">
-                {profile.role ?? "pending"}
-              </span>
+              <Badge tone="neutral">{profile.role ?? "pending"}</Badge>
             </div>
             {profile.role === null && (
               <div className="mt-3 flex gap-2">
-                <button
+                <Button
+                  variant="secondary"
                   onClick={() => void approve(profile.id, "lawyer")}
-                  disabled={approvingId === profile.id}
-                  className="rounded-md border border-line px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-60"
+                  loading={approvingId === profile.id}
                 >
                   Approve as lawyer
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="secondary"
                   onClick={() => void approve(profile.id, "admin")}
-                  disabled={approvingId === profile.id}
-                  className="rounded-md border border-line px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-60"
+                  loading={approvingId === profile.id}
                 >
                   Approve as admin
-                </button>
+                </Button>
               </div>
             )}
           </li>

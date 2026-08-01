@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { accountRoutes } from "../features/account";
 import { anatomyRoutes } from "../features/anatomy";
+import { designKitRoutes } from "../features/design-kit";
 import { serviceDetailRoutes } from "../features/service-detail";
 import { servicesRoutes } from "../features/services";
 import { teamRoutes } from "../features/team";
@@ -27,7 +28,8 @@ export const router = createBrowserRouter([
       ...anatomyRoutes,
       ...accountRoutes,
       ...teamRoutes,
-      { path: "*", element: <div className="text-ink-muted">Page not found</div> },
+      ...designKitRoutes,
+      { path: "*", element: <div className="text-inkMute">Page not found</div> },
     ],
   },
 ]);

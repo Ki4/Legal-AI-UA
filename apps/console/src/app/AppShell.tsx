@@ -16,8 +16,8 @@ export function AppShell() {
   const nav = role === "admin" ? [...baseNav, ...adminNav] : baseNav;
 
   return (
-    <div className="flex min-h-screen bg-canvas text-ink">
-      <aside className="flex w-56 flex-col border-r border-line bg-paper p-4">
+    <div className="flex h-screen overflow-hidden bg-canvas text-ink">
+      <aside className="flex w-56 shrink-0 flex-col border-r border-line bg-paper p-4">
         <div className="mb-6 font-semibold">Legal-AI-UA</div>
         <nav className="flex flex-col gap-1">
           {nav.map((item) => (
@@ -43,7 +43,7 @@ export function AppShell() {
           </Button>
         </div>
       </aside>
-      <main className="flex-1 p-8">
+      <main className="flex-1 overflow-y-auto p-8">
         <div className="mx-auto w-full max-w-[1100px]">
           <Outlet />
         </div>

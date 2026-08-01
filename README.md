@@ -52,4 +52,4 @@ Every PR passes CI (lint, typecheck, build). `main` is always deployable.
 ## Team & workflow
 
 See `docs/CONTRIBUTING.md` for branching, ownership zones, review rules, and the
-AI-assisted development protocol.
+AI-assisted development protocol. `docs/ROADMAP.md` tracks what exists and what's next.

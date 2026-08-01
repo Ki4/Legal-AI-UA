@@ -16,10 +16,19 @@ never ship a table with RLS off.
 
 ## Explicit grants only
 
-"Automatically expose new tables" is disabled project-wide. Every table needs its `grant` written
-out in the migration; nothing is reachable by default. See `20260730120000_auth_profiles.sql` for
-the pattern: explicit `grant select ... to authenticated`, paired with policies that further
-restrict rows.
+"Automatically expose new tables" is disabled project-wide, and
+`20260801120000_explicit_client_grants.sql` strips the privileges the platform grants to `anon`
+and `authenticated` by default (see `docs/adr/0007-explicit-grants-for-client-roles.md`). Every
+table needs its `grant` written out in the migration; nothing is reachable by default. See
+`20260730120000_auth_profiles.sql` for the pattern: explicit `grant select ... to authenticated`,
+paired with policies that further restrict rows.
+
+Check the result against a running database, not against the migration text — bring up the local
+sandbox and read the ACL:
+
+```sql
+select relacl from pg_class where relname = '<table>' and relnamespace = 'public'::regnamespace;
+```
 
 ## Every policy needs a verification scenario
 

@@ -21,6 +21,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
+    "supabase": "^2.111.0",
     "turbo": "^2.5.5",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0"
@@ -32,6 +33,11 @@
     ],
     "*.{json,md,yml,yaml,css}": [
       "prettier --write"
+    ]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "supabase"
     ]
   }
 }

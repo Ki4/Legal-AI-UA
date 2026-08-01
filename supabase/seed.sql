@@ -1,0 +1,4 @@
+-- Demo data for local development. Applied by `supabase db reset` after migrations.
+-- Rules: invented data only — never real client names, emails, or case details.
+-- Auth users are not seeded here: register through the app against the local stack,
+-- then promote a first admin with the snippet from the auth migration's header.

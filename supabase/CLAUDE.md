@@ -31,6 +31,6 @@ result. "Looks correct" is not a scenario.
 
 Any migration touching access control (RLS policies, `auth.*`, JWT `app_metadata`, consents)
 always requires a second reviewer before merge — no self-merge, ever, regardless of who wrote it.
-Senior dev preferred as reviewer. This is the one exception to the default review matrix in
+Core owner preferred as reviewer. This is the one exception to the default review matrix in
 `docs/CONTRIBUTING.md`. Separately, any migration is automatically Tier 2 (full spec + ADR, see
 `docs/CONTRIBUTING.md`) regardless of how small the diff looks.

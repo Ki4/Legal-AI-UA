@@ -1,7 +1,7 @@
 # Roadmap
 
 Status board lives in GitHub issues; this file is the map — what exists, what's next, in what
-order and why. Owners: PO (Sergey), core owner (senior dev), design-system owner (junior dev).
+order and why. Roles: product owner (PO), core owner, design-system owner.
 
 ## Done — bootstrap (2026-08-01)
 

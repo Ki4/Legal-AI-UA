@@ -6,14 +6,14 @@
 ## Context
 
 Document generation (questionnaire interpretation, template filling, block assembly, full
-generation, building the generation trace) is a distinct concern owned by the senior developer,
+generation, building the generation trace) is a distinct concern owned by the core developer,
 with a different runtime profile than a typical CRUD request — generation can run long, while
 Supabase Edge Functions have wall-clock execution limits. The frontend must never reach the AI
 core directly, since every call needs auth verification, a rights check, and an audit trail.
 
 ## Decision
 
-The AI core is an in-repo, separately-deployed service (future `apps/core`), owned by the senior
+The AI core is an in-repo, separately-deployed service (future `apps/core`), owned by the core
 developer, exposed through an HTTP contract typed in `packages/core-client` with MSW mocks so
 frontend work can proceed before the core exists.
 

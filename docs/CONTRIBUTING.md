@@ -7,13 +7,14 @@ content, it links to it.
 
 ## Team and ownership zones
 
-Three people today: Sergey (product owner), the senior developer, the junior frontend developer.
+Three roles today, held as equals: product owner, core owner, design-system owner. Ideas mostly
+start with the product owner; decisions are made together.
 
-| Zone                                                                                   | Owner                     | Notes                                                        |
-| -------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------ |
-| Database, migrations, app carcass, rules                                               | Sergey                    | Also product owner for cross-zone decisions                  |
-| AI core (`apps/core`, `packages/core-client`)                                          | Senior developer          | See `docs/adr/0004-ai-core-separate-service.md`              |
-| Design system + console feature screens (`packages/ui`, `apps/console/src/features/*`) | Junior frontend developer | See `apps/console/CLAUDE.md` for the feature-isolation rules |
+| Zone                                                                                   | Owner               | Notes                                                        |
+| -------------------------------------------------------------------------------------- | ------------------- | ------------------------------------------------------------ |
+| Database, migrations, app carcass, rules                                               | Product owner       | Also brings product ideas; coordinates cross-zone questions  |
+| AI core (`apps/core`, `packages/core-client`)                                          | Core owner          | See `docs/adr/0004-ai-core-separate-service.md`              |
+| Design system + console feature screens (`packages/ui`, `apps/console/src/features/*`) | Design-system owner | See `apps/console/CLAUDE.md` for the feature-isolation rules |
 
 **Ownership rule, applies to everyone:** a PR touching files outside the author's zone needs the
 zone owner's review, regardless of the review matrix below.
@@ -30,17 +31,17 @@ zone owner's review, regardless of the review matrix below.
 
 This is a **default matrix**, not a hard gate — use judgment.
 
-| Author              | Reviewer                                |
-| ------------------- | --------------------------------------- |
-| Junior frontend dev | Senior developer or Sergey              |
-| Sergey              | Senior developer or junior frontend dev |
-| Senior developer    | No mandatory reviewer                   |
+| Author              | Reviewer                          |
+| ------------------- | --------------------------------- |
+| Design-system owner | Core owner or product owner       |
+| Product owner       | Core owner or design-system owner |
+| Core owner          | No mandatory reviewer             |
 
 Any of the three may push directly or self-approve when it's pragmatic — a small change, inside
 their own zone. The matrix is the default expectation, not a lock.
 
 **The one hard exception, no self-merge ever:** migrations touching access control (RLS policies,
-`auth.*`, JWT `app_metadata`, consents) always require a second reviewer, senior developer
+`auth.*`, JWT `app_metadata`, consents) always require a second reviewer, core owner
 preferred. See `supabase/CLAUDE.md`. This exception overrides everything above, including
 self-approval and the "no mandatory reviewer" row.
 
@@ -61,7 +62,8 @@ How much upfront spec a piece of work needs, before code:
 ## Conflict resolution
 
 - Inside a zone, the owner decides.
-- Cross-zone or product questions go to Sergey as product owner.
+- Cross-zone or product questions are discussed together; when consensus doesn't emerge, the
+  product owner has the final call.
 - Anything legal/GDPR: the stricter reading wins until the question is explicitly resolved.
 - Log disagreements as one line in the relevant ADR — not in chat, not lost.
 

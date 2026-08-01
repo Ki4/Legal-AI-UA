@@ -37,6 +37,13 @@ Requirements: Node >= 22, pnpm 10 (`npm i -g pnpm@10`).
 Copy `.env.example` into the app you are running and fill in the values — see the comments
 inside the file. Secrets never enter git.
 
+## Troubleshooting
+
+After dependency changes, the dev server can serve two generations of Vite's pre-bundled deps
+at once — the symptom is `Invalid hook call` / `useContext of null` in the console while the
+page half-renders. Fix: stop the dev server, delete `apps/console/node_modules/.vite`, start
+again.
+
 ## Quality gates
 
 Every commit passes local hooks (ESLint, Prettier, commitlint via Husky + lint-staged).

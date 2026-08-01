@@ -23,7 +23,7 @@ export function FormField({ htmlFor, label, hint, error, className, children }: 
       </Label>
       {children}
       {error ? (
-        <p className="flex items-center gap-1 text-xs text-danger">
+        <p className="flex items-center gap-1 text-xs text-danger-ink">
           <AlertCircle size={13} aria-hidden="true" />
           {error}
         </p>

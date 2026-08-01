@@ -10,9 +10,11 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const toneClasses: Record<BadgeTone, string> = {
-  ok: "bg-ok/10 text-ok",
-  warn: "bg-warn/10 text-warn",
-  danger: "bg-danger/10 text-danger",
+  // Text uses the AA-safe *-ink pair (design-system.md §1.3); tint backgrounds
+  // and the dot below stay on the vivid tokens.
+  ok: "bg-ok/10 text-ok-ink",
+  warn: "bg-warn/10 text-warn-ink",
+  danger: "bg-danger/10 text-danger-ink",
   brand: "bg-brand/10 text-brand",
   neutral: "bg-paperAlt text-inkSoft",
 };

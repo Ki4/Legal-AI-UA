@@ -31,6 +31,16 @@
   --ui-warn: #b7791f;
   --ui-danger: #bc4334;
 
+  /* §1.3 status *-ink pair — AA-safe text on tint/paper.
+   * The vivid --ui-ok/warn/danger above stay for dots, fills and tints
+   * (bg-ok/10, border-warn/40, etc.) — non-text use is exempt from AA.
+   * Status *text* must use these -ink siblings instead: light-mode
+   * --ui-warn (#B7791F on paper) measured ~3.7:1, below the 4.5:1 floor;
+   * --ui-warn-ink (#8A5A12) measures ~5.9:1. Same rationale for ok/danger. */
+  --ui-ok-ink: #2e7d5b;
+  --ui-warn-ink: #8a5a12;
+  --ui-danger-ink: #bc4334;
+
   /* §5 motion */
   --motion-fast: 120ms;
   --motion-base: 180ms;
@@ -64,6 +74,12 @@
   --ui-ok: #4ade80;
   --ui-warn: #fbbf24;
   --ui-danger: #f87171;
+
+  /* §1.3 status *-ink pair — dark tints are already light enough on dark
+   * paper, so these mirror the vivid values. */
+  --ui-ok-ink: #4ade80;
+  --ui-warn-ink: #fbbf24;
+  --ui-danger-ink: #f87171;
 }
 
 @theme inline {
@@ -80,6 +96,11 @@
   --color-ok: var(--ui-ok);
   --color-warn: var(--ui-warn);
   --color-danger: var(--ui-danger);
+  /* §1.3 AA-safe text pair — use text-ok-ink/text-warn-ink/text-danger-ink for
+   * any status LABEL TEXT; the vivid tokens above stay for dots/fills/tints. */
+  --color-ok-ink: var(--ui-ok-ink);
+  --color-warn-ink: var(--ui-warn-ink);
+  --color-danger-ink: var(--ui-danger-ink);
 
   /* §2 typography */
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -94,4 +115,17 @@
   --shadow-card-hover: 0 4px 16px rgba(31, 30, 27, 0.06);
   --shadow-pop: 0 4px 12px rgba(31, 30, 27, 0.1), 0 2px 4px rgba(31, 30, 27, 0.05);
   --shadow-modal: 0 24px 48px rgba(31, 30, 27, 0.16);
+}
+
+/* §5 motion — global reduced-motion floor. Every transition/animation in the
+ * system collapses to effectively-instant when the user has asked the OS for
+ * reduced motion, regardless of which component wrote the duration. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

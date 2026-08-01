@@ -1,10 +1,11 @@
 import { mockTrace, type BlockTrust } from "@legal-ai/db";
+import { Citation, Confidence, Provenance, type ProvenanceState } from "@legal-ai/ui";
 import { useParams } from "react-router";
 
-const trustLabel: Record<BlockTrust, string> = {
-  template: "Template",
-  ai_generated: "AI generated",
-  lawyer_edited: "Lawyer edited",
+const provenanceState: Record<BlockTrust, ProvenanceState> = {
+  template: "confirmed",
+  ai_generated: "ai",
+  lawyer_edited: "edited",
 };
 
 export function AnatomyPage() {
@@ -25,20 +26,22 @@ export function AnatomyPage() {
               block.needsAttention ? "border-danger" : "border-line"
             }`}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <span className="font-medium">{block.title}</span>
-              <span className="rounded-full border border-line px-2 py-0.5 text-xs text-inkSoft">
-                {trustLabel[block.trust]}
-              </span>
+              <div className="flex items-center gap-2">
+                <Confidence level={block.needsAttention ? "needs-review" : "high"} />
+                <Provenance state={provenanceState[block.trust]} />
+              </div>
             </div>
-            {block.needsAttention && (
-              <p className="mt-2 text-sm text-danger">Needs lawyer attention</p>
-            )}
             {block.lawRefs.length > 0 && (
-              <p className="mt-2 text-sm text-inkMute">Law refs: {block.lawRefs.join("; ")}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {block.lawRefs.map((ref) => (
+                  <Citation key={ref} source={ref} />
+                ))}
+              </div>
             )}
             {block.questionnaireFields.length > 0 && (
-              <p className="mt-1 text-sm text-inkMute">
+              <p className="mt-2 text-sm text-inkMute">
                 Questionnaire fields: {block.questionnaireFields.join(", ")}
               </p>
             )}

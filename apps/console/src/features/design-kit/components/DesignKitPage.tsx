@@ -1,5 +1,20 @@
-import { Badge, Button, FormField, Input, Spinner } from "@legal-ai/ui";
-import { AlertCircle } from "lucide-react";
+import {
+  Badge,
+  Button,
+  Citation,
+  Confidence,
+  EmptyState,
+  FormField,
+  Input,
+  Provenance,
+  Spinner,
+  Table,
+  TableCell,
+  TableHead,
+  TableRow,
+  type ProvenanceState,
+} from "@legal-ai/ui";
+import { AlertCircle, FileX2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 const colorSwatches = [
@@ -20,6 +35,27 @@ const colorSwatches = [
 const buttonVariants = ["primary", "secondary", "ghost", "danger"] as const;
 
 const badgeTones = ["ok", "warn", "danger", "brand", "neutral"] as const;
+
+const statusInkPairs = [
+  { tone: "ok", vivid: "text-ok", ink: "text-ok-ink", tint: "bg-ok/10" },
+  { tone: "warn", vivid: "text-warn", ink: "text-warn-ink", tint: "bg-warn/10" },
+  { tone: "danger", vivid: "text-danger", ink: "text-danger-ink", tint: "bg-danger/10" },
+] as const;
+
+const provenanceStates: ProvenanceState[] = ["ai", "confirmed", "edited"];
+
+const mockTableRows = [
+  {
+    id: "row-1",
+    service: "Divorce application",
+    mode: "Full generation",
+    price: "€120",
+    selected: false,
+  },
+  { id: "row-2", service: "Alimony claim", mode: "Block assembly", price: "€90", selected: true },
+  { id: "row-3", service: "Power of attorney", mode: "Template", price: "€30", selected: false },
+  { id: "row-4", service: "NDA for a contractor", mode: "Template", price: "€25", selected: false },
+] as const;
 
 function Section({
   title,
@@ -193,6 +229,100 @@ export function DesignKitPage() {
           <Spinner size={14} />
           <Spinner size={16} />
           <Spinner size={20} />
+        </div>
+      </Section>
+
+      <Section
+        title="Status ink pairs"
+        description="Vivid tokens (ok · warn · danger) stay on dots/fills/tints; label TEXT uses the AA-safe -ink sibling. warn was ~3.7:1 on its tint, warn-ink measures ~5.9:1."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {statusInkPairs.map((pair) => (
+            <div key={pair.tone} className={`space-y-2 rounded-btn p-4 ${pair.tint}`}>
+              <p className={`text-sm font-semibold ${pair.vivid}`}>{pair.vivid} (vivid)</p>
+              <p className={`text-sm font-semibold ${pair.ink}`}>{pair.ink} (AA-safe)</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="Trust layer"
+        description="Human-in-the-Loop core: what is machine-suggested vs human-confirmed, confidence without a fake percentage, and a source for every fact."
+      >
+        <div className="space-y-5">
+          <div>
+            <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.07em] text-inkMute">
+              Provenance
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              {provenanceStates.map((state) => (
+                <Provenance key={state} state={state} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.07em] text-inkMute">
+              Confidence
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Confidence level="high" />
+              <span className="text-xs text-inkMute">
+                (high renders nothing — quiet is the signal)
+              </span>
+              <Confidence level="needs-review" />
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.07em] text-inkMute">
+              Citation
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Citation source="art. 180 FC" />
+              <Citation
+                source="Family Code of Ukraine, art. 112"
+                href="/laws/family-code#art-112"
+              />
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        title="Table"
+        description="Comfortable rows, horizontal lines over zebra striping, selected row gets a brand tint and left border."
+      >
+        <Table>
+          <TableHead>
+            <tr>
+              <th>Service</th>
+              <th>Mode</th>
+              <th>Price</th>
+            </tr>
+          </TableHead>
+          <tbody>
+            {mockTableRows.map((row) => (
+              <TableRow key={row.id} selected={row.selected}>
+                <TableCell>{row.service}</TableCell>
+                <TableCell>{row.mode}</TableCell>
+                <TableCell align="num">{row.price}</TableCell>
+              </TableRow>
+            ))}
+          </tbody>
+        </Table>
+      </Section>
+
+      <Section
+        title="Empty state"
+        description="Muted icon, warm title, optional hint and action — never 'No data'."
+      >
+        <div className="rounded-card border border-line">
+          <EmptyState
+            icon={FileX2}
+            title="No services yet"
+            hint="Create the first one — it takes minutes"
+            action={<Button variant="primary">New service</Button>}
+          />
         </div>
       </Section>
     </div>

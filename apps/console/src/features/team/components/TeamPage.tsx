@@ -54,7 +54,7 @@ export function TeamPage() {
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Team</h1>
       {loading && <p className="text-sm text-inkSoft">Loading…</p>}
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-sm text-danger-ink">{error}</p>}
       <ul className="grid max-w-3xl gap-3">
         {profiles.map((profile) => (
           <li key={profile.id} className="rounded-card border border-line bg-paper p-4">

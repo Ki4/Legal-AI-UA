@@ -1,5 +1,25 @@
 import { mockServices } from "@legal-ai/db";
+import type { ServiceStatus } from "@legal-ai/db";
+import {
+  Badge,
+  EmptyState,
+  Table,
+  TableCell,
+  TableHead,
+  TableRow,
+  type BadgeTone,
+} from "@legal-ai/ui";
 import { Link } from "react-router";
+
+const statusTone: Record<ServiceStatus, BadgeTone> = {
+  published: "ok",
+  draft: "neutral",
+  in_review: "neutral",
+  paused: "warn",
+  archived: "neutral",
+};
+
+const COLUMN_COUNT = 5;
 
 export function ServicesListPage() {
   return (
@@ -9,23 +29,45 @@ export function ServicesListPage() {
         Mock data — this feature's api/ layer switches to Supabase queries without touching
         components.
       </p>
-      <ul className="grid max-w-3xl gap-3">
-        {mockServices.map((service) => (
-          <li key={service.id} className="rounded-card border border-line bg-paper p-4">
-            <div className="flex items-center justify-between">
-              <Link to={`/services/${service.id}`} className="font-medium hover:underline">
-                {service.title}
-              </Link>
-              <span className="rounded-full border border-line px-2 py-0.5 text-xs text-inkSoft">
-                {service.status}
-              </span>
-            </div>
-            <div className="mt-1 text-sm text-inkMute">
-              {service.generationMode} · {service.reviewMode} · €{service.priceEur}
-            </div>
-          </li>
-        ))}
-      </ul>
+      <Table>
+        <TableHead>
+          <tr>
+            <th>Service</th>
+            <th>Mode</th>
+            <th>Review</th>
+            <th>Price</th>
+            <th>Status</th>
+          </tr>
+        </TableHead>
+        <tbody>
+          {mockServices.length === 0 ? (
+            <tr>
+              <td colSpan={COLUMN_COUNT}>
+                <EmptyState
+                  title="No services yet"
+                  hint="Create the first one — it takes minutes"
+                />
+              </td>
+            </tr>
+          ) : (
+            mockServices.map((service) => (
+              <TableRow key={service.id}>
+                <TableCell>
+                  <Link to={`/services/${service.id}`} className="font-medium hover:underline">
+                    {service.title}
+                  </Link>
+                </TableCell>
+                <TableCell>{service.generationMode}</TableCell>
+                <TableCell>{service.reviewMode}</TableCell>
+                <TableCell align="num">€{service.priceEur}</TableCell>
+                <TableCell align="center">
+                  <Badge tone={statusTone[service.status]}>{service.status}</Badge>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </tbody>
+      </Table>
     </section>
   );
 }

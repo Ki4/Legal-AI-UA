@@ -66,6 +66,8 @@ Two layers: **primitives** (raw palette, never used directly in components) and 
 **Status is a subsystem.** Status color is set **only** via `<Badge tone=…>` or the health mapping. Status color is never written by hand in markup.
 
 > **[v2] Contrast caveat.** `text-warn #B7791F` on `bg-warn/10` and `text-danger`/`text-ok` on their tints must be verified at **≥ 4.5:1** before shipping (amber-on-light is the classic failure). If a status _label text_ falls below AA, darken the text token for that pairing — do not lighten the tint (the tint must stay quiet). Status used as a large dot/fill is exempt (non-text).
+>
+> **[shipped fix] Paired `*-ink` text tokens.** `text-warn` on light measured **~3.7:1** — below AA. Rather than darken `--ui-warn` itself (it also drives the dot/fill, which must stay the documented hue), the system adds a parallel text-only family: `--ui-ok-ink` / `--ui-warn-ink` / `--ui-danger-ink` (Tailwind `text-ok-ink` / `text-warn-ink` / `text-danger-ink`), light values `#2E7D5B` / `#8A5A12` / `#BC4334`. `warn-ink #8A5A12` on `bg-warn/10` now measures **~5.9:1**; `ok-ink`/`danger-ink` were already ≥ 4.5:1 so they equal their vivid siblings. Dark-theme `-ink` values mirror the vivid tokens (already light enough on dark paper). Rule going forward: any status **label text** uses the `-ink` token; dots, fills, tints, and border accents keep the vivid token. `Badge`, `Button` (danger variant) and `FormField`'s error text were migrated as the reference implementation.
 
 ### 1.4 CSS variables (source, `src/index.css`)
 
@@ -464,5 +466,42 @@ export type Locale = (typeof LOCALES)[number];
 4. **Motion · elevation · z-index (§4–5)** — small sections that prevent silent bugs and make it _feel_ calm.
 5. **Table (§9.8)** — the screen the lawyer lives in.
 6. **Target size & legibility (§12)** — 44px targets, comfortable density, for a non-technical/older user.
+
+## 16. Conversational collection (chat) primitives — spec only
+
+The client-facing intake for a service does not have to be a form. For some services the better
+channel is a chat bot that asks the questionnaire's questions conversationally — same data, a
+different UX. This section specs the primitives that channel will need **before** `apps/web` is
+built; nothing here is implemented yet.
+
+**The invariant.** The questionnaire **schema is channel-independent**. A field collected by a
+form input and the same field collected by a chat turn feed the generation trace identically —
+same field id, same validation, same downstream block. Chat is a rendering of the schema, not a
+parallel data model. If a chat answer cannot be traced back to a schema field, it cannot enter the
+generation trace.
+
+**Primitives to spec now, build later:**
+
+- **Message bubble.** Two surfaces only: the client's message and the assistant's. `bg-paperAlt`
+  for the assistant, `bg-paper` (or `bg-brand/10` for a lawyer-brand-forward tone — TBD at build
+  time) for the client, both on `bg-canvas`, `rounded-card`. No new elevation level — bubbles are
+  flush (`e0`), not cards.
+- **Streaming AI state.** Reuses the §9.9 AI-generation pattern verbatim: `Sparkles` + a calm
+  indeterminate progress affordance while the model is composing, text filling in as it streams.
+  Never a frozen bubble — the same rule that forbids a frozen screen during document generation
+  applies turn-by-turn here.
+- **Quick-reply chips.** A row of `Button variant="ghost"` chips under the assistant's message for
+  common answers (yes/no, pick-one). Same **44px minimum target** as every other interactive
+  control (§12) — chat chips are not exempt just because they look lightweight.
+- **Input bar.** Sits at the bottom, same `Input`/`Textarea` styling as the form world
+  (`border-lineStrong`, `focus:ring-brand/15`) — a lawyer or client should not be able to tell the
+  design system changed channel.
+- **Provenance markers on AI messages.** Any AI message that asserts a fact (not just a question)
+  gets the same `<Provenance state="ai">` treatment as a document block (§8.1) — the trust layer
+  does not stop at the document; it covers every AI-authored sentence the client sees.
+
+Nothing above is a component yet — no `MessageBubble`, no `ChatInput` exists in
+`packages/ui/src/components` today. This section exists so the eventual implementation starts
+from an agreed shape instead of ad-hoc styling, per the "zero magic values" rule in §0.
 
 _End of specification v2._

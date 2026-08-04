@@ -466,12 +466,13 @@ That is the difference between "worth rechecking" and "this definitively changed
 The interval is configurable per norm, with a recommended default the platform proposes and a
 person may change. The rationale for a non-default value is recorded.
 
-| Scope                                                 | Recommended default       |
-| ----------------------------------------------------- | ------------------------- |
-| Norms behind at least one published service           | Daily probe               |
-| Norms used only by drafts                             | Weekly probe              |
-| New acts amending a tracked act                       | On publication-feed event |
-| Full human review of a service, regardless of signals | Quarterly, on by default  |
+| Scope                                                 | Recommended default      |
+| ----------------------------------------------------- | ------------------------ |
+| Norms behind at least one published service           | Daily probe              |
+| Norms used only by drafts                             | Weekly probe             |
+| Full human review of a service, regardless of signals | Quarterly, on by default |
+
+New acts amending a tracked act are deliberately absent from this table — see §9.14.
 
 Three rules around this:
 
@@ -542,6 +543,79 @@ raw diff. Not first-wave work, and it changes none of the mechanics above.
 - Renumbering and editorial edits will produce meaningless diffs. Mitigated by aggressive
   normalization and by "no impact" being one click.
 
+### 9.14 We build the fetcher, and we do not build the feed
+
+Two capabilities were being discussed as one. They are not the same size and they do not get the
+same answer.
+
+**Watching known articles** — take a list of citations we already hold, check whether the text
+moved. Bounded, well understood, and small at our scale: one source, a few dozen articles.
+**We build this.**
+
+**Ingesting the publication stream** — take every newly published act and work out which of ours
+it amends. A different problem entirely, because it reasons about acts that are not in our list.
+**We neither build nor buy this for now.** New acts are the assigned lawyer's manual
+responsibility (§9.1), so dropping it leaves no gap that was not already covered by a human.
+
+Buying a commercial feed was considered and rejected _for now_, on a deliberate ground: we do not
+yet know enough about the problem to specify what we would be buying — what coverage, what
+granularity, what latency, in what format. Building the watcher first is how that knowledge is
+acquired, and it leaves a working reference implementation to evaluate any future supplier
+against. Revisit when the number of tracked norms, or the number of sources, makes maintenance
+real.
+
+### 9.15 What makes a home-grown fetcher safe
+
+The objection to building rather than buying was never that parsers are bad. It was that a broken
+parser fails **silently**: markup changes, extraction returns nothing, no differences are reported,
+and everything looks healthy until a client notices. That objection is answered in full once
+**"I don't know" is a first-class outcome**, alongside "changed" and "unchanged".
+
+Four conditions, in order of how much they matter:
+
+1. **The parser asserts what it expects to find.** Article heading present, text non-empty,
+   revision date parseable. Any assertion failing yields `unreachable` (§9.11) — never
+   "no change". This one carries the argument; the rest are support.
+2. **Non-empty is an invariant.** An empty or implausibly short extraction is a failure, always.
+   This is exactly what broken markup looks like: not an error, silence.
+3. **Fixtures in CI.** A handful of saved pages with known expected output. These catch our own
+   regressions when the parser is refactored — they cannot catch the source changing, which is
+   what condition 1 is for.
+4. **Periodic human spot-check.** Once a quarter a lawyer verifies two or three norms by hand
+   against the source. Cheap, and the only thing that catches a systematic bias the automation
+   cannot see in itself.
+
+### 9.16 Response times
+
+Two different obligations, on two different clocks. Merging them produces a target that is missed
+routinely and therefore means nothing.
+
+| Obligation      | Deadline                                    |
+| --------------- | ------------------------------------------- |
+| Triage a signal | One business day from notification          |
+| Fix the impact  | A date set by the lawyer at triage, tracked |
+
+Triage is small work — open it, read the diff, decide: no impact, impact, or defer to the
+effective date. One business day is achievable. Remediation is not one day: rewriting blocks,
+running fixtures, publishing a version and re-issuing documents can take a week. The severity that
+sets the deadline can only be judged by the person who has read the diff, so it is set at triage
+rather than fixed in policy — a law taking effect in three months and a law that made yesterday's
+delivered document wrong are not the same urgency.
+
+Consequences that follow directly from naming a number:
+
+- **One business day means business days.** A signal arriving Friday evening, with one lawyer on
+  the service and no cover, waits until Monday. This turns the cover question (§14) from
+  theoretical into operational.
+- **The service's state while a signal is untriaged.** Proposed: an untriaged signal leaves the
+  service on sale but visibly flagged; a **confirmed impact on a published service pauses it**
+  until a new version ships. That makes "impact confirmed" a consequential decision, which is
+  right. It costs revenue; selling a document we know to be wrong costs more.
+- **What the client is told, and when.** Proposed: told immediately, with the note that an update
+  is being prepared. Waiting until the fix is friendlier and leaves a window in which someone acts
+  on a document we already know is wrong. Open (§14) — this one is a product call, not an
+  engineering one.
+
 ## 10. Backlog
 
 Sizes are relative: S ≈ a day, M ≈ a few days, L ≈ a week or more, and L items are candidates for
@@ -606,23 +680,30 @@ Whatever is not recorded when it happens is gone.
 
 ### Law monitoring (§9)
 
-| ID     | Task                                                      | Depends        | Size |
-| ------ | --------------------------------------------------------- | -------------- | ---- |
-| ADM-41 | Link normalization and entry-time validation (§9.2, §9.6) | ADM-21         | M    |
-| ADM-42 | Citation entry UI with fetched-text confirmation          | ADM-41         | M    |
-| ADM-43 | Fingerprint store and text normalization (§9.7)           | ADM-21         | M    |
-| ADM-44 | Probe scheduler with per-norm interval and floor (§9.8)   | ADM-43         | M    |
-| ADM-45 | Diff production and signal creation                       | ADM-43         | M    |
-| ADM-46 | Signal triage queue and citation states (§9.11)           | ADM-45         | M    |
-| ADM-47 | Effective-date calendar and scheduled signals (§9.9)      | ADM-45         | M    |
-| ADM-48 | Lawyer's cabinet: calendar, obligations, overdue signals  | ADM-46, ADM-47 | M    |
-| ADM-49 | Health: unreachable norms and stale-check alarms (§9.10)  | ADM-44         | S    |
-| ADM-50 | Publication-feed ingestion                                | ADM-43         | L    |
-| ADM-51 | Scheduled full service review, on by default (§9.8)       | ADM-6          | S    |
+| ID     | Task                                                       | Depends        | Size |
+| ------ | ---------------------------------------------------------- | -------------- | ---- |
+| ADM-41 | Link normalization and entry-time validation (§9.2, §9.6)  | ADM-21         | M    |
+| ADM-42 | Citation entry UI with fetched-text confirmation           | ADM-41         | M    |
+| ADM-43 | Fingerprint store and text normalization (§9.7)            | ADM-21         | M    |
+| ADM-44 | Probe scheduler with per-norm interval and floor (§9.8)    | ADM-43         | M    |
+| ADM-45 | Diff production and signal creation                        | ADM-43         | M    |
+| ADM-46 | Signal triage queue and citation states (§9.11)            | ADM-45         | M    |
+| ADM-47 | Effective-date calendar and scheduled signals (§9.9)       | ADM-45         | M    |
+| ADM-48 | Lawyer's cabinet: calendar, obligations, overdue signals   | ADM-46, ADM-47 | M    |
+| ADM-49 | Health: unreachable norms and stale-check alarms (§9.10)   | ADM-44         | S    |
+| ADM-50 | Fetcher safety: assertions, fixtures, spot-check (§9.15)   | ADM-43         | M    |
+| ADM-51 | Scheduled full service review, on by default (§9.8)        | ADM-6          | S    |
+| ADM-52 | Triage SLA timers and overdue escalation (§9.16)           | ADM-46         | S    |
+| ADM-53 | Auto-pause a published service on confirmed impact (§9.16) | ADM-46, ADM-32 | S    |
 
-Fetching and diffing belong to the core owner's zone; the console owns entry, triage, the calendar
-and the health surfaces. ADM-50 is sized L and is the candidate for buying rather than building —
-see §14.
+Fetching, normalization and diffing belong to the core owner's zone; the console owns entry,
+triage, the calendar and the health surfaces.
+
+ADM-50 is not optional polish. It is what makes building the fetcher instead of buying a feed a
+sound decision rather than a cheap one — without it the failure mode is silence (§9.15). It ships
+with ADM-43, not after it.
+
+Publication-feed ingestion is deliberately not in this table (§9.14).
 
 ### Authoring sandbox
 
@@ -757,6 +838,12 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 - Known future changes become calendar entries with reminders in the lawyer's cabinet, not
   something discovered after the fact (§9.9).
 - The index route becomes the lawyer's cabinet rather than a redirect to `/services`.
+- We build the article fetcher rather than buying a feed, and the safety conditions in §9.15 ship
+  with it rather than after it.
+- Publication-feed ingestion is neither built nor bought for now; new acts remain the assigned
+  lawyer's manual responsibility (§9.14).
+- A signal is triaged within one business day; the deadline for fixing a confirmed impact is set
+  by the lawyer at triage (§9.16).
 
 ## 14. Open questions
 
@@ -774,16 +861,13 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 4. **What detection window do we promise clients?** A day, a week. Every interval in §9.8 is
    derived from this number, and the floor that configuration cannot cross is set by it. This is
    the first question to answer in this group — the rest depend on it.
-5. **Do we buy a publication feed or build the fetcher ourselves?** ADM-50 is sized L on the
-   assumption we build. A home-grown scraper fails silently — markup changes, the parser returns
-   nothing, no differences are reported, and everything looks fine until a client notices.
-   Buying a structured feed moves that risk to a supplier; a home-grown parser is then worth
-   keeping as a second, cross-checking channel rather than the primary one.
-6. **What is the lawyer's deadline for triaging a signal?** An undetected change and an untriaged
-   one are equally an unkept promise.
+5. **Does a published service pause itself when an impact is confirmed?** §9.16 proposes yes.
+   It costs revenue on a false positive and prevents selling a document we know to be wrong.
+6. **Is the client told as soon as an impact is confirmed, or only once the fix ships?** §9.16
+   proposes immediately, with a note that an update is being prepared. A product call.
 7. **When a change has a known future effective date, do we tell affected clients in advance or on
    the day?** Advance notice is better product and more support load.
-8. **Does a detected impact trigger automatic re-issue, or a notification with a human deciding?**
+8. **Does a confirmed impact trigger automatic re-issue, or a notification with a human deciding?**
    §9 stops at the signal; this decides what happens after "impact confirmed".
 
 **Blocking schema design**
@@ -803,9 +887,10 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
     lawyer in the loop for the other two modes.
 15. **Invitations or self-registration?** ADM-34 either exists or does not.
 16. **Deactivation: soft disable or account deletion?**
-17. **Is one assigned lawyer per service enough, or does a service need a backup?** Decided so far:
-    at least one. The open part is what happens to that service's signals and scheduled reviews
-    while its lawyer is away.
+17. **Who covers a service while its assigned lawyer is away?** Settled: at least one lawyer per
+    service. Still open, and now operational rather than theoretical, because §9.16 commits to one
+    business day: a signal arriving on Friday against a single unavailable lawyer breaches the SLA
+    by Monday with nobody at fault.
 
 **Already answered, listed so they stop being reopened**
 
@@ -819,3 +904,10 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 - Whether a norm is watched once or per service — once (§9.3).
 - Whether adaptive frequency is worth it — no (§9.8).
 - Whether scheduled full review is opt-in — no, it is on by default (§9.8).
+- Buy a feed or build the fetcher — build, and revisit later with a working reference
+  implementation to judge suppliers against (§9.14).
+- Publication-feed ingestion — not built and not bought; new acts stay the lawyer's manual layer
+  (§9.14).
+- How long a lawyer has to triage a signal — one business day (§9.16).
+- How long a lawyer has to fix a confirmed impact — a date set at triage, not a fixed policy
+  number (§9.16).

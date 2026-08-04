@@ -1,11 +1,21 @@
 # Admin console — screens, metadata and audit
 
 - Status: draft for discussion
-- Date: 2026-08-03
+- Date: 2026-08-04
 - Audience: the two developers building the console, plus the core owner for the zone boundary
 
 This is one document on purpose: the screen map, the user stories, the metadata model behind them,
 and the backlog all constrain each other, and reading them apart is how they drift.
+
+The architectural decisions recorded here have their own ADRs, which are the durable record; this
+document is the plan of work built on top of them.
+
+| ADR                                                                     | Covers                                                 |
+| ----------------------------------------------------------------------- | ------------------------------------------------------ |
+| [ADR-0008](../adr/0008-templates-from-uploaded-documents.md)            | Uploads and extraction instead of a Word add-in (§5.1) |
+| [ADR-0009](../adr/0009-issued-documents-pin-frozen-versions.md)         | Version pinning, freezing, the passport (§5.3, §5.4)   |
+| [ADR-0010](../adr/0010-append-only-audit-with-pseudonymous-subjects.md) | The audit model (§6, §7)                               |
+| [ADR-0011](../adr/0011-monitoring-legislative-change.md)                | Legislative change monitoring (§9)                     |
 
 ## 1. Assumptions
 

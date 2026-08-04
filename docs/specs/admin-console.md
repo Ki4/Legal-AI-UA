@@ -13,7 +13,7 @@ Everything below is written as if **document generation and extraction already w
 the core owner's zone (ADR-0004, ADR-0008) and the console is built around them, not with them.
 Where the console needs the core, it needs it through the Edge Function gateway and nowhere else.
 
-Two frontend developers work on this in parallel. Section 11 is the split.
+Two frontend developers work on this in parallel. Section 12 is the split.
 
 ## 2. Zone boundary
 
@@ -32,6 +32,7 @@ pipeline.
 ## 3. Information architecture
 
 ```
+/                          lawyer's cabinet: calendar and signals awaiting triage
 /services                  service list
 /services/:id              service card → overview
 /services/:id/versions     versions, with archive behind a filter
@@ -40,12 +41,14 @@ pipeline.
 /services/:id/runs         test runs and their history
 /services/:id/stats        per-service statistics
 /services/:id/history      who changed what
+/services/:id/law          the norms this service depends on
 /law                       law reference register
+/law/signals               triage queue for detected changes
 /team                      team (admin only)
 /account                   own profile
 ```
 
-Two decisions are baked into this map.
+Three decisions are baked into this map.
 
 **Versions and the archive are not a top-level section.** They are a tab on the service card, and
 the archive is a filter on that tab. A separate "archive" entry in the sidebar creates a dead
@@ -56,6 +59,11 @@ contributing its own child route. This is not cosmetic — it is the preconditio
 working in parallel. If the tabs are branches of one component, both developers edit the same file
 every day. The layout itself lives in `src/app/`, not inside a feature, so that no feature imports
 from a sibling (the rule in `apps/console/CLAUDE.md`).
+
+**The index route stops being a redirect to `/services`.** A lawyer assigned to services has
+recurring obligations with dates on them — upcoming effective dates, scheduled reviews, signals
+waiting to be triaged (§9). Those need somewhere to live, and the first screen after login is where
+a person looks for what is owed today.
 
 ## 4. Screens and user stories
 
@@ -140,20 +148,61 @@ service.
 
 - As an admin, I see who changed what and when, without asking anyone.
 
-### 4.9 Law register — `/law`
+### 4.9 Service law dependencies — `/services/:id/law`
 
-Code, article, link, verification date. A "needs rechecking" report.
+The norms this service rests on: act, article, what it is relied on for, citation state (§9.11),
+tracking interval, when it was last successfully checked.
 
-- As a lawyer, I record that I verified an article on a date, so its citations stay trustworthy.
+- As a lawyer, I add a law reference by pasting a link and naming the article, and the system shows
+  me the fetched text so I can confirm it is the norm I meant.
+- As a lawyer, I write one line about what the block relies on, so whoever reads the diff in six
+  months knows whether it matters.
+- As a lawyer, I mark a reference as covering a whole act when that is genuinely the dependency,
+  and I record why.
+- As a lawyer, I change the tracking interval for a norm away from the recommended default, and I
+  record the reason.
+- As a lawyer, I cannot set an interval that would break the detection window promised to clients.
+- As a lawyer, I see one honest freshness figure for the service, rolled up from its references.
+
+### 4.10 Lawyer's cabinet — `/`
+
+Calendar and obligations: upcoming effective dates, scheduled service reviews, signals awaiting
+triage, references that have gone unreachable.
+
+- As a lawyer, the first screen after login tells me what is owed today, not a service list.
+- As a lawyer, I see a change that takes effect next month before it does, so I can prepare the new
+  template version instead of catching up afterwards.
+- As a lawyer, I see when a service of mine is next due for its scheduled full review.
+
+### 4.11 Law register — `/law`
+
+Act, article, link, tracked revision fingerprint, verification date, tracking interval, dependent
+services. A "needs rechecking" report.
+
+- As a lawyer, I record that I verified an article, so its citations stay trustworthy.
 - As a lawyer, I see which articles have not been rechecked in too long.
 - As a lawyer, I see which templates and which issued documents depend on an article (see §8.2).
+- As a lawyer, I see a norm once, with every service that depends on it listed against it.
 
-### 4.10 Team — `/team`, admin only
+### 4.12 Signal triage — `/law/signals`
+
+Detected changes waiting for a decision, with the diff.
+
+- As a lawyer, I see what changed in the text, not just that something did.
+- As a lawyer, I mark a change as not affecting the document in one click, and the reference is
+  re-fingerprinted.
+- As a lawyer, I mark a change as affecting the document, and the work it creates is visible: which
+  templates, which services, which issued documents.
+- As a lawyer, I defer a signal to the date the change takes effect.
+- As an admin, I see signals nobody has triaged for too long.
+- As an admin, a reference that could not be checked is as loud as one that changed.
+
+### 4.13 Team — `/team`, admin only
 
 - As an admin, I deactivate a lawyer to close access without erasing their history.
 - As an admin, I change the role of an already-approved user.
 
-### 4.11 Account — `/account`
+### 4.14 Account — `/account`
 
 - As any user, I change my password, language and theme.
 
@@ -241,7 +290,7 @@ an incomplete log still gets believed.
 ### 6.4 No personal data in event payloads
 
 Events carry identifiers, never names, emails or case details. `docs/CONTRIBUTING.md` already says
-this; §7.3 is why it becomes load-bearing rather than merely good hygiene.
+this; §7.1 is why it becomes load-bearing rather than merely good hygiene.
 
 ## 7. Client, consents, GDPR
 
@@ -310,7 +359,190 @@ now has versions of its own, and the passport records the chain.
 A promise of freshness with no delivery channel is not a promise. Notifications were on the
 deferred list; the subscription decision takes them off it.
 
-## 9. Backlog
+## 9. Law monitoring
+
+§8 sells a promise about legislation. This section is the machinery that keeps it.
+
+### 9.1 The division of labour
+
+Two signals, caught in completely different ways. Conflating them produces an RSS reader everyone
+mistakes for compliance coverage.
+
+| Signal                                                           | Caught by | Owner               |
+| ---------------------------------------------------------------- | --------- | ------------------- |
+| A tracked article's text changed                                 | Machine   | Platform            |
+| A new amending act was published                                 | Machine   | Platform            |
+| Court practice, ministry clarifications, draft laws, sector news | Human     | The assigned lawyer |
+
+Every service has at least one assigned lawyer, and watching news and pending legislation is
+their job, not the platform's. The platform automates only what has an official source and a
+formal structure.
+
+### 9.2 A pasted link is not what we track
+
+The lawyer's input is a URL. That is the right thing to ask a human for and the wrong thing to
+watch, for three reasons.
+
+**The pinned-redaction trap.** A link to an act can point at the current text or at a fixed
+historical revision. A lawyer will often copy the second, because that is the revision they read.
+Watching it will _never_ fire — that text is immutable by definition. The service stays green
+forever and nobody can explain why.
+
+So a link is **normalized on entry** into the triple that is actually tracked: source, act
+identifier, article, plus a pointer meaning "whatever is currently in force". The original URL is
+kept for display only.
+
+**Granularity.** A link to a whole code fires on every amendment to any of its articles. See §9.4.
+
+**Link rot.** Acts get consolidated and URLs move. A failed fetch is its own state — never
+"no change".
+
+### 9.3 Watch once, depend many times
+
+Ten services will cite the same article. It is watched **once**, in a shared register, and the
+dependency "this service relies on this norm" hangs off it separately.
+
+Watching per service would mean ten fetches of one text, ten possibly-diverging states for the
+same article, and no way to say which is right.
+
+The fan-out — norm → blocks → template versions → issued documents → clients — is derived from
+the dependency, and it is the same reverse index §8.1 requires.
+
+### 9.4 Article level is the norm, act level is a marked exception
+
+A code has hundreds of articles; a template rests on a handful. Tracking the code as a whole fires
+an alarm on every amendment anywhere in it, nearly all irrelevant. The lawyer stops opening the
+alerts within a month — and that failure is invisible, because everything still looks like it is
+working.
+
+So: **the article is required by default.** Act-level tracking is allowed, but only as an explicit,
+recorded choice with a reason — sometimes the dependency really is on a whole new act, and forcing
+an invented article number is worse than an honest "whole act, noise expected" flag.
+
+### 9.5 Guide: adding a law reference
+
+Written for the lawyer entering it. The in-product version is Ukrainian and lives in
+`packages/i18n` as content; this is the specification of what it must say.
+
+1. **Link to the version currently in force**, not to a fixed historical revision. If you were
+   reading a specific revision, that is fine — paste it anyway, the system will resolve it.
+2. **Name the article.** If the block depends on a specific part or point of it, say which.
+3. **One citation per norm the block actually relies on.** Do not cite for context or for weight.
+4. **Several dependencies mean several citations**, not one broad one.
+5. **If the dependency really is the whole act**, mark it as act-level and accept the extra noise.
+6. **Write one line about what you relied on** — "grounds for dissolution of marriage". When a
+   diff arrives in six months, this sentence is what tells the reader whether the change matters.
+7. **Confirm the text the system shows you.** After you save, the article is fetched and displayed
+   back. Check it is the norm you meant.
+
+### 9.6 Designing for a wrong citation
+
+A lawyer will mistype an article number, cite a repealed provision, or pick the wrong act. The
+system assumes this rather than trusting the input.
+
+- **Validate on entry.** Fetch the cited article immediately and show it back. A number that does
+  not exist in that act is rejected at the cheapest possible moment.
+- **Confirm, don't type.** Where extraction proposes citations from the template text, the lawyer
+  confirms a candidate instead of typing an identifier.
+- **A citation can be marked wrong and replaced** without losing the history of what it used to be.
+- **The scheduled full review** (§9.8) is the backstop for what still slips through.
+
+### 9.7 What a check does
+
+Two tiers, which is what makes a frequent cadence affordable.
+
+- **Cheap probe** — compare the published revision date, `ETag` or `Last-Modified`. One light
+  request, no parsing.
+- **Expensive comparison** — only when the probe moved: fetch, extract the article, normalize
+  (whitespace, markup, numbering artifacts), hash, compare against the stored fingerprint, produce
+  a diff.
+
+What is stored per citation is a **fingerprint of the revision**, not merely a date. A date says
+only that somebody looked; a fingerprint says whether what they looked at is still the same thing.
+That is the difference between "worth rechecking" and "this definitively changed".
+
+### 9.8 Cadence
+
+The interval is configurable per norm, with a recommended default the platform proposes and a
+person may change. The rationale for a non-default value is recorded.
+
+| Scope                                                 | Recommended default       |
+| ----------------------------------------------------- | ------------------------- |
+| Norms behind at least one published service           | Daily probe               |
+| Norms used only by drafts                             | Weekly probe              |
+| New acts amending a tracked act                       | On publication-feed event |
+| Full human review of a service, regardless of signals | Quarterly, on by default  |
+
+Three rules around this:
+
+- **Configuration must not be able to break the commercial promise.** For a norm behind a published
+  service, the interval cannot be set longer than the detection window §8 commits to. Same shape as
+  the ADR-0005 constraint: the model refuses configurations that contradict a promise.
+- **No adaptive frequency.** "Check volatile acts more often" is superficially clever and wrong
+  here: an act untouched for three years and then amended is precisely the dangerous case, and
+  adaptive cadence is asleep for it.
+- **Scale is not the constraint.** A few hundred articles probed daily is a few hundred light
+  requests. The interval is chosen from what was promised, not from what is cheap.
+
+### 9.9 Much of the future is already knowable
+
+An amending act almost always states the date it takes effect, often months out. That is not a
+polling problem — it is a **calendar entry**.
+
+When such an act is seen, the system creates a **scheduled signal**: "this article changes on
+date X". It fires on the date, and it is visible before it.
+
+This is the largest practical win in the whole section: the lawyer prepares the new template
+version _before_ the law takes effect, instead of catching up afterwards. For a paid freshness
+promise that is the difference between having reacted and having been ready.
+
+The lawyer's cabinet therefore carries a **calendar with reminders**: upcoming effective dates,
+scheduled reviews, signals awaiting triage.
+
+### 9.10 Green must mean checked
+
+"No difference found" and "no check completed" are different states and must never render alike.
+
+If a norm has not been _successfully_ checked for several times its interval, that is an alarm in
+its own right, equal in weight to a detected change. Without this, a broken fetcher looks exactly
+like perfect order, and the first to notice is a client.
+
+### 9.11 A citation has more than two states
+
+| State            | Meaning                                                    |
+| ---------------- | ---------------------------------------------------------- |
+| verified         | Fingerprint matches the last confirmed revision            |
+| drifted          | Fingerprint changed, nobody has looked yet                 |
+| under review     | A lawyer is assessing whether the change matters           |
+| impact confirmed | It changes the document — a new template version is needed |
+| no impact        | Changed but irrelevant; re-fingerprint and continue        |
+| scheduled        | A known change lands on a future date (§9.9)               |
+| stale by time    | Nothing detected, but verification is older than policy    |
+| unreachable      | Fetch failing — see §9.10                                  |
+
+The **no impact** path carries more weight than it looks. Most amendments to a large code do not
+touch the specific provision a template rests on — renumbering, editorial fixes, changes to a
+neighbouring article. If every drift forced a template update the system would become a source of
+false alarms, and lawyers would stop reading it. Marking "no impact" must be one click, and the
+decision is recorded with its author: it is a legal judgement, not a housekeeping flag.
+
+### 9.12 Where AI helps here
+
+Classifying a diff as editorial or substantive, and pointing out whether it touches the cited
+provision, is a good use of the core: the lawyer still decides, but reads a summary instead of a
+raw diff. Not first-wave work, and it changes none of the mechanics above.
+
+### 9.13 Honest limits
+
+- An article-level diff will not see meaning change because a definition elsewhere moved, or
+  because of transitional provisions. Cross-references stay a human matter; the system's job is to
+  record a dependency once discovered, not to infer it.
+- A new act nobody is tracking is not detectable by machine at all. That is exactly the layer the
+  assigned lawyer covers.
+- Renumbering and editorial edits will produce meaningless diffs. Mitigated by aggressive
+  normalization and by "no impact" being one click.
+
+## 10. Backlog
 
 Sizes are relative: S ≈ a day, M ≈ a few days, L ≈ a week or more, and L items are candidates for
 splitting before they become issues.
@@ -367,10 +599,30 @@ Whatever is not recorded when it happens is gone.
 
 | ID     | Task                                       | Depends        | Size |
 | ------ | ------------------------------------------ | -------------- | ---- |
-| ADM-21 | Article register                           | ADM-1          | S    |
+| ADM-21 | Article register, watched once (§9.3)      | ADM-1          | M    |
 | ADM-22 | Link articles to blocks                    | ADM-14, ADM-21 | S    |
 | ADM-23 | "Needs rechecking" report                  | ADM-21         | S    |
 | ADM-24 | Impact index: article → affected documents | ADM-21, ADM-30 | M    |
+
+### Law monitoring (§9)
+
+| ID     | Task                                                      | Depends        | Size |
+| ------ | --------------------------------------------------------- | -------------- | ---- |
+| ADM-41 | Link normalization and entry-time validation (§9.2, §9.6) | ADM-21         | M    |
+| ADM-42 | Citation entry UI with fetched-text confirmation          | ADM-41         | M    |
+| ADM-43 | Fingerprint store and text normalization (§9.7)           | ADM-21         | M    |
+| ADM-44 | Probe scheduler with per-norm interval and floor (§9.8)   | ADM-43         | M    |
+| ADM-45 | Diff production and signal creation                       | ADM-43         | M    |
+| ADM-46 | Signal triage queue and citation states (§9.11)           | ADM-45         | M    |
+| ADM-47 | Effective-date calendar and scheduled signals (§9.9)      | ADM-45         | M    |
+| ADM-48 | Lawyer's cabinet: calendar, obligations, overdue signals  | ADM-46, ADM-47 | M    |
+| ADM-49 | Health: unreachable norms and stale-check alarms (§9.10)  | ADM-44         | S    |
+| ADM-50 | Publication-feed ingestion                                | ADM-43         | L    |
+| ADM-51 | Scheduled full service review, on by default (§9.8)       | ADM-6          | S    |
+
+Fetching and diffing belong to the core owner's zone; the console owns entry, triage, the calendar
+and the health surfaces. ADM-50 is sized L and is the candidate for buying rather than building —
+see §14.
 
 ### Authoring sandbox
 
@@ -411,11 +663,18 @@ Whatever is not recorded when it happens is gone.
 ### Deferred but now unblocked by §8
 
 Orders and the order card; the per-order review queue; the client card, consents and GDPR
-operations; entitlements; staleness detection and bulk re-issue; notifications; payments and
+operations; entitlements; bulk re-issue after a confirmed impact; notifications; payments and
 payouts. These wait on `apps/web` and on real orders, not on an unanswered product question any
 more.
 
-## 10. Waves
+**Consultation booking.** Human-in-the-loop today means a lawyer reviewing one document. The next
+step is a client booking time with a lawyer directly — a scheduled consultation rather than a
+review of an artifact. It needs the assigned-lawyer model (already here), availability, and a
+calendar the client can see, so it sits naturally next to the lawyer's cabinet in §4.10 rather
+than as a separate product. Not scoped yet; recorded so the cabinet is not designed in a way that
+forecloses it.
+
+## 11. Waves
 
 **Wave 1 — foundation.** ADM-1…6. Until this stands, one developer has no data and the other has
 no contract. ADM-33 and ADM-36 can run alongside: they depend on nothing and are a good way to warm
@@ -426,9 +685,18 @@ up against live Supabase.
 **Wave 3 — the loop closes.** Template editing and the sandbox. This is where the console first
 becomes useful to a lawyer.
 
-**Wave 4 — around it.** Law references, publication lifecycle, cross-cutting concerns.
+**Wave 4 — around it.** Law references and monitoring, publication lifecycle, cross-cutting
+concerns.
 
-## 11. Two developers in parallel
+One ordering constraint inside wave 4: **citation entry comes before the watcher.** ADM-41 and
+ADM-42 — normalized links, validated on entry — must land before ADM-44 starts probing on a
+schedule. Watching a register full of un-normalized links reproduces the pinned-revision trap
+(§9.2) at scale, and the symptom is silence, which nobody investigates.
+
+ADM-51, the scheduled full review, is worth pulling earlier than the rest of the group: it needs
+only the event log, and it is the backstop that covers for everything in §9 not being built yet.
+
+## 12. Two developers in parallel
 
 Split by vertical, not by layer. "One writes the API, the other the UI" produces continuous
 blocking.
@@ -442,7 +710,13 @@ Publication, pause, archive, lawyer assignment.
 trace.
 
 The load is roughly even, but B carries more risk: the branching condition editor (ADM-16) is the
-hardest item on the list. `/law`, `/team` and `/account` go to whoever frees up first.
+hardest item on the list. `/team` and `/account` go to whoever frees up first.
+
+Law monitoring (§9) is a third vertical and does not fit inside either half. Its console surfaces —
+citation entry, the triage queue, the cabinet calendar, the health screens — are a wave-4 track of
+their own; the fetching, normalization and diffing behind them belong to the core owner. Do not
+split it across A and B: it touches the service card, the law register and the index route at once,
+which is exactly the shape that produces conflicts.
 
 **Both can start before the database exists.** The repo already requires components to reach data
 only through their feature's own `api/`. Agree those signatures on day one and hand them over as
@@ -459,7 +733,7 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
    owner's zone. Either batch the missing components at the start of the wave, or temporarily give
    one of the two write access to it.
 
-## 12. Decisions taken, for the record
+## 13. Decisions taken, for the record
 
 - Word add-in dropped for now; lawyers upload documents and the core extracts logic and variables.
 - The canonical template is structured data. The uploaded file is provenance only.
@@ -469,8 +743,22 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 - Both one-off purchase and subscription. Prices in EUR.
 - Staleness is tracked for both models; entitlement decides what happens next.
 - The event log is foundation work, not a later feature.
+- Every service has at least one assigned lawyer. News, court practice and pending legislation are
+  their manual responsibility; the platform automates only formally published acts (§9.1).
+- A norm is watched once in a shared register; service dependencies hang off it (§9.3).
+- A pasted link is normalized into act + article + "currently in force" before being tracked; the
+  URL itself is kept only for display (§9.2).
+- The article is required by default; act-level tracking is an explicit, justified exception
+  (§9.4).
+- The tracking interval is per norm, with a recommended default a person may override, and a floor
+  that configuration cannot push past the promised detection window (§9.8).
+- No adaptive frequency (§9.8).
+- Scheduled full human review of a service is on by default (§9.8).
+- Known future changes become calendar entries with reminders in the lawyer's cabinet, not
+  something discovered after the fact (§9.9).
+- The index route becomes the lawyer's cabinet rather than a redirect to `/services`.
 
-## 13. Open questions
+## 14. Open questions
 
 **Blocking the split of work into issues**
 
@@ -481,30 +769,53 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
    confirmed by a human?** This decides whether ADM-15 is a full editor or a review surface.
 3. **Does `packages/ui` get a temporary second owner for this wave?** Item 4 above.
 
+**Blocking law monitoring (§9)**
+
+4. **What detection window do we promise clients?** A day, a week. Every interval in §9.8 is
+   derived from this number, and the floor that configuration cannot cross is set by it. This is
+   the first question to answer in this group — the rest depend on it.
+5. **Do we buy a publication feed or build the fetcher ourselves?** ADM-50 is sized L on the
+   assumption we build. A home-grown scraper fails silently — markup changes, the parser returns
+   nothing, no differences are reported, and everything looks fine until a client notices.
+   Buying a structured feed moves that risk to a supplier; a home-grown parser is then worth
+   keeping as a second, cross-checking channel rather than the primary one.
+6. **What is the lawyer's deadline for triaging a signal?** An undetected change and an untriaged
+   one are equally an unkept promise.
+7. **When a change has a known future effective date, do we tell affected clients in advance or on
+   the day?** Advance notice is better product and more support load.
+8. **Does a detected impact trigger automatic re-issue, or a notification with a human deciding?**
+   §9 stops at the signal; this decides what happens after "impact confirmed".
+
 **Blocking schema design**
 
-4. **What counts as "the law changed"?** Who marks it, and does it trigger automatic re-issue or a
-   notification only?
-5. **Does a one-off purchase cover one document or a package?** This shapes the entitlement record.
-6. **Is a subscription tied to specific services or to the platform as a whole?**
-7. **Does an admin see clients' personal data, or only depersonalized orders?** This is an RLS
-   question, not a UI one.
-8. **How long do uploaded source documents and run outputs live?** Retention has to be set before
-   the first upload, not after.
-9. **Delivery format to the client — .docx, .pdf, or both?**
+9. **Does a one-off purchase cover one document or a package?** This shapes the entitlement record.
+10. **Is a subscription tied to specific services or to the platform as a whole?**
+11. **Does an admin see clients' personal data, or only depersonalized orders?** This is an RLS
+    question, not a UI one.
+12. **How long do uploaded source documents and run outputs live?** Retention has to be set before
+    the first upload, not after.
+13. **Delivery format to the client — .docx, .pdf, or both?**
 
 **Blocking wave planning**
 
-10. **Which mode does the first service launch in?** If it is not `template` + `auto`, the
+14. **Which mode does the first service launch in?** If it is not `template` + `auto`, the
     per-order review queue moves from "deferred" into the first waves, because ADR-0005 requires a
     lawyer in the loop for the other two modes.
-11. **Invitations or self-registration?** ADM-34 either exists or does not.
-12. **Deactivation: soft disable or account deletion?**
-13. **Is a service assigned to exactly one accountable lawyer, or to several participants?**
+15. **Invitations or self-registration?** ADM-34 either exists or does not.
+16. **Deactivation: soft disable or account deletion?**
+17. **Is one assigned lawyer per service enough, or does a service need a backup?** Decided so far:
+    at least one. The open part is what happens to that service's signals and scheduled reviews
+    while its lawyer is away.
 
 **Already answered, listed so they stop being reopened**
 
 - One-off versus subscription — both (§8).
 - Currency — EUR.
 - First-wave statistics — about runs, not orders (§4.7).
-- Source of truth for a template — structured data, not the file (§12).
+- Source of truth for a template — structured data, not the file (§13).
+- Who watches news and draft legislation — the assigned lawyer, manually (§9.1).
+- Whether to make tracking intervals configurable — yes, per norm, with a recommended default and
+  a floor (§9.8).
+- Whether a norm is watched once or per service — once (§9.3).
+- Whether adaptive frequency is worth it — no (§9.8).
+- Whether scheduled full review is opt-in — no, it is on by default (§9.8).

@@ -5,9 +5,14 @@
 // later touches no component. A mock shaped for convenience rather than
 // accuracy would quietly break that (ADR-0012).
 
-import { mockProfiles, mockServices, mockServiceVersions } from "@legal-ai/db";
-import type { ProfileRow, ServiceRow, ServiceVersionRow } from "@legal-ai/db";
+import type { ServiceRow, ServiceVersionRow } from "@legal-ai/db";
 import { AppError } from "../../../shared/api/errors";
+import {
+  currentVersionRowOf,
+  profileById,
+  profileRows,
+  serviceRows,
+} from "../../../shared/api/fixture-store";
 import type { ServicesApi } from "./contract";
 import type { LawyerRef, ServiceFilter, ServiceListItem, ServiceVersionSummary } from "./types";
 
@@ -18,16 +23,12 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Mutable copies: assignLawyer has to be observable across calls, the way a
-// real write would be.
-const services: ServiceRow[] = mockServices.map((row) => ({ ...row }));
-const versions: ServiceVersionRow[] = mockServiceVersions.map((row) => ({ ...row }));
-const profiles: ProfileRow[] = mockProfiles.map((row) => ({ ...row }));
-
 function toLawyerRef(lawyerId: string | null): LawyerRef | null {
   if (lawyerId === null) return null;
-  const profile = profiles.find((candidate) => candidate.id === lawyerId);
-  return profile ? { id: profile.id, fullName: profile.fullName } : null;
+  // An id that resolves to no profile still means someone is assigned. Keeping
+  // the ref with a null name says "assigned, name unavailable"; returning null
+  // would say "nobody assigned", which is a different and false statement.
+  return { id: lawyerId, fullName: profileById(lawyerId)?.fullName ?? null };
 }
 
 function toVersionSummary(version: ServiceVersionRow): ServiceVersionSummary {
@@ -41,21 +42,9 @@ function toVersionSummary(version: ServiceVersionRow): ServiceVersionSummary {
   };
 }
 
-/**
- * The live version when there is one, otherwise the newest. "Live" covers
- * paused as well as published: a paused service is still the one on the
- * catalogue, just not selling.
- */
 function currentVersionOf(serviceId: string): ServiceVersionSummary | null {
-  const own = versions.filter((version) => version.serviceId === serviceId);
-  const live = own.find((version) => version.status === "published" || version.status === "paused");
-  if (live) return toVersionSummary(live);
-
-  const newest = own.reduce<ServiceVersionRow | null>(
-    (best, version) => (best === null || version.version > best.version ? version : best),
-    null,
-  );
-  return newest ? toVersionSummary(newest) : null;
+  const row = currentVersionRowOf(serviceId);
+  return row === null ? null : toVersionSummary(row);
 }
 
 function toListItem(service: ServiceRow): ServiceListItem {
@@ -92,7 +81,7 @@ function matches(item: ServiceListItem, filter: ServiceFilter): boolean {
 export const mockServicesApi: ServicesApi = {
   async list(filter) {
     await delay(LATENCY_MS);
-    return services
+    return serviceRows
       .map(toListItem)
       .filter((item) => (filter ? matches(item, filter) : true))
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
@@ -100,7 +89,7 @@ export const mockServicesApi: ServicesApi = {
 
   async get(id) {
     await delay(LATENCY_MS);
-    const service = services.find((candidate) => candidate.id === id);
+    const service = serviceRows.find((candidate) => candidate.id === id);
     if (!service) {
       throw new AppError("not_found", `No service with id ${id}.`);
     }
@@ -110,12 +99,12 @@ export const mockServicesApi: ServicesApi = {
   async assignLawyer(id, lawyerId) {
     await delay(LATENCY_MS);
 
-    const service = services.find((candidate) => candidate.id === id);
+    const service = serviceRows.find((candidate) => candidate.id === id);
     if (!service) {
       throw new AppError("not_found", `No service with id ${id}.`);
     }
 
-    if (lawyerId !== null && !profiles.some((profile) => profile.id === lawyerId)) {
+    if (lawyerId !== null && !profileRows.some((profile) => profile.id === lawyerId)) {
       throw new AppError("validation", `No profile with id ${lawyerId}.`);
     }
 

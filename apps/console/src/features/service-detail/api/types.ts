@@ -10,6 +10,13 @@ export interface ServiceDetail {
   slug: string;
   title: string;
   summary: string | null;
+  /** Null means nobody is assigned. */
+  assignedLawyerId: string | null;
+  /**
+   * Null when nobody is assigned, or when the assigned lawyer's profile could
+   * not be read. Check `assignedLawyerId` to tell the two apart — "assigned,
+   * name unavailable" and "unassigned" must not render alike.
+   */
   assignedLawyerName: string | null;
   currentVersion: {
     version: number;

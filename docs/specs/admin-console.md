@@ -327,10 +327,16 @@ scheme.
 
 Decided: **both one-off purchase and subscription.**
 
-- One-off — a specific document or package, around €130, promised valid until the law changes.
-- Annual subscription — around €40/month, documents kept up to date, plus additional features.
+- One-off — a specific document or package, promised valid until the law changes.
+- Annual subscription — documents kept up to date, plus additional features.
 
-Prices are in EUR.
+**Prices are in UAH.** The platform serves Ukraine and bills in hryvnia; the schema carries
+integer minor units plus a currency code, so this is a data decision rather than a structural one.
+
+The figures discussed were €130 one-off and €40/month, which convert to roughly ₴5,500 and ₴1,700
+at recent rates. **Those hryvnia numbers are a conversion, not a decision** — they are recorded so
+the order of magnitude is not lost, and the actual price list is open (§14). Renaming the currency
+without restating the amounts would have divided the price by about forty.
 
 ### 8.1 What this demands that nothing else did
 
@@ -831,7 +837,8 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 - The field dictionary is platform-owned and canonical; templates reference field keys.
 - Versions and archive are a tab on the service card, not a sidebar section.
 - The service card is a layout route so its tabs can be separate features.
-- Both one-off purchase and subscription. Prices in EUR.
+- Both one-off purchase and subscription. Prices in UAH, carried as integer minor units plus a
+  currency code.
 - Staleness is tracked for both models; entitlement decides what happens next.
 - The event log is foundation work, not a later feature.
 - Every service has at least one assigned lawyer. News, court practice and pending legislation are
@@ -882,22 +889,26 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 
 **Blocking schema design**
 
-9. **Does a one-off purchase cover one document or a package?** This shapes the entitlement record.
-10. **Is a subscription tied to specific services or to the platform as a whole?**
-11. **Does an admin see clients' personal data, or only depersonalized orders?** This is an RLS
+9. **What are the actual hryvnia prices?** The currency is settled (§8); the amounts are not. The
+   euro figures that were discussed are recorded there as a conversion so the order of magnitude
+   survives, and they should be replaced by real numbers rather than treated as decided.
+10. **Does a one-off purchase cover one document or a package?** This shapes the entitlement
+    record.
+11. **Is a subscription tied to specific services or to the platform as a whole?**
+12. **Does an admin see clients' personal data, or only depersonalized orders?** This is an RLS
     question, not a UI one.
-12. **How long do uploaded source documents and run outputs live?** Retention has to be set before
+13. **How long do uploaded source documents and run outputs live?** Retention has to be set before
     the first upload, not after.
-13. **Delivery format to the client — .docx, .pdf, or both?**
+14. **Delivery format to the client — .docx, .pdf, or both?**
 
 **Blocking wave planning**
 
-14. **Which mode does the first service launch in?** If it is not `template` + `auto`, the
+15. **Which mode does the first service launch in?** If it is not `template` + `auto`, the
     per-order review queue moves from "deferred" into the first waves, because ADR-0005 requires a
     lawyer in the loop for the other two modes.
-15. **Invitations or self-registration?** ADM-34 either exists or does not.
-16. **Deactivation: soft disable or account deletion?**
-17. **Who covers a service while its assigned lawyer is away?** Settled: at least one lawyer per
+16. **Invitations or self-registration?** ADM-34 either exists or does not.
+17. **Deactivation: soft disable or account deletion?**
+18. **Who covers a service while its assigned lawyer is away?** Settled: at least one lawyer per
     service. Still open, and now operational rather than theoretical, because §9.16 commits to one
     business day: a signal arriving on Friday against a single unavailable lawyer breaches the SLA
     by Monday with nobody at fault.
@@ -905,7 +916,7 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 **Already answered, listed so they stop being reopened**
 
 - One-off versus subscription — both (§8).
-- Currency — EUR.
+- Currency — UAH (§8). The amounts themselves are still open.
 - First-wave statistics — about runs, not orders (§4.7).
 - Source of truth for a template — structured data, not the file (§13).
 - Who watches news and draft legislation — the assigned lawyer, manually (§9.1).

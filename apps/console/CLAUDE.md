@@ -7,7 +7,7 @@ Lawyer/admin cabinet. Read the root `CLAUDE.md` first.
 ```
 src/features/<name>/
   components/   feature-local UI
-  api/          data access — mocks from @legal-ai/db today, Supabase later
+  api/          data access — see the anatomy below
   hooks/        feature-local hooks
   index.tsx     exports the feature's RouteObject[]
 ```
@@ -19,6 +19,37 @@ Rules:
 - All data access goes through the feature's own `api/` layer. Components call `api/`, never
   Supabase or `@legal-ai/db` directly — that's what lets mocks become live queries without
   touching a single component.
+
+## The `api/` layer
+
+**`src/features/services/api/` is the reference. Copy its shape.** The conventions and the
+reasoning are ADR-0012; what follows is the short version.
+
+```
+api/
+  types.ts             view models — what the screen renders, not what a table holds
+  contract.ts          the interface both sides agree on before either writes code
+  <name>.mock.ts       fixture implementation, typed as the contract
+  index.ts             the swap point: one line picks the implementation
+```
+
+Six conventions, all enforced in the reference:
+
+1. **Return view models, not rows.** `ServiceListItem` carries the lawyer's name and the live
+   version — three tables joined once here rather than in every component.
+2. **Timestamps are ISO strings, money is integer minor units plus a currency code.** Never a
+   `Date` object across the boundary, never a float for money.
+3. **Errors are `AppError` from `src/shared/api/errors.ts`,** with a small closed set of codes.
+   Every mutation runs its result through `expectOne` — a write denied by an RLS `USING` clause
+   returns an empty array with no error, so the row count is the only signal that nothing was
+   written.
+4. **No Supabase type crosses the boundary.** No `PostgrestError`, no Postgres error codes in a
+   component.
+5. **A mutation returns the updated entity**, so the caller refreshes without a second round trip.
+6. **Shared domain vocabulary lives in `packages/db`; view models live in the feature.**
+
+Still to migrate, and deliberately listed rather than hidden: `anatomy` and `team` bypass the
+layer. `team` is the more valuable of the two, being the only feature with real queries.
 
 ## `src/app/routes.tsx` — the one shared file
 

@@ -23,7 +23,9 @@ Rules:
 ## The `api/` layer
 
 **`src/features/services/api/` is the reference. Copy its shape.** The conventions and the
-reasoning are ADR-0012; what follows is the short version.
+reasoning are ADR-0012; the checkable form — what "done" means for any feature, and how to write
+acceptance criteria for one — is `docs/specs/console-feature-dod.md`. What follows is the short
+version.
 
 ```
 api/

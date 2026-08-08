@@ -52,7 +52,12 @@ export function useServices(filter?: ServiceFilter): ServicesState {
         if (!cancelled) setServices(result);
       })
       .catch((cause: unknown) => {
-        if (!cancelled) setError(messageFor(cause));
+        if (cancelled) return;
+        setError(messageFor(cause));
+        // Drop the previous result too. It belongs to the previous filter, and
+        // leaving it on screen next to an error reads as "here are your
+        // results" when they are somebody else's.
+        setServices([]);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

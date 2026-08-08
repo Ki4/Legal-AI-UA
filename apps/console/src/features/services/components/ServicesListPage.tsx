@@ -60,10 +60,17 @@ export function ServicesListPage() {
           ) : services.length === 0 ? (
             <tr>
               <td colSpan={COLUMN_COUNT}>
-                <EmptyState
-                  title="No services yet"
-                  hint="Create the first one — it takes minutes"
-                />
+                {error === null ? (
+                  <EmptyState
+                    title="No services yet"
+                    hint="Create the first one — it takes minutes"
+                  />
+                ) : (
+                  // An empty list after a failed load is not an empty
+                  // catalogue. Telling an admin to create their first service
+                  // when the fetch simply broke is worse than saying nothing.
+                  <EmptyState title="Could not load the catalogue" hint="Try again in a moment" />
+                )}
               </td>
             </tr>
           ) : (
@@ -76,7 +83,16 @@ export function ServicesListPage() {
                 </TableCell>
                 <TableCell>{service.currentVersion?.generationMode ?? "—"}</TableCell>
                 <TableCell>{service.currentVersion?.reviewMode ?? "—"}</TableCell>
-                <TableCell>{service.assignedLawyer?.fullName ?? "—"}</TableCell>
+                <TableCell>
+                  {service.assignedLawyer === null
+                    ? "—"
+                    : // A dash here means "nobody assigned". A service that has a
+                      // lawyer whose profile we cannot read must not borrow that
+                      // dash and claim to be unassigned.
+                      (service.assignedLawyer.fullName ?? (
+                        <span className="text-inkMute">name unavailable</span>
+                      ))}
+                </TableCell>
                 <TableCell align="num">
                   {service.currentVersion
                     ? formatMoney(

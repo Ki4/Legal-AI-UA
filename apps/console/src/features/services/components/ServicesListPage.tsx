@@ -1,8 +1,8 @@
-import { mockServices } from "@legal-ai/db";
 import type { ServiceStatus } from "@legal-ai/db";
 import {
   Badge,
   EmptyState,
+  Spinner,
   Table,
   TableCell,
   TableHead,
@@ -10,6 +10,8 @@ import {
   type BadgeTone,
 } from "@legal-ai/ui";
 import { Link } from "react-router";
+import { formatMoney } from "../../../shared/format";
+import { useServices } from "../hooks/useServices";
 
 const statusTone: Record<ServiceStatus, BadgeTone> = {
   published: "ok",
@@ -19,28 +21,43 @@ const statusTone: Record<ServiceStatus, BadgeTone> = {
   archived: "neutral",
 };
 
-const COLUMN_COUNT = 5;
+const COLUMN_COUNT = 7;
 
 export function ServicesListPage() {
+  const { services, loading, error } = useServices();
+
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Services</h1>
       <p className="text-sm text-inkSoft">
-        Mock data — this feature's api/ layer switches to Supabase queries without touching
-        components.
+        Served by this feature&apos;s <code>api/</code> layer. It reads fixtures today and Supabase
+        later; no component on this screen changes when that happens.
       </p>
+
+      {error !== null && <p className="text-sm text-danger-ink">{error}</p>}
+
       <Table>
         <TableHead>
           <tr>
             <th>Service</th>
             <th>Mode</th>
             <th>Review</th>
+            <th>Lawyer</th>
             <th>Price</th>
+            <th>Version</th>
             <th>Status</th>
           </tr>
         </TableHead>
         <tbody>
-          {mockServices.length === 0 ? (
+          {loading ? (
+            <tr>
+              <td colSpan={COLUMN_COUNT}>
+                <div className="flex justify-center py-8">
+                  <Spinner />
+                </div>
+              </td>
+            </tr>
+          ) : services.length === 0 ? (
             <tr>
               <td colSpan={COLUMN_COUNT}>
                 <EmptyState
@@ -50,18 +67,35 @@ export function ServicesListPage() {
               </td>
             </tr>
           ) : (
-            mockServices.map((service) => (
+            services.map((service) => (
               <TableRow key={service.id}>
                 <TableCell>
                   <Link to={`/services/${service.id}`} className="font-medium hover:underline">
                     {service.title}
                   </Link>
                 </TableCell>
-                <TableCell>{service.generationMode}</TableCell>
-                <TableCell>{service.reviewMode}</TableCell>
-                <TableCell align="num">€{service.priceEur}</TableCell>
+                <TableCell>{service.currentVersion?.generationMode ?? "—"}</TableCell>
+                <TableCell>{service.currentVersion?.reviewMode ?? "—"}</TableCell>
+                <TableCell>{service.assignedLawyer?.fullName ?? "—"}</TableCell>
+                <TableCell align="num">
+                  {service.currentVersion
+                    ? formatMoney(
+                        service.currentVersion.priceMinor,
+                        service.currentVersion.currency,
+                      )
+                    : "—"}
+                </TableCell>
+                <TableCell align="num">
+                  {service.currentVersion ? `v${service.currentVersion.version}` : "—"}
+                </TableCell>
                 <TableCell align="center">
-                  <Badge tone={statusTone[service.status]}>{service.status}</Badge>
+                  {service.currentVersion ? (
+                    <Badge tone={statusTone[service.currentVersion.status]}>
+                      {service.currentVersion.status}
+                    </Badge>
+                  ) : (
+                    <span className="text-inkMute">—</span>
+                  )}
                 </TableCell>
               </TableRow>
             ))

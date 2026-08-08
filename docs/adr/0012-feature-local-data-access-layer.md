@@ -83,5 +83,6 @@ one screen's needs everyone's rebuild.
   `team` is the more valuable of the two to convert, because it is the only feature with real
   queries and therefore the place where convention 3 first earns its keep.
 
-See `apps/console/CLAUDE.md` for the folder anatomy and `docs/specs/admin-console.md` §12 for why
-the parallel split depends on this.
+See `apps/console/CLAUDE.md` for the folder anatomy, `docs/specs/console-feature-dod.md` for the
+checkable form of these conventions, and `docs/specs/admin-console.md` §12 for why the parallel
+split depends on this.

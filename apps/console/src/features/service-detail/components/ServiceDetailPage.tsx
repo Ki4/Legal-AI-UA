@@ -12,7 +12,14 @@ export function ServiceDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (serviceId === undefined) return;
+    // `loading` starts true, so bailing out without clearing it would leave the
+    // page on a spinner forever. Unreachable while the route supplies the
+    // param, which is exactly why it would go unnoticed if it ever were not.
+    if (serviceId === undefined) {
+      setLoading(false);
+      setError("No service selected.");
+      return;
+    }
 
     let cancelled = false;
     setLoading(true);
@@ -77,7 +84,11 @@ export function ServiceDetailPage() {
         <dt className="text-inkSoft">Price</dt>
         <dd>{version ? formatMoney(version.priceMinor, version.currency) : "—"}</dd>
         <dt className="text-inkSoft">Assigned lawyer</dt>
-        <dd>{service.assignedLawyerName ?? "nobody"}</dd>
+        <dd>
+          {service.assignedLawyerId === null
+            ? "nobody"
+            : (service.assignedLawyerName ?? "assigned — name unavailable")}
+        </dd>
         <dt className="text-inkSoft">Last changed</dt>
         <dd>{formatDate(service.updatedAt)}</dd>
       </dl>

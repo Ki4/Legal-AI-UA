@@ -9,7 +9,13 @@ import type { GenerationMode, ReviewMode, ServiceStatus } from "@legal-ai/db";
 
 export interface LawyerRef {
   id: string;
-  fullName: string;
+  /**
+   * Null when a lawyer is assigned but their profile could not be read —
+   * deleted, or hidden by RLS from the current user. Distinct from
+   * `assignedLawyer: null`, which means nobody is assigned: reporting "no
+   * lawyer" for a service that has one is a lie the layer must not tell.
+   */
+  fullName: string | null;
 }
 
 export interface ServiceVersionSummary {

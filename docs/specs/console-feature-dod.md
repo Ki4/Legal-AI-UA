@@ -53,16 +53,29 @@ where it claims to be.
 
 ## 4. Screen states
 
-Every screen renders all four, and they are visibly distinct:
+Which states exist depends on the screen; that they are visibly distinct does not.
+
+Always:
 
 - [ ] **Loading** — a spinner or skeleton, not an empty table.
-- [ ] **Empty** — the entity genuinely has no rows.
 - [ ] **Error** — distinguishing at minimum: no rights, not found, and the request never completed.
-- [ ] **Access denied** — the role guard's own state, not a generic error.
 
+For a screen showing a collection:
+
+- [ ] **Empty** — the collection genuinely has no rows.
 - [ ] **Empty and error do not share a rendering.** "No services yet — create the first one" after
       a failed load tells an admin their catalogue is empty when the request simply broke. This
       shipped in the reference and had to be fixed; it is the single most repeatable mistake here.
+
+For a screen showing one entity:
+
+- [ ] **Not found** — distinct from an error, because a mistyped id and a broken request call for
+      different reactions from the reader.
+
+For a route restricted by role:
+
+- [ ] **Access denied** — `RequireAuth` renders this, so the feature inherits it rather than
+      building its own. A feature open to every signed-in role has nothing to do here.
 
 ## 5. Telling the truth about data
 

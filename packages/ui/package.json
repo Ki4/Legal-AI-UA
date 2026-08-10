@@ -14,12 +14,13 @@
     "react": "^19.1.0"
   },
   "dependencies": {
-    "lucide-react": "^0.544.0",
+    "@fontsource/geist-mono": "^5.2.6",
     "@fontsource/geist-sans": "^5.2.6",
-    "@fontsource/geist-mono": "^5.2.6"
+    "lucide-react": "^0.544.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.8",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.10"
   }
 }

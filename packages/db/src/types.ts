@@ -45,7 +45,13 @@ export interface ServiceVersionRow {
 
 export interface ProfileRow {
   id: string;
-  fullName: string;
+  /**
+   * Nullable, because `profiles.full_name` is: it is filled from the
+   * registration form's metadata and a row can exist without one. A view model
+   * that claims otherwise would compile and then meet its first nameless
+   * lawyer in production.
+   */
+  fullName: string | null;
   role: Role | null;
 }
 

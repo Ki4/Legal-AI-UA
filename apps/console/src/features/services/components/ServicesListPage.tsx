@@ -1,6 +1,7 @@
 import type { ServiceStatus } from "@legal-ai/db";
 import {
   Badge,
+  Button,
   EmptyState,
   Spinner,
   Table,
@@ -24,7 +25,7 @@ const statusTone: Record<ServiceStatus, BadgeTone> = {
 const COLUMN_COUNT = 7;
 
 export function ServicesListPage() {
-  const { services, loading, error } = useServices();
+  const { services, loading, error, reload } = useServices();
 
   return (
     <section className="space-y-4">
@@ -34,7 +35,16 @@ export function ServicesListPage() {
         later; no component on this screen changes when that happens.
       </p>
 
-      {error !== null && <p className="text-sm text-danger-ink">{error}</p>}
+      {error !== null && (
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-danger-ink">{error}</p>
+          {/* The message says to try again, so there is something to try it
+              with. `reload` existed and went unwired in the first version. */}
+          <Button variant="secondary" onClick={reload}>
+            Try again
+          </Button>
+        </div>
+      )}
 
       <Table>
         <TableHead>
@@ -52,8 +62,12 @@ export function ServicesListPage() {
           {loading ? (
             <tr>
               <td colSpan={COLUMN_COUNT}>
-                <div className="flex justify-center py-8">
+                {/* Spinner is aria-hidden by design, so the wrapper carries the
+                    announcement — otherwise a screen reader hears nothing at
+                    all while the table is loading. */}
+                <div className="flex justify-center py-8" role="status" aria-live="polite">
                   <Spinner />
+                  <span className="sr-only">Loading services</span>
                 </div>
               </td>
             </tr>

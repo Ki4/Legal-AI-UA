@@ -11,6 +11,19 @@
 import { mockProfiles, mockServices, mockServiceVersions } from "@legal-ai/db";
 import type { ProfileRow, ServiceRow, ServiceVersionRow } from "@legal-ai/db";
 
+/**
+ * Every fixture implementation awaits this, so loading states get built rather
+ * than discovered later against a real network.
+ *
+ * Zero under test. The delay exists for a human looking at a screen; paid on
+ * every call in a suite it turns twenty assertions into several seconds, and a
+ * slow suite is one that stops being run.
+ */
+export function fixtureDelay(): Promise<void> {
+  const ms = import.meta.env.MODE === "test" ? 0 : 140;
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export const serviceRows: ServiceRow[] = mockServices.map((row) => ({ ...row }));
 export const serviceVersionRows: ServiceVersionRow[] = mockServiceVersions.map((row) => ({
   ...row,

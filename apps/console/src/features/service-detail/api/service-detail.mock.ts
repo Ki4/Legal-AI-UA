@@ -1,17 +1,16 @@
 import { AppError } from "../../../shared/api/errors";
-import { currentVersionRowOf, profileById, serviceRows } from "../../../shared/api/fixture-store";
+import {
+  currentVersionRowOf,
+  fixtureDelay,
+  profileById,
+  serviceRows,
+} from "../../../shared/api/fixture-store";
 import type { ServiceDetailApi } from "./contract";
 import type { ServiceDetail } from "./types";
 
-const LATENCY_MS = 140;
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export const mockServiceDetailApi: ServiceDetailApi = {
   async get(id) {
-    await delay(LATENCY_MS);
+    await fixtureDelay();
 
     // Reads the shared fixture store, not a private copy: a write made through
     // another feature has to be visible here, the way it would be with one

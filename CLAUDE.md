@@ -36,9 +36,13 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
 
 - Local: Husky + lint-staged run ESLint, Prettier, and commitlint on every commit. Commit
   messages must be Conventional Commits.
-- CI (`.github/workflows/ci.yml`): lint, typecheck, build on every PR and on push to `main`.
+- CI (`.github/workflows/ci.yml`): lint, typecheck, test, build on every PR and on push to `main`.
   `main` is always deployable.
-- Run `pnpm lint`, `pnpm typecheck`, `pnpm build` from the repo root before opening a PR.
+- Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` from the repo root before opening a
+  PR.
+- Tests are Vitest, live beside what they test as `*.test.ts`, and import `describe`/`it`/`expect`
+  explicitly rather than relying on globals. Green gates mean the code compiles and conforms — a
+  test is how it gets to mean the code behaves.
 
 ## Where to look next
 

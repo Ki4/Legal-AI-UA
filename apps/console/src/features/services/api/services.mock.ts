@@ -9,19 +9,13 @@ import type { ServiceRow, ServiceVersionRow } from "@legal-ai/db";
 import { AppError } from "../../../shared/api/errors";
 import {
   currentVersionRowOf,
+  fixtureDelay,
   profileById,
   profileRows,
   serviceRows,
 } from "../../../shared/api/fixture-store";
 import type { ServicesApi } from "./contract";
 import type { LawyerRef, ServiceFilter, ServiceListItem, ServiceVersionSummary } from "./types";
-
-/** Enough delay that loading states get built rather than discovered later. */
-const LATENCY_MS = 140;
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function toLawyerRef(lawyerId: string | null): LawyerRef | null {
   if (lawyerId === null) return null;
@@ -80,7 +74,7 @@ function matches(item: ServiceListItem, filter: ServiceFilter): boolean {
 
 export const mockServicesApi: ServicesApi = {
   async list(filter) {
-    await delay(LATENCY_MS);
+    await fixtureDelay();
     return serviceRows
       .map(toListItem)
       .filter((item) => (filter ? matches(item, filter) : true))
@@ -88,7 +82,7 @@ export const mockServicesApi: ServicesApi = {
   },
 
   async get(id) {
-    await delay(LATENCY_MS);
+    await fixtureDelay();
     const service = serviceRows.find((candidate) => candidate.id === id);
     if (!service) {
       throw new AppError("not_found", `No service with id ${id}.`);
@@ -97,7 +91,7 @@ export const mockServicesApi: ServicesApi = {
   },
 
   async assignLawyer(id, lawyerId) {
-    await delay(LATENCY_MS);
+    await fixtureDelay();
 
     const service = serviceRows.find((candidate) => candidate.id === id);
     if (!service) {

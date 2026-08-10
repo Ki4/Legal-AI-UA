@@ -116,10 +116,12 @@ Learned from reviewing the reference, all of which it got wrong first time:
 that at least one piece of evidence show the thing being **invoked** rather than merely defined.
 For a console feature that means:
 
-- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm build` clean from the repo root.
-- [ ] Every contract operation exercised, including each fallback branch and each error path. The
-      reference does this from a script against the fixture implementation; a test runner will
-      replace it when one exists.
+- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` clean from the repo root.
+- [ ] Every contract operation exercised in `*.test.ts` beside the implementation, including each
+      fallback branch and each error path. Not "the happy path passes" — the interesting cases are
+      the empty result, the denied write and the malformed row.
+- [ ] Any fixture state a test mutates is restored afterwards. Vitest isolates files from each
+      other; within a file it is the author's job.
 - [ ] The screen seen rendering, in both themes, with the browser console clean.
 - [ ] Anything touching RLS ships a verification scenario: which role, which rows expected, what
       actually happened (`supabase/CLAUDE.md`).
@@ -233,7 +235,8 @@ green build never tells you.
 - **i18n.** The design spec says a component holds no strings, only dictionary keys. `packages/i18n`
   does not exist yet (ADM-37), so this cannot be required. Until it lands, keep user-facing strings
   inside components rather than scattered through `api/`, so extraction is one mechanical pass.
-- **No test runner.** Verification in §8 is currently a script per feature. When a runner arrives,
-  these become tests and this section shrinks.
+- **No component tests.** §8 covers the `api/` layer, which is where the logic is. Rendering is
+  still verified by looking at the screen, because a component test needs a DOM environment and a
+  testing library that the workspace does not have yet.
 - **No `ErrorBoundary`.** §5 requires total formatters because a throw currently takes down a whole
   screen. An app-level boundary would make that requirement softer; it is not built.

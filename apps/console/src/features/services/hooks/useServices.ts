@@ -13,15 +13,24 @@ interface ServicesState {
   reload: () => void;
 }
 
+// Every code gets its own sentence, and nothing falls through to
+// `error.message` — those are written for whoever is reading a stack trace, not
+// for a lawyer looking at a screen ("No profile with id usr-ghost.").
 function messageFor(error: unknown): string {
   if (error instanceof AppError) {
     switch (error.code) {
       case "forbidden":
         return "You do not have access to the service catalogue.";
+      case "not_found":
+        return "This catalogue no longer exists.";
+      case "validation":
+        return "The filter could not be applied. Try clearing it.";
+      case "conflict":
+        return "Someone changed this while you were looking. Reload to see the current state.";
       case "network":
         return "Could not reach the server. Check the connection and try again.";
-      default:
-        return error.message;
+      case "unknown":
+        return "Something went wrong loading the catalogue.";
     }
   }
   return "Something went wrong loading the catalogue.";

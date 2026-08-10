@@ -49,8 +49,9 @@ export function ServiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-12" role="status" aria-live="polite">
         <Spinner />
+        <span className="sr-only">Loading service</span>
       </div>
     );
   }

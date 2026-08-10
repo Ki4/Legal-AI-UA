@@ -2,7 +2,10 @@ import type { Session } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "./supabase";
 
-export type Role = "admin" | "lawyer";
+// Re-exported rather than redeclared. The guard path is the last place that
+// should hold a second opinion about what a role is.
+import type { Role } from "@legal-ai/db";
+export type { Role };
 
 interface AuthState {
   session: Session | null;

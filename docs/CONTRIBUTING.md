@@ -27,6 +27,16 @@ zone owner's review, regardless of the review matrix below.
   of PRs rather than one big one.
 - Commit messages follow Conventional Commits; `commitlint` enforces this locally via Husky.
 
+**Do not stack pull requests.** The 2026-08-04 journal concluded that stacking is safe if the base
+branch is deleted on merge. Tried on 2026-08-11 with four stacked PRs, and it is not: deleting the
+base branch **closed** the dependent PR unmerged instead of retargeting it, and the one PR that did
+merge landed in a feature branch rather than `main`. Nothing was lost, because the branch at the
+top of the stack carried every commit and applied to `main` cleanly — which is also the recovery:
+open one PR from the topmost branch and let the intermediate ones close.
+
+If work genuinely depends on unmerged work, either merge the base to `main` first and branch again,
+or ship it as one PR and say so in the description.
+
 ## Review policy
 
 This is a **default matrix**, not a hard gate — use judgment.

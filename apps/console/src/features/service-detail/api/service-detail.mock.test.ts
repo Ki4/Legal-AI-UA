@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { mockServicesApi } from "../../services/api/services.mock";
-import { serviceRows } from "../../../shared/api/fixture-store";
+import { serviceAssignmentRows, serviceRows } from "../../../shared/api/fixture-store";
 import { mockServiceDetailApi } from "./service-detail.mock";
 
 // Reaching into a sibling feature is forbidden in application code and
@@ -33,7 +33,13 @@ describe("get", () => {
     expect(unassigned.assignedLawyerId).toBeNull();
     expect(unassigned.assignedLawyerName).toBeNull();
 
-    serviceRows.find((s) => s.id === "svc-poa")!.assigned_lawyer_id = "usr-hidden";
+    serviceAssignmentRows.push({
+      service_id: "svc-poa",
+      lawyer_id: "usr-hidden",
+      is_primary: true,
+      assigned_at: "2026-08-01T00:00:00.000Z",
+      assigned_by: null,
+    });
     const hidden = await mockServiceDetailApi.get("svc-poa");
     expect(hidden.assignedLawyerId).toBe("usr-hidden");
     expect(hidden.assignedLawyerName).toBeNull();
@@ -44,7 +50,7 @@ describe("one store behind both features", () => {
   it("sees a write made through the services feature", async () => {
     // Private per-feature copies would make this pass locally and fail in
     // reality — the fixture divergence ADR-0012 exists to prevent.
-    await mockServicesApi.assignLawyer("svc-poa", "usr-taras");
+    await mockServicesApi.setPrimaryLawyer("svc-poa", "usr-taras");
     expect((await mockServiceDetailApi.get("svc-poa")).assignedLawyerName).toBe("Taras Bondarenko");
   });
 });

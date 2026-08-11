@@ -159,6 +159,45 @@ export type Database = {
           },
         ];
       };
+      service_assignments: {
+        Row: {
+          assigned_at: string;
+          assigned_by: string | null;
+          is_primary: boolean;
+          lawyer_id: string;
+          service_id: string;
+        };
+        Insert: {
+          assigned_at?: string;
+          assigned_by?: string | null;
+          is_primary?: boolean;
+          lawyer_id: string;
+          service_id: string;
+        };
+        Update: {
+          assigned_at?: string;
+          assigned_by?: string | null;
+          is_primary?: boolean;
+          lawyer_id?: string;
+          service_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_assignments_lawyer_id_fkey";
+            columns: ["lawyer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_assignments_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       service_version_prices: {
         Row: {
           amount_minor: number;
@@ -238,7 +277,6 @@ export type Database = {
       };
       services: {
         Row: {
-          assigned_lawyer_id: string | null;
           created_at: string;
           id: string;
           slug: string;
@@ -247,7 +285,6 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
-          assigned_lawyer_id?: string | null;
           created_at?: string;
           id?: string;
           slug: string;
@@ -256,7 +293,6 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
-          assigned_lawyer_id?: string | null;
           created_at?: string;
           id?: string;
           slug?: string;
@@ -264,15 +300,7 @@ export type Database = {
           title?: string;
           updated_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "services_assigned_lawyer_id_fkey";
-            columns: ["assigned_lawyer_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
     };
     Views: {
@@ -283,7 +311,13 @@ export type Database = {
         Args: { new_role: string; target_user: string };
         Returns: undefined;
       };
+      is_assigned_to: { Args: { target_service: string }; Returns: boolean };
+      is_primary_for: { Args: { target_service: string }; Returns: boolean };
       jwt_role: { Args: never; Returns: string };
+      set_primary_lawyer: {
+        Args: { new_lawyer: string; target_service: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       audit_action: "insert" | "update" | "delete";

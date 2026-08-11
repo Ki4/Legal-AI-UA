@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { AppError } from "../../../shared/api/errors";
 import {
+  serviceAssignmentRows,
   serviceRows,
   serviceVersionPriceRows,
   serviceVersionRows,
@@ -13,6 +14,7 @@ import { mockServicesApi } from "./services.mock";
 const originalVersions = serviceVersionRows.map((row) => ({ ...row }));
 const originalServices = serviceRows.map((row) => ({ ...row }));
 const originalPrices = serviceVersionPriceRows.map((row) => ({ ...row }));
+const originalAssignments = serviceAssignmentRows.map((row) => ({ ...row }));
 
 afterEach(() => {
   serviceVersionRows.length = 0;
@@ -21,6 +23,8 @@ afterEach(() => {
   serviceRows.push(...originalServices.map((row) => ({ ...row })));
   serviceVersionPriceRows.length = 0;
   serviceVersionPriceRows.push(...originalPrices.map((row) => ({ ...row })));
+  serviceAssignmentRows.length = 0;
+  serviceAssignmentRows.push(...originalAssignments.map((row) => ({ ...row })));
 });
 
 describe("list", () => {
@@ -46,12 +50,12 @@ describe("list", () => {
 
   it("joins the assigned lawyer's name", async () => {
     const divorce = (await mockServicesApi.list()).find((s) => s.id === "svc-divorce");
-    expect(divorce?.assignedLawyer?.fullName).toBe("Olena Kovalchuk");
+    expect(divorce?.primaryLawyer?.fullName).toBe("Olena Kovalchuk");
   });
 
   it("returns null for a service nobody is assigned to", async () => {
     const poa = (await mockServicesApi.list()).find((s) => s.id === "svc-poa");
-    expect(poa?.assignedLawyer).toBeNull();
+    expect(poa?.primaryLawyer).toBeNull();
   });
 
   it("orders by most recently updated", async () => {
@@ -71,9 +75,20 @@ describe("list filters", () => {
     expect(await mockServicesApi.list({ query: "power-of" })).toHaveLength(1);
   });
 
-  it("narrows by assigned lawyer", async () => {
+  it("narrows by lawyer, cover included", async () => {
+    // Taras is accountable for alimony and covers divorce. Both are his work:
+    // a filter that returned only what he is accountable for would hide the
+    // service he was brought in to look after (spec §14, Q18).
     const result = await mockServicesApi.list({ lawyerId: "usr-taras" });
-    expect(result.map((s) => s.id)).toEqual(["svc-alimony"]);
+    expect(result.map((s) => s.id).sort()).toEqual(["svc-alimony", "svc-divorce"]);
+  });
+
+  it("does not confuse cover with accountability", async () => {
+    const divorce = (await mockServicesApi.list({ lawyerId: "usr-taras" })).find(
+      (s) => s.id === "svc-divorce",
+    );
+    expect(divorce?.primaryLawyer?.id).toBe("usr-olena");
+    expect(divorce?.coverLawyers.map((l) => l.id)).toEqual(["usr-taras"]);
   });
 
   it("treats a blank query as no filter", async () => {
@@ -92,28 +107,31 @@ describe("get", () => {
 
 describe("assignLawyer", () => {
   it("returns the updated entity so the caller need not refetch", async () => {
-    const updated = await mockServicesApi.assignLawyer("svc-poa", "usr-taras");
-    expect(updated.assignedLawyer?.fullName).toBe("Taras Bondarenko");
+    const updated = await mockServicesApi.setPrimaryLawyer("svc-poa", "usr-taras");
+    expect(updated.primaryLawyer?.fullName).toBe("Taras Bondarenko");
   });
 
   it("makes the write visible to the next read", async () => {
-    await mockServicesApi.assignLawyer("svc-poa", "usr-taras");
-    expect((await mockServicesApi.get("svc-poa")).assignedLawyer?.id).toBe("usr-taras");
+    await mockServicesApi.setPrimaryLawyer("svc-poa", "usr-taras");
+    expect((await mockServicesApi.get("svc-poa")).primaryLawyer?.id).toBe("usr-taras");
   });
 
   it("unassigns when given null", async () => {
-    await mockServicesApi.assignLawyer("svc-divorce", null);
-    expect((await mockServicesApi.get("svc-divorce")).assignedLawyer).toBeNull();
+    await mockServicesApi.setPrimaryLawyer("svc-divorce", null);
+    const after = await mockServicesApi.get("svc-divorce");
+    expect(after.primaryLawyer).toBeNull();
+    // Demoted, not detached: losing accountability is not losing access.
+    expect(after.coverLawyers.map((l) => l.id)).toContain("usr-olena");
   });
 
   it("rejects an unknown profile", async () => {
-    await expect(mockServicesApi.assignLawyer("svc-poa", "usr-ghost")).rejects.toMatchObject({
+    await expect(mockServicesApi.setPrimaryLawyer("svc-poa", "usr-ghost")).rejects.toMatchObject({
       code: "validation",
     });
   });
 
   it("throws not_found for an unknown service", async () => {
-    await expect(mockServicesApi.assignLawyer("svc-nope", null)).rejects.toMatchObject({
+    await expect(mockServicesApi.setPrimaryLawyer("svc-nope", null)).rejects.toMatchObject({
       code: "not_found",
     });
   });
@@ -123,12 +141,18 @@ describe("a lawyer who is assigned but unreadable", () => {
   it("is not reported as unassigned", async () => {
     // Deleted, or hidden from this user by RLS. Collapsing this into "nobody
     // assigned" makes the layer state a falsehood about who is responsible.
-    serviceRows.find((s) => s.id === "svc-poa")!.assigned_lawyer_id = "usr-hidden";
+    serviceAssignmentRows.push({
+      service_id: "svc-poa",
+      lawyer_id: "usr-hidden",
+      is_primary: true,
+      assigned_at: "2026-08-01T00:00:00.000Z",
+      assigned_by: null,
+    });
 
     const poa = (await mockServicesApi.list()).find((s) => s.id === "svc-poa");
-    expect(poa?.assignedLawyer).not.toBeNull();
-    expect(poa?.assignedLawyer?.id).toBe("usr-hidden");
-    expect(poa?.assignedLawyer?.fullName).toBeNull();
+    expect(poa?.primaryLawyer).not.toBeNull();
+    expect(poa?.primaryLawyer?.id).toBe("usr-hidden");
+    expect(poa?.primaryLawyer?.fullName).toBeNull();
   });
 });
 

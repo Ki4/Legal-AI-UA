@@ -14,12 +14,14 @@
 
 import {
   mockProfiles,
+  mockServiceAssignments,
   mockServices,
   mockServiceVersionPrices,
   mockServiceVersions,
 } from "@legal-ai/db";
 import type {
   ProfileRow,
+  ServiceAssignmentRow,
   ServiceRow,
   ServiceVersionPriceRow,
   ServiceVersionRow,
@@ -45,7 +47,15 @@ export const serviceVersionRows: ServiceVersionRow[] = mockServiceVersions.map((
 export const serviceVersionPriceRows: ServiceVersionPriceRow[] = mockServiceVersionPrices.map(
   (row) => ({ ...row }),
 );
+export const serviceAssignmentRows: ServiceAssignmentRow[] = mockServiceAssignments.map((row) => ({
+  ...row,
+}));
 export const profileRows: ProfileRow[] = mockProfiles.map((row) => ({ ...row }));
+
+/** Every lawyer attached to a service, accountable or cover. */
+export function assignmentsOf(serviceId: string): ServiceAssignmentRow[] {
+  return serviceAssignmentRows.filter((row) => row.service_id === serviceId);
+}
 
 /**
  * The version a catalogue screen reflects: the live one — published or paused —

@@ -36,7 +36,17 @@ export interface ServiceListItem {
   id: string;
   slug: string;
   title: string;
-  assignedLawyer: LawyerRef | null;
+  /**
+   * The lawyer accountable for this service. Null only while nobody has been
+   * made accountable — a state a service may not be published in.
+   */
+  primaryLawyer: LawyerRef | null;
+  /**
+   * Everyone else attached to the service. They can do everything the primary
+   * can; what they do not carry is the obligation, which is why they are a
+   * separate field rather than a flag in one list.
+   */
+  coverLawyers: LawyerRef[];
   /**
    * The version the catalogue reflects: the live one — published or paused —
    * when there is one, otherwise the newest. Null only for a service with no
@@ -50,6 +60,7 @@ export interface ServiceListItem {
 
 export interface ServiceFilter {
   status?: ServiceStatus[];
+  /** Matches a lawyer in any role on the service — accountable or cover. */
   lawyerId?: string;
   /** Case-insensitive, matched against title and slug. */
   query?: string;

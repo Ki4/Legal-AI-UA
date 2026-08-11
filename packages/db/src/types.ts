@@ -36,6 +36,17 @@ export type AuditAction = Enums["audit_action"];
 export type Role = "admin" | "lawyer";
 
 /**
+ * `profiles.role` is a `text` column with no check constraint — the only thing
+ * that ever writes it is the `approve_user` RPC, which validates the value, but
+ * the column itself will hold anything. Narrowing therefore has to happen at
+ * the boundary rather than being asserted: a row that somehow carries a
+ * nonsense role reads as "no role yet", which is the safe interpretation.
+ */
+export function asRole(value: string | null): Role | null {
+  return value === "admin" || value === "lawyer" ? value : null;
+}
+
+/**
  * A catalogue entry. Everything that varies over time — modes, price, status —
  * lives on the version, so a published version can be frozen while the service
  * keeps a stable identity for an issued document to pin (ADR-0009).
@@ -52,6 +63,13 @@ export type ServiceVersionRow = Tables["service_versions"]["Row"];
 export type ServiceVersionPriceRow = Tables["service_version_prices"]["Row"];
 
 export type QuestionnaireFieldRow = Tables["questionnaire_fields"]["Row"];
+
+/**
+ * Who may act on a service. Exactly one row per service carries `is_primary`
+ * and with it the obligations; the rest are cover, with the same rights and
+ * none of the accountability.
+ */
+export type ServiceAssignmentRow = Tables["service_assignments"]["Row"];
 
 export type AuditEventRow = Tables["audit_events"]["Row"];
 

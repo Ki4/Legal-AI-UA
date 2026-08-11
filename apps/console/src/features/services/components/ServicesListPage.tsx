@@ -98,14 +98,21 @@ export function ServicesListPage() {
                 <TableCell>{service.currentVersion?.generationMode ?? "—"}</TableCell>
                 <TableCell>{service.currentVersion?.reviewMode ?? "—"}</TableCell>
                 <TableCell>
-                  {service.assignedLawyer === null
-                    ? "—"
-                    : // A dash here means "nobody assigned". A service that has a
-                      // lawyer whose profile we cannot read must not borrow that
-                      // dash and claim to be unassigned.
-                      (service.assignedLawyer.fullName ?? (
+                  {service.primaryLawyer === null ? (
+                    "—"
+                  ) : (
+                    <>
+                      {/* A dash means "nobody accountable". A service whose
+                          lawyer we cannot read must not borrow that dash and
+                          claim to be unassigned. */}
+                      {service.primaryLawyer.fullName ?? (
                         <span className="text-inkMute">name unavailable</span>
-                      ))}
+                      )}
+                      {service.coverLawyers.length > 0 && (
+                        <span className="text-inkMute"> +{service.coverLawyers.length}</span>
+                      )}
+                    </>
+                  )}
                 </TableCell>
                 <TableCell align="num">
                   {service.currentVersion?.priceMinor !== null &&

@@ -10,6 +10,7 @@
     "dev": "turbo run dev",
     "lint": "eslint .",
     "test": "vitest run",
+    "docs:check": "node scripts/check-docs.mjs",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "prepare": "husky"

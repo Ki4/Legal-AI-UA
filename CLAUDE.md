@@ -43,6 +43,10 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
 - Tests are Vitest, live beside what they test as `*.test.ts`, and import `describe`/`it`/`expect`
   explicitly rather than relying on globals. Green gates mean the code compiles and conforms — a
   test is how it gets to mean the code behaves.
+- `pnpm docs:check` runs on every push (git pre-push) and in CI: broken relative links, section
+  cross-references pointing at sections that no longer exist, backlog ids cited without a defining
+  row. It reports orphaned ADRs as notes without failing. It checks only what is decidable without
+  judgement — whether prose is still _true_ is nobody's job but a reader's.
 
 ## Where to look next
 

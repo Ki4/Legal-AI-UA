@@ -62,8 +62,17 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   trigger with no INSERT grant anywhere else, immutable against UPDATE/DELETE/TRUNCATE, redaction
   of personal-data columns by trigger argument. The access log waits for client data and the
   gateway (§6.2).
+- `service_assignments`: several lawyers per service with exactly one accountable, enforced by a
+  partial unique index. Cover carries the same rights and none of the obligation; the accountable
+  lawyer arranges their own cover, only an admin moves accountability, and it moves through an
+  RPC so a half-finished handover cannot leave a service with nobody answering for it. Staff can
+  read staff names; a registration awaiting approval cannot. Closes Q18.
+- The service list runs on live data (ADM-7). The swap point changed one line and no component
+  moved, which is the first test of the claim ADR-0012 was written to make. `packages/db` now
+  derives row types from the schema (`pnpm db:types`): rows are snake_case, view models stay
+  camelCase, and the api/ layer is the translation.
 - Verification scripts at `supabase/snippets/verify_*.sql` — runnable, denials covered, and now
-  the required form for any policy (`supabase/CLAUDE.md`). 65 scenarios across three files.
+  the required form for any policy (`supabase/CLAUDE.md`). 79 scenarios across four files.
 - Two defects in already-deployed schema, found by an adversarial probe rather than by review:
   a version could hold the live slot without being published (and so stayed editable), and a
   published version could walk back to `draft`. Both closed; both had passed a green 23-scenario
@@ -81,12 +90,12 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 5. Tabs · Accordion · Pagination · table sorting.
 6. StatCard · ChartCard · Avatar · Breadcrumbs · LangSwitcher.
 
-**Data layer** (PO): domain migrations — `services` + `service_versions`
-(`generation_mode`, `review_mode`), per-currency price rows, `document_blocks`, questionnaire
-fields with the GDPR triad and the Art. 9 marker, `orders` + `order_events` (append-only), law
-refs; freeze triggers per ADR-0009; explicit grants + RLS keyed on assignment rather than role
-(ADR-0014), with a verification scenario per policy; seed; generated types replacing the
-hand-written mocks in `packages/db`. Client-bearing tables wait on nothing else now that Q10–Q13
+**Data layer** (PO): the catalogue half shipped — see the section above. What remains is
+`document_blocks`, which waits on the trace schema below because the two constrain each other's
+shape; `orders`, the first table to carry client data; and the law-reference register. Orders do
+not need an event table of their own: `audit_events` is the log, and a new domain table joins it
+by gaining an entity mapping in `audit_change` — which raises rather than logging a null service,
+so the mapping cannot be forgotten. Client-bearing tables wait on nothing else now that Q10–Q13
 are closed.
 
 **Core contract** (PO drafts, core owner countersigns): `packages/core-client` — typed HTTP
@@ -96,8 +105,10 @@ written.
 
 ## Next — wave 2
 
-- Console screens on real data: orders table + order card with event timeline, service editor
-  with pause/resume, lawyers, profile.
+- Console screens on real data: the service list is there (ADM-7). Still on fixtures or unbuilt —
+  the service card, the versions tab with pause/resume, the assignment editor (ADM-10, whose RPC
+  already exists), and the orders table with its event timeline. `team` and `anatomy` never joined
+  the api/ layer at all, and `team` is now the only feature querying Supabase outside it.
 - `packages/i18n` (uk + en; adding a locale = one line, per ADR-0006) and dictionary adoption
   in console.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.

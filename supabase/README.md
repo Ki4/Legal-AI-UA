@@ -48,8 +48,11 @@ to replay them and fail on objects that already exist. Once the project is linke
 pnpm exec supabase migration repair --status applied <version> [<version> ...]
 ```
 
-Check what the cloud already believes with
-`select version from supabase_migrations.schema_migrations order by version;`.
+Linking needs an access token and the database password. Until that happens, `snippets/repair_migration_ledger.sql`
+does the same thing from the SQL editor — run it once against the cloud project, and keep its list
+in step with the filenames in `migrations/`. A version recorded there that was never applied is
+worse than an unrecorded one: `db push` will skip it, and the schema silently lacks whatever it
+contained.
 
 ## Seed
 

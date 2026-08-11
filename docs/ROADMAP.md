@@ -50,6 +50,17 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   §7.3 (who may read client data), §8.6 (entitlements and per-currency prices); backlog
   ADM-54…57. Open questions Q10–Q13 closed; questions now carry stable ids.
 
+## Done — the first domain migrations (2026-08-11)
+
+- `services`, `service_versions`, `service_version_prices`. ADR-0009 enforced by triggers:
+  published versions frozen and undeletable, prices frozen with them, one live slot per service.
+  Carries the ADR-0005 constraint that had never been implemented — `block_assembly` and
+  `full_generation` can no longer be configured to skip lawyer review.
+- `questionnaire_fields`: the canonical per-service dictionary, GDPR triad enforced by constraint
+  (ADR-0008), Art. 9 special-category marker with its own basis (ADR-0013), keys immutable.
+- Verification scripts at `supabase/snippets/verify_*.sql` — runnable, denials covered, and now
+  the required form for any policy (`supabase/CLAUDE.md`).
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (design-system owner; DoD per design spec §11 for every item):

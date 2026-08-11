@@ -5,11 +5,25 @@
 // database never could. That divergence is exactly what ADR-0012 warns fixtures
 // must not have.
 //
+// Rows here are snake_case because rows are snake_case — they stand in for what
+// Postgres returns. The camelCase view model is the api/ layer's output, not its
+// input.
+//
 // This file disappears when the Supabase implementations land. Nothing outside
 // a `*.mock.ts` may import it.
 
-import { mockProfiles, mockServices, mockServiceVersions } from "@legal-ai/db";
-import type { ProfileRow, ServiceRow, ServiceVersionRow } from "@legal-ai/db";
+import {
+  mockProfiles,
+  mockServices,
+  mockServiceVersionPrices,
+  mockServiceVersions,
+} from "@legal-ai/db";
+import type {
+  ProfileRow,
+  ServiceRow,
+  ServiceVersionPriceRow,
+  ServiceVersionRow,
+} from "@legal-ai/db";
 
 /**
  * Every fixture implementation awaits this, so loading states get built rather
@@ -28,6 +42,9 @@ export const serviceRows: ServiceRow[] = mockServices.map((row) => ({ ...row }))
 export const serviceVersionRows: ServiceVersionRow[] = mockServiceVersions.map((row) => ({
   ...row,
 }));
+export const serviceVersionPriceRows: ServiceVersionPriceRow[] = mockServiceVersionPrices.map(
+  (row) => ({ ...row }),
+);
 export const profileRows: ProfileRow[] = mockProfiles.map((row) => ({ ...row }));
 
 /**
@@ -35,13 +52,14 @@ export const profileRows: ProfileRow[] = mockProfiles.map((row) => ({ ...row }))
  * when there is one, otherwise the newest.
  *
  * Deliberately not `.find`. Array order is meaningless here and will be
- * meaningless in a Supabase result too, and the schema only guarantees one
- * *published* version per service — `paused` is outside that partial unique
- * index, so two live rows are reachable. Picking the highest version number
- * among the candidates makes the answer the same every time.
+ * meaningless in a Supabase result too. The schema does now guarantee a single
+ * live version per service — the partial unique index covers `published` and
+ * `paused` together, and occupying that slot requires publication — but a
+ * fixture store is not the schema, and picking the highest version number among
+ * the candidates makes the answer the same every time regardless.
  */
 export function currentVersionRowOf(serviceId: string): ServiceVersionRow | null {
-  const own = serviceVersionRows.filter((version) => version.serviceId === serviceId);
+  const own = serviceVersionRows.filter((version) => version.service_id === serviceId);
 
   const highest = (rows: ServiceVersionRow[]): ServiceVersionRow | null =>
     rows.reduce<ServiceVersionRow | null>(
@@ -51,6 +69,19 @@ export function currentVersionRowOf(serviceId: string): ServiceVersionRow | null
 
   const live = own.filter((row) => row.status === "published" || row.status === "paused");
   return live.length > 0 ? highest(live) : highest(own);
+}
+
+/**
+ * The platform bills in UAH (spec §8). A version may legitimately have no price
+ * row at all — an unpriced draft — which is why this returns null rather than
+ * inventing a zero.
+ */
+export function priceRowOf(versionId: string, currency = "UAH"): ServiceVersionPriceRow | null {
+  return (
+    serviceVersionPriceRows.find(
+      (row) => row.service_version_id === versionId && row.currency === currency,
+    ) ?? null
+  );
 }
 
 export function profileById(id: string): ProfileRow | null {

@@ -1,16 +1,41 @@
-// Stand-in rows, shaped exactly as the tables will be. A feature's api/ layer
-// joins them into the view model its screen needs, which is the same work the
-// Supabase implementation will do — so swapping the source later changes no
-// component (ADR-0012).
+// Stand-in rows, shaped exactly as the tables are — snake_case included, since
+// these stand in for what Postgres returns. A feature's api/ layer joins them
+// into the view model its screen needs, which is the same work the Supabase
+// implementation will do, so swapping the source later changes no component
+// (ADR-0012).
 //
 // Invented data only: never a real client name, email or case detail.
 
-import type { GenerationTrace, ProfileRow, ServiceRow, ServiceVersionRow } from "./types";
+import type {
+  GenerationTrace,
+  ProfileRow,
+  ServiceRow,
+  ServiceVersionPriceRow,
+  ServiceVersionRow,
+} from "./types";
 
 export const mockProfiles: ProfileRow[] = [
-  { id: "usr-olena", fullName: "Olena Kovalchuk", role: "lawyer" },
-  { id: "usr-taras", fullName: "Taras Bondarenko", role: "lawyer" },
-  { id: "usr-admin", fullName: "Iryna Shevchenko", role: "admin" },
+  {
+    id: "usr-olena",
+    email: "olena@example.test",
+    full_name: "Olena Kovalchuk",
+    role: "lawyer",
+    created_at: "2026-04-01T09:00:00.000Z",
+  },
+  {
+    id: "usr-taras",
+    email: "taras@example.test",
+    full_name: "Taras Bondarenko",
+    role: "lawyer",
+    created_at: "2026-04-02T09:00:00.000Z",
+  },
+  {
+    id: "usr-admin",
+    email: "iryna@example.test",
+    full_name: "Iryna Shevchenko",
+    role: "admin",
+    created_at: "2026-03-20T09:00:00.000Z",
+  },
 ];
 
 export const mockServices: ServiceRow[] = [
@@ -19,78 +44,91 @@ export const mockServices: ServiceRow[] = [
     slug: "divorce-application",
     title: "Divorce application",
     summary: "Application to dissolve a marriage, filed with a district court.",
-    assignedLawyerId: "usr-olena",
-    createdAt: "2026-05-12T09:20:00.000Z",
-    updatedAt: "2026-07-30T14:05:00.000Z",
+    assigned_lawyer_id: "usr-olena",
+    created_at: "2026-05-12T09:20:00.000Z",
+    updated_at: "2026-07-30T14:05:00.000Z",
   },
   {
     id: "svc-alimony",
     slug: "alimony-claim",
     title: "Alimony claim",
     summary: "Claim for child maintenance.",
-    assignedLawyerId: "usr-taras",
-    createdAt: "2026-06-02T11:00:00.000Z",
-    updatedAt: "2026-07-28T08:41:00.000Z",
+    assigned_lawyer_id: "usr-taras",
+    created_at: "2026-06-02T11:00:00.000Z",
+    updated_at: "2026-07-28T08:41:00.000Z",
   },
   {
     id: "svc-poa",
     slug: "power-of-attorney",
     title: "Power of attorney",
     summary: "General power of attorney, no legal consequences for the grantor.",
-    assignedLawyerId: null,
-    createdAt: "2026-06-19T16:30:00.000Z",
-    updatedAt: "2026-07-04T10:15:00.000Z",
+    assigned_lawyer_id: null,
+    created_at: "2026-06-19T16:30:00.000Z",
+    updated_at: "2026-07-04T10:15:00.000Z",
   },
 ];
 
 // Deliberately uneven: svc-divorce has an archived predecessor so the live
 // version is not simply "the only one", svc-poa is paused, and svc-alimony has
 // never been published — the three states the list has to render differently.
+//
+// Mode pairings respect the ADR-0005 constraint the schema now enforces:
+// anything but `template` is always `lawyer_required`. A fixture that violated
+// it would be a fixture the database would reject.
 export const mockServiceVersions: ServiceVersionRow[] = [
   {
     id: "sv-divorce-1",
-    serviceId: "svc-divorce",
+    service_id: "svc-divorce",
     version: 1,
     status: "archived",
-    generationMode: "full_generation",
-    reviewMode: "lawyer_required",
-    priceMinor: 480000,
-    currency: "UAH",
-    publishedAt: "2026-05-20T09:00:00.000Z",
+    generation_mode: "full_generation",
+    review_mode: "lawyer_required",
+    published_at: "2026-05-20T09:00:00.000Z",
+    published_by: "usr-admin",
+    created_at: "2026-05-12T09:20:00.000Z",
   },
   {
     id: "sv-divorce-2",
-    serviceId: "svc-divorce",
+    service_id: "svc-divorce",
     version: 2,
     status: "published",
-    generationMode: "full_generation",
-    reviewMode: "lawyer_required",
-    priceMinor: 520000,
-    currency: "UAH",
-    publishedAt: "2026-07-30T14:05:00.000Z",
+    generation_mode: "full_generation",
+    review_mode: "lawyer_required",
+    published_at: "2026-07-30T14:05:00.000Z",
+    published_by: "usr-admin",
+    created_at: "2026-07-20T10:00:00.000Z",
   },
   {
     id: "sv-alimony-1",
-    serviceId: "svc-alimony",
+    service_id: "svc-alimony",
     version: 1,
     status: "draft",
-    generationMode: "block_assembly",
-    reviewMode: "lawyer_required",
-    priceMinor: 390000,
-    currency: "UAH",
-    publishedAt: null,
+    generation_mode: "block_assembly",
+    review_mode: "lawyer_required",
+    published_at: null,
+    published_by: null,
+    created_at: "2026-06-02T11:00:00.000Z",
   },
   {
     id: "sv-poa-1",
-    serviceId: "svc-poa",
+    service_id: "svc-poa",
     version: 1,
     status: "paused",
-    generationMode: "template",
-    reviewMode: "auto",
-    priceMinor: 120000,
-    currency: "UAH",
-    publishedAt: "2026-06-25T12:00:00.000Z",
+    generation_mode: "template",
+    review_mode: "auto",
+    published_at: "2026-06-25T12:00:00.000Z",
+    published_by: "usr-admin",
+    created_at: "2026-06-19T16:30:00.000Z",
   },
+];
+
+// sv-alimony-1 deliberately has no price: a draft that nobody has priced yet is
+// an ordinary state, and the screens have to render it rather than assume every
+// version costs something.
+export const mockServiceVersionPrices: ServiceVersionPriceRow[] = [
+  { service_version_id: "sv-divorce-1", currency: "UAH", amount_minor: 480000 },
+  { service_version_id: "sv-divorce-2", currency: "UAH", amount_minor: 520000 },
+  { service_version_id: "sv-poa-1", currency: "UAH", amount_minor: 120000 },
 ];
 
 export const mockTrace: GenerationTrace = {

@@ -23,9 +23,13 @@ export interface ServiceVersionSummary {
   status: ServiceStatus;
   generationMode: GenerationMode;
   reviewMode: ReviewMode;
-  /** Integer minor units; render with `formatMoney` from shared/format. */
-  priceMinor: number;
-  currency: string;
+  /**
+   * Integer minor units; render with `formatMoney` from shared/format. Null
+   * when the version has no price in the display currency — an unpriced draft
+   * is an ordinary state, and a zero would be a different claim.
+   */
+  priceMinor: number | null;
+  currency: string | null;
 }
 
 export interface ServiceListItem {

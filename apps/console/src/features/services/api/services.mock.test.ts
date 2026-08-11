@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { AppError } from "../../../shared/api/errors";
-import { serviceRows, serviceVersionRows } from "../../../shared/api/fixture-store";
+import {
+  serviceRows,
+  serviceVersionPriceRows,
+  serviceVersionRows,
+} from "../../../shared/api/fixture-store";
 import { mockServicesApi } from "./services.mock";
 
 // The fixture store is module state, so anything that mutates it puts it back.
@@ -8,12 +12,15 @@ import { mockServicesApi } from "./services.mock";
 // keep honest.
 const originalVersions = serviceVersionRows.map((row) => ({ ...row }));
 const originalServices = serviceRows.map((row) => ({ ...row }));
+const originalPrices = serviceVersionPriceRows.map((row) => ({ ...row }));
 
 afterEach(() => {
   serviceVersionRows.length = 0;
   serviceVersionRows.push(...originalVersions.map((row) => ({ ...row })));
   serviceRows.length = 0;
   serviceRows.push(...originalServices.map((row) => ({ ...row })));
+  serviceVersionPriceRows.length = 0;
+  serviceVersionPriceRows.push(...originalPrices.map((row) => ({ ...row })));
 });
 
 describe("list", () => {
@@ -116,7 +123,7 @@ describe("a lawyer who is assigned but unreadable", () => {
   it("is not reported as unassigned", async () => {
     // Deleted, or hidden from this user by RLS. Collapsing this into "nobody
     // assigned" makes the layer state a falsehood about who is responsible.
-    serviceRows.find((s) => s.id === "svc-poa")!.assignedLawyerId = "usr-hidden";
+    serviceRows.find((s) => s.id === "svc-poa")!.assigned_lawyer_id = "usr-hidden";
 
     const poa = (await mockServicesApi.list()).find((s) => s.id === "svc-poa");
     expect(poa?.assignedLawyer).not.toBeNull();
@@ -125,20 +132,53 @@ describe("a lawyer who is assigned but unreadable", () => {
   });
 });
 
+describe("price", () => {
+  it("reads the display currency out of the price table", async () => {
+    const divorce = (await mockServicesApi.list()).find((s) => s.id === "svc-divorce");
+    expect(divorce?.currentVersion?.priceMinor).toBe(520000);
+    expect(divorce?.currentVersion?.currency).toBe("UAH");
+  });
+
+  it("reports no price rather than a zero when a version has none", async () => {
+    // An unpriced draft is an ordinary state, and 0 UAH is a different claim
+    // from "not priced yet" — one of them says the document is free.
+    const alimony = (await mockServicesApi.list()).find((s) => s.id === "svc-alimony");
+    expect(alimony?.currentVersion?.version).toBe(1);
+    expect(alimony?.currentVersion?.priceMinor).toBeNull();
+    expect(alimony?.currentVersion?.currency).toBeNull();
+  });
+
+  it("ignores a price in a currency the screen does not display", async () => {
+    // Prices are per currency (spec §8.6). A EUR row must not be picked up and
+    // rendered as if it were the hryvnia price.
+    serviceVersionPriceRows.push({
+      service_version_id: "sv-alimony-1",
+      currency: "EUR",
+      amount_minor: 13000,
+    });
+
+    const alimony = (await mockServicesApi.list()).find((s) => s.id === "svc-alimony");
+    expect(alimony?.currentVersion?.priceMinor).toBeNull();
+  });
+});
+
 describe("choosing the current version", () => {
   it("takes the highest live version regardless of row order", async () => {
-    // Only `published` is covered by the schema's partial unique index, so a
-    // second `paused` row is reachable — and no query promises an order.
+    // The schema now guarantees one live version per service — the partial
+    // unique index covers `published` and `paused` together. This still has to
+    // hold, because no query promises an order: a Supabase result arrives in
+    // whatever order the planner produced, and picking "the first live row"
+    // would be right only by luck.
     serviceVersionRows.push({
       id: "sv-divorce-3",
-      serviceId: "svc-divorce",
+      service_id: "svc-divorce",
       version: 3,
       status: "paused",
-      generationMode: "full_generation",
-      reviewMode: "lawyer_required",
-      priceMinor: 999900,
-      currency: "UAH",
-      publishedAt: "2026-08-01T00:00:00.000Z",
+      generation_mode: "full_generation",
+      review_mode: "lawyer_required",
+      published_at: "2026-08-01T00:00:00.000Z",
+      published_by: "usr-admin",
+      created_at: "2026-07-31T00:00:00.000Z",
     });
 
     const forwards = (await mockServicesApi.get("svc-divorce")).currentVersion?.version;

@@ -13,7 +13,8 @@
     "docs:check": "node scripts/check-docs.mjs",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:types": "supabase gen types typescript --local > packages/db/src/database.types.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

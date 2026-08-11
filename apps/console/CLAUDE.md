@@ -50,6 +50,12 @@ Six conventions, all enforced in the reference:
 5. **A mutation returns the updated entity**, so the caller refreshes without a second round trip.
 6. **Shared domain vocabulary lives in `packages/db`; view models live in the feature.**
 
+**Rows are snake_case, view models are camelCase.** Row types in `packages/db` are generated from
+the schema (`pnpm db:types`), so they carry Postgres's naming; a view model carries the shape a
+screen renders. Mapping between the two is what the `api/` layer is _for_ — that is why
+regenerating types cannot reach a component. If you find yourself wanting a camelCase row, you are
+about to put the mapping in the wrong place.
+
 Still to migrate, and deliberately listed rather than hidden: `anatomy` and `team` bypass the
 layer. `team` is the more valuable of the two, being the only feature with real queries.
 

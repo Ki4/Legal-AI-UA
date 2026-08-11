@@ -1,0 +1,472 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+  public: {
+    Tables: {
+      audit_events: {
+        Row: {
+          action: Database["public"]["Enums"]["audit_action"];
+          actor_id: string | null;
+          actor_role: string | null;
+          after: Json | null;
+          before: Json | null;
+          changed_columns: string[] | null;
+          entity_id: string;
+          entity_table: string;
+          id: number;
+          occurred_at: string;
+          service_id: string | null;
+        };
+        Insert: {
+          action: Database["public"]["Enums"]["audit_action"];
+          actor_id?: string | null;
+          actor_role?: string | null;
+          after?: Json | null;
+          before?: Json | null;
+          changed_columns?: string[] | null;
+          entity_id: string;
+          entity_table: string;
+          id?: never;
+          occurred_at?: string;
+          service_id?: string | null;
+        };
+        Update: {
+          action?: Database["public"]["Enums"]["audit_action"];
+          actor_id?: string | null;
+          actor_role?: string | null;
+          after?: Json | null;
+          before?: Json | null;
+          changed_columns?: string[] | null;
+          entity_id?: string;
+          entity_table?: string;
+          id?: never;
+          occurred_at?: string;
+          service_id?: string | null;
+        };
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          created_at: string;
+          email: string;
+          full_name: string | null;
+          id: string;
+          role: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          full_name?: string | null;
+          id: string;
+          role?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          full_name?: string | null;
+          id?: string;
+          role?: string | null;
+        };
+        Relationships: [];
+      };
+      questionnaire_fields: {
+        Row: {
+          created_at: string;
+          field_type: Database["public"]["Enums"]["questionnaire_field_type"];
+          help_text: string | null;
+          id: string;
+          is_personal_data: boolean;
+          is_special_category: boolean;
+          key: string;
+          label: string;
+          legal_basis: Database["public"]["Enums"]["personal_data_basis"] | null;
+          options: Json | null;
+          position: number;
+          required: boolean;
+          retention_days: number | null;
+          service_id: string;
+          special_category_basis: Database["public"]["Enums"]["special_category_basis"] | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          field_type: Database["public"]["Enums"]["questionnaire_field_type"];
+          help_text?: string | null;
+          id?: string;
+          is_personal_data?: boolean;
+          is_special_category?: boolean;
+          key: string;
+          label: string;
+          legal_basis?: Database["public"]["Enums"]["personal_data_basis"] | null;
+          options?: Json | null;
+          position?: number;
+          required?: boolean;
+          retention_days?: number | null;
+          service_id: string;
+          special_category_basis?: Database["public"]["Enums"]["special_category_basis"] | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          field_type?: Database["public"]["Enums"]["questionnaire_field_type"];
+          help_text?: string | null;
+          id?: string;
+          is_personal_data?: boolean;
+          is_special_category?: boolean;
+          key?: string;
+          label?: string;
+          legal_basis?: Database["public"]["Enums"]["personal_data_basis"] | null;
+          options?: Json | null;
+          position?: number;
+          required?: boolean;
+          retention_days?: number | null;
+          service_id?: string;
+          special_category_basis?: Database["public"]["Enums"]["special_category_basis"] | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_fields_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      service_version_prices: {
+        Row: {
+          amount_minor: number;
+          currency: string;
+          service_version_id: string;
+        };
+        Insert: {
+          amount_minor: number;
+          currency: string;
+          service_version_id: string;
+        };
+        Update: {
+          amount_minor?: number;
+          currency?: string;
+          service_version_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_version_prices_service_version_id_fkey";
+            columns: ["service_version_id"];
+            isOneToOne: false;
+            referencedRelation: "service_versions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      service_versions: {
+        Row: {
+          created_at: string;
+          generation_mode: Database["public"]["Enums"]["generation_mode"];
+          id: string;
+          published_at: string | null;
+          published_by: string | null;
+          review_mode: Database["public"]["Enums"]["review_mode"];
+          service_id: string;
+          status: Database["public"]["Enums"]["service_status"];
+          version: number;
+        };
+        Insert: {
+          created_at?: string;
+          generation_mode: Database["public"]["Enums"]["generation_mode"];
+          id?: string;
+          published_at?: string | null;
+          published_by?: string | null;
+          review_mode: Database["public"]["Enums"]["review_mode"];
+          service_id: string;
+          status?: Database["public"]["Enums"]["service_status"];
+          version: number;
+        };
+        Update: {
+          created_at?: string;
+          generation_mode?: Database["public"]["Enums"]["generation_mode"];
+          id?: string;
+          published_at?: string | null;
+          published_by?: string | null;
+          review_mode?: Database["public"]["Enums"]["review_mode"];
+          service_id?: string;
+          status?: Database["public"]["Enums"]["service_status"];
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_versions_published_by_fkey";
+            columns: ["published_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_versions_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      services: {
+        Row: {
+          assigned_lawyer_id: string | null;
+          created_at: string;
+          id: string;
+          slug: string;
+          summary: string | null;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          assigned_lawyer_id?: string | null;
+          created_at?: string;
+          id?: string;
+          slug: string;
+          summary?: string | null;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          assigned_lawyer_id?: string | null;
+          created_at?: string;
+          id?: string;
+          slug?: string;
+          summary?: string | null;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "services_assigned_lawyer_id_fkey";
+            columns: ["assigned_lawyer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      approve_user: {
+        Args: { new_role: string; target_user: string };
+        Returns: undefined;
+      };
+      jwt_role: { Args: never; Returns: string };
+    };
+    Enums: {
+      audit_action: "insert" | "update" | "delete";
+      generation_mode: "template" | "block_assembly" | "full_generation";
+      personal_data_basis:
+        | "consent"
+        | "contract"
+        | "legal_obligation"
+        | "vital_interests"
+        | "public_task"
+        | "legitimate_interests";
+      questionnaire_field_type:
+        "text" | "long_text" | "number" | "date" | "boolean" | "select" | "multi_select";
+      review_mode: "auto" | "lawyer_required";
+      service_status: "draft" | "in_review" | "published" | "paused" | "archived";
+      special_category_basis:
+        | "explicit_consent"
+        | "employment_social_security"
+        | "vital_interests"
+        | "not_for_profit_body"
+        | "made_public_by_subject"
+        | "legal_claims"
+        | "substantial_public_interest"
+        | "health_care"
+        | "public_health"
+        | "archiving_research";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+};
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      audit_action: ["insert", "update", "delete"],
+      generation_mode: ["template", "block_assembly", "full_generation"],
+      personal_data_basis: [
+        "consent",
+        "contract",
+        "legal_obligation",
+        "vital_interests",
+        "public_task",
+        "legitimate_interests",
+      ],
+      questionnaire_field_type: [
+        "text",
+        "long_text",
+        "number",
+        "date",
+        "boolean",
+        "select",
+        "multi_select",
+      ],
+      review_mode: ["auto", "lawyer_required"],
+      service_status: ["draft", "in_review", "published", "paused", "archived"],
+      special_category_basis: [
+        "explicit_consent",
+        "employment_social_security",
+        "vital_interests",
+        "not_for_profit_body",
+        "made_public_by_subject",
+        "legal_claims",
+        "substantial_public_interest",
+        "health_care",
+        "public_health",
+        "archiving_research",
+      ],
+    },
+  },
+} as const;

@@ -3,7 +3,17 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/.turbo/**", "**/coverage/**"],
+    ignores: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.next/**",
+      "**/.turbo/**",
+      "**/coverage/**",
+      // `supabase start` writes a bundled edge-runtime entrypoint here. It is
+      // generated, gitignored, and minified onto one line, so linting it turns
+      // `pnpm lint` red for anyone who followed supabase/README.md.
+      "supabase/.temp/**",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

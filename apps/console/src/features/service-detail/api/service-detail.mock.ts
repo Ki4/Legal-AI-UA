@@ -2,6 +2,7 @@ import { AppError } from "../../../shared/api/errors";
 import {
   currentVersionRowOf,
   fixtureDelay,
+  priceRowOf,
   profileById,
   serviceRows,
 } from "../../../shared/api/fixture-store";
@@ -27,25 +28,25 @@ export const mockServiceDetailApi: ServiceDetailApi = {
       slug: service.slug,
       title: service.title,
       summary: service.summary,
-      assignedLawyerId: service.assignedLawyerId,
+      assignedLawyerId: service.assigned_lawyer_id,
       assignedLawyerName:
-        service.assignedLawyerId === null
+        service.assigned_lawyer_id === null
           ? null
-          : (profileById(service.assignedLawyerId)?.fullName ?? null),
+          : (profileById(service.assigned_lawyer_id)?.full_name ?? null),
       currentVersion:
         version === null
           ? null
           : {
               version: version.version,
               status: version.status,
-              generationMode: version.generationMode,
-              reviewMode: version.reviewMode,
-              priceMinor: version.priceMinor,
-              currency: version.currency,
-              publishedAt: version.publishedAt,
+              generationMode: version.generation_mode,
+              reviewMode: version.review_mode,
+              priceMinor: priceRowOf(version.id)?.amount_minor ?? null,
+              currency: priceRowOf(version.id)?.currency ?? null,
+              publishedAt: version.published_at,
             },
-      createdAt: service.createdAt,
-      updatedAt: service.updatedAt,
+      createdAt: service.created_at,
+      updatedAt: service.updated_at,
     };
 
     return detail;

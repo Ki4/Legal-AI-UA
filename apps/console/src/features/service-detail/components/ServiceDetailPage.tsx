@@ -83,7 +83,11 @@ export function ServiceDetailPage() {
         <dt className="text-inkSoft">Review mode</dt>
         <dd>{version?.reviewMode ?? "—"}</dd>
         <dt className="text-inkSoft">Price</dt>
-        <dd>{version ? formatMoney(version.priceMinor, version.currency) : "—"}</dd>
+        <dd>
+          {version?.priceMinor != null && version.currency != null
+            ? formatMoney(version.priceMinor, version.currency)
+            : "—"}
+        </dd>
         <dt className="text-inkSoft">Assigned lawyer</dt>
         <dd>
           {service.assignedLawyerId === null

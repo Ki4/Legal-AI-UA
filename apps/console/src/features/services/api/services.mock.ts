@@ -10,6 +10,7 @@ import { AppError } from "../../../shared/api/errors";
 import {
   currentVersionRowOf,
   fixtureDelay,
+  priceRowOf,
   profileById,
   profileRows,
   serviceRows,
@@ -22,17 +23,21 @@ function toLawyerRef(lawyerId: string | null): LawyerRef | null {
   // An id that resolves to no profile still means someone is assigned. Keeping
   // the ref with a null name says "assigned, name unavailable"; returning null
   // would say "nobody assigned", which is a different and false statement.
-  return { id: lawyerId, fullName: profileById(lawyerId)?.fullName ?? null };
+  return { id: lawyerId, fullName: profileById(lawyerId)?.full_name ?? null };
 }
 
 function toVersionSummary(version: ServiceVersionRow): ServiceVersionSummary {
+  // Price lives in its own per-currency table now (spec §8.6), so this is a
+  // join rather than a field copy — and it may legitimately find nothing.
+  const price = priceRowOf(version.id);
+
   return {
     version: version.version,
     status: version.status,
-    generationMode: version.generationMode,
-    reviewMode: version.reviewMode,
-    priceMinor: version.priceMinor,
-    currency: version.currency,
+    generationMode: version.generation_mode,
+    reviewMode: version.review_mode,
+    priceMinor: price?.amount_minor ?? null,
+    currency: price?.currency ?? null,
   };
 }
 
@@ -46,10 +51,10 @@ function toListItem(service: ServiceRow): ServiceListItem {
     id: service.id,
     slug: service.slug,
     title: service.title,
-    assignedLawyer: toLawyerRef(service.assignedLawyerId),
+    assignedLawyer: toLawyerRef(service.assigned_lawyer_id),
     currentVersion: currentVersionOf(service.id),
-    createdAt: service.createdAt,
-    updatedAt: service.updatedAt,
+    createdAt: service.created_at,
+    updatedAt: service.updated_at,
   };
 }
 
@@ -106,8 +111,8 @@ export const mockServicesApi: ServicesApi = {
     // from shared/api/errors — a denial by an RLS USING clause writes nothing
     // and reports no error, so the row count is the only signal. There is no
     // RLS here, hence no call: the guard belongs where the risk is.
-    service.assignedLawyerId = lawyerId;
-    service.updatedAt = new Date().toISOString();
+    service.assigned_lawyer_id = lawyerId;
+    service.updated_at = new Date().toISOString();
 
     return toListItem(service);
   },

@@ -108,7 +108,8 @@ export function ServicesListPage() {
                       ))}
                 </TableCell>
                 <TableCell align="num">
-                  {service.currentVersion
+                  {service.currentVersion?.priceMinor !== null &&
+                  service.currentVersion?.currency != null
                     ? formatMoney(
                         service.currentVersion.priceMinor,
                         service.currentVersion.currency,

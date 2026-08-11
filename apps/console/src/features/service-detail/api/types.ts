@@ -23,8 +23,8 @@ export interface ServiceDetail {
     status: ServiceStatus;
     generationMode: GenerationMode;
     reviewMode: ReviewMode;
-    priceMinor: number;
-    currency: string;
+    priceMinor: number | null;
+    currency: string | null;
     publishedAt: string | null;
   } | null;
   createdAt: string;

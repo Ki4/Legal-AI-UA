@@ -33,7 +33,7 @@ describe("get", () => {
     expect(unassigned.assignedLawyerId).toBeNull();
     expect(unassigned.assignedLawyerName).toBeNull();
 
-    serviceRows.find((s) => s.id === "svc-poa")!.assignedLawyerId = "usr-hidden";
+    serviceRows.find((s) => s.id === "svc-poa")!.assigned_lawyer_id = "usr-hidden";
     const hidden = await mockServiceDetailApi.get("svc-poa");
     expect(hidden.assignedLawyerId).toBe("usr-hidden");
     expect(hidden.assignedLawyerName).toBeNull();

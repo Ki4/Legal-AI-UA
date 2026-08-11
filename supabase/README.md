@@ -31,10 +31,13 @@ as production: it only ever changes by applying merged migration files.
 2. Test it locally: `pnpm exec supabase db reset` must run clean.
 3. Write the verification script at `snippets/verify_<area>.sql` and run it against the sandbox.
    Every policy ships with scenarios, denials included — see `supabase/CLAUDE.md`.
-4. PR. Access-control migrations (RLS, `auth.*`, consents) need a second reviewer when there is
+4. `pnpm db:types` — regenerate `packages/db/src/database.types.ts` from the sandbox. Row types
+   are derived from it, so a migration that changes a column and does not regenerate leaves
+   TypeScript describing a table that no longer exists.
+5. PR. Access-control migrations (RLS, `auth.*`, consents) need a second reviewer when there is
    one; while the team is a single developer that rule is suspended against the substitutes in
    `docs/CONTRIBUTING.md`.
-5. After merge, the migration is applied to the cloud project (today: manually via the SQL
+6. After merge, the migration is applied to the cloud project (today: manually via the SQL
    editor by the product owner; next: `supabase db push` from CI).
 
 **Before the first `db push`, repair the ledger.** Migrations applied by hand are invisible to the

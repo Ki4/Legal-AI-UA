@@ -57,17 +57,20 @@ This is the platform's flagship feature. It is what the review UI is built aroun
 lawyer sign-off meaningful rather than a rubber stamp, and what distinguishes the product from a
 plain AI document generator.
 
-## Open question: one-off documents vs. subscription
+## One-off documents and subscription — both
 
-Some client needs are one-off (a single contract, a single complaint). Others are recurring —
-a medical sole proprietor, for example, has a stream of periodic filings and obligations tied to
-one legal status. Whether the product commits to a subscription model for recurring obligations,
-stays one-off-per-order, or offers both, is **not decided**.
+Some client needs are one-off (a single contract, a single complaint). Others are recurring — a
+medical sole proprietor, for example, has a stream of periodic filings and obligations tied to one
+legal status. The product serves **both**: a one-off purchase covering a document or a set of
+them, and a subscription to the platform whose plan decides which services it covers.
 
-The bootstrap architecture is deliberately agnostic to this: it builds the order spine (client →
-questionnaire → generation → review → delivery), which serves either model equally. Funnel
-dashboards, recurring billing, and pricing structure are deferred until this question has an
-answer grounded in real usage, not guessed upfront.
+The order spine (client → questionnaire → generation → review → delivery) serves either model, so
+this decision changed no structure. What it did add is a promise with teeth: a document stays valid
+until the law it rests on changes, which is why legislative-change monitoring exists at all.
+Pricing is in UAH, and the amounts are still open.
+
+See `docs/specs/admin-console.md` §8 for the commercial model, §8.6 for what an entitlement
+records, and §9 for the monitoring machinery the promise depends on.
 
 ## GDPR posture
 

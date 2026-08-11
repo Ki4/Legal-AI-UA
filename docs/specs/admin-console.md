@@ -10,12 +10,14 @@ and the backlog all constrain each other, and reading them apart is how they dri
 The architectural decisions recorded here have their own ADRs, which are the durable record; this
 document is the plan of work built on top of them.
 
-| ADR                                                                     | Covers                                                 |
-| ----------------------------------------------------------------------- | ------------------------------------------------------ |
-| [ADR-0008](../adr/0008-templates-from-uploaded-documents.md)            | Uploads and extraction instead of a Word add-in (§5.1) |
-| [ADR-0009](../adr/0009-issued-documents-pin-frozen-versions.md)         | Version pinning, freezing, the passport (§5.3, §5.4)   |
-| [ADR-0010](../adr/0010-append-only-audit-with-pseudonymous-subjects.md) | The audit model (§6, §7)                               |
-| [ADR-0011](../adr/0011-monitoring-legislative-change.md)                | Legislative change monitoring (§9)                     |
+| ADR                                                                       | Covers                                                 |
+| ------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [ADR-0008](../adr/0008-templates-from-uploaded-documents.md)              | Uploads and extraction instead of a Word add-in (§5.1) |
+| [ADR-0009](../adr/0009-issued-documents-pin-frozen-versions.md)           | Version pinning, freezing, the passport (§5.3, §5.4)   |
+| [ADR-0010](../adr/0010-append-only-audit-with-pseudonymous-subjects.md)   | The audit model (§6, §7)                               |
+| [ADR-0011](../adr/0011-monitoring-legislative-change.md)                  | Legislative change monitoring (§9)                     |
+| [ADR-0013](../adr/0013-conversational-intake-transcript-is-provenance.md) | Chat intake, answer provenance (§5.5, §7.2)            |
+| [ADR-0014](../adr/0014-client-data-access-follows-assignment.md)          | Who may read client data (§7.2, §7.3)                  |
 
 ## 1. Assumptions
 
@@ -108,6 +110,8 @@ and when. Archive hidden behind a toggle, off by default.
   version is ever live.
 - As an admin, I cannot publish a service version whose template is not published.
 - As an admin, the archive is hidden by default, so it does not crowd the list.
+- As the assigned lawyer, I create and edit a draft version of my own service, including its
+  review mode, without waiting on an admin — but I cannot publish it, price it, or reassign it.
 
 ### 4.4 Questionnaire fields — `/services/:id/fields`
 
@@ -255,6 +259,29 @@ The consequence is a product rule, not just a schema one: _editing a published s
 exist as an operation_. There is only issuing a new version. One version live at a time, the live
 one not editable, publication archives its predecessor.
 
+### 5.5 Where an answer comes from
+
+The client's channel is a chat bot, not a form (ADR-0013). The field dictionary is unchanged by
+that — it stays canonical and channel-independent — but an answer stops being self-evident.
+
+| Artifact         | What it is                            | Read by generation  |
+| ---------------- | ------------------------------------- | ------------------- |
+| Transcript       | Raw provenance, personal data, opaque | Never               |
+| Extracted answer | Field key + value + confidence        | Only once confirmed |
+| Confirmed answer | What the client is held to have said  | Yes                 |
+
+Three rules follow, and they mirror the authoring side exactly (ADR-0008): an artifact a human
+produced, an extraction over it, canonical structured data as the only thing downstream reads.
+
+- An answer that cannot be traced to a field key does not enter generation.
+- An extracted answer carries channel, source turn and confidence, and is `ai_generated` trust
+  until a human confirms it. Unconfirmed answers do not feed generation.
+- The passport's answer snapshot (§5.3) records provenance per answer, not only values.
+
+The field dictionary (§4.4) gains one attribute for this: a special-category marker with its own
+Art. 9(2) basis, because that is a different statement from an Art. 6(1) basis and one column
+cannot hold both.
+
 ## 6. Audit
 
 ### 6.1 An append-only event log, not a status column
@@ -323,6 +350,50 @@ stays intact and stops being identifying.
 This is what makes §6.4 load-bearing: a single name accidentally written into a payload breaks the
 scheme.
 
+### 7.2 Retention schedule
+
+Retention has to be set before the first upload and the first conversation, not after — a clock
+cannot be applied retroactively to data already held. These are the platform defaults; a field's
+own retention (§7, §4.4) may be shorter, never longer.
+
+| Artifact                                        | Retention                                     | Why that number                                                                 |
+| ----------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------- |
+| Chat transcript                                 | 90 days after delivery; 30 if order abandoned | Enough to settle "I told you X", not enough to become a standing liability      |
+| Uploaded precedent, depersonalisation confirmed | Life of the template version + 1 year         | Needed for re-extraction; firm work product, not client data                    |
+| Uploaded precedent, not yet confirmed           | Transcript clock                              | Until a human confirms, assume it carries personal data                         |
+| Test run outputs                                | 90 days, or last N per service                | Fixture data, no real client in it                                              |
+| Issued document + passport                      | 7 years from delivery, then anonymised        | Limitation period for a claim; the passport must stay reconstructible that long |
+| Action log                                      | 7 years                                       | Must outlive the document it describes; pseudonymous, so it survives erasure    |
+| Access log                                      | 1 year                                        | Order-of-magnitude larger volume (§6.2); closes what ADR-0010 left open         |
+| Profile after account deletion                  | 30 days grace, then anonymised                | Recovery window, then the anonymisation route of §7                             |
+
+**The subtlety that will otherwise be found by a retention job.** A field's retention governs the
+client's live record — not the frozen snapshot inside a passport. The passport is pinned and
+immutable (ADR-0009) and keeps its own 7-year clock. A retention job that treats the two alike
+deletes the evidence the platform is built to preserve.
+
+Erasure runs on two mechanisms, not one (ADR-0013): the pseudonym mapping is destroyed, and
+transcripts are hard-deleted. Either alone leaves personal data standing.
+
+### 7.3 Who may read client data
+
+Settled in ADR-0014. **Role governs platform capability; assignment governs case data.**
+
+| Who                    | Sees                                                     |
+| ---------------------- | -------------------------------------------------------- |
+| Assigned lawyer        | Client data for their matters, on Art. 6(1)(b)           |
+| Admin                  | Depersonalised by default — administration is not a case |
+| Admin with break-glass | Named client data, reason recorded, time-boxed, notified |
+
+Consent is not the gate for the assigned lawyer: refusing it would cost the client the service,
+which under Art. 7(4) means it was never freely given. Consent's real job is secondary use —
+precedent reuse, second-opinion review, training data — where a client can say no and still receive
+their document.
+
+Two consequences for the screens: client-bearing views are built depersonalised-first, and a
+document is itself personal data, so "show the document but not the client's data" is not a state
+the UI can offer.
+
 ## 8. Commercial model
 
 Decided: **both one-off purchase and subscription.**
@@ -374,6 +445,24 @@ now has versions of its own, and the passport records the chain.
 
 A promise of freshness with no delivery channel is not a promise. Notifications were on the
 deferred list; the subscription decision takes them off it.
+
+### 8.6 What an entitlement records
+
+Both purchase shapes are settled, and they converge on one relation rather than two systems.
+
+- **One-off** covers a **set** of services, one or many. A "package" is an entitlement with several
+  covered services, not a separate kind of thing.
+- **Subscription is to the platform**, and the plan decides coverage: `plans` and the services each
+  plan covers.
+
+So both resolve to **entitlement → covered services**, which is what §8.3 predicted: one staleness
+mechanism, with the entitlement deciding whether a client gets the refreshed document or a
+notification and an offer.
+
+**Price is a row per currency on a version, not a column pair.** UAH is what we sell in; EUR is
+plausible later. A published version is frozen (ADR-0009), so a currency that arrives after
+publication could not be added without breaking the freeze — and the freeze trigger must therefore
+cover the price rows as well as the version. The amounts themselves are still open (§14).
 
 ## 9. Law monitoring
 
@@ -685,6 +774,18 @@ Whatever is not recorded when it happens is gone.
 | ADM-19 | GDPR attributes on a field | ADM-18         | S    |
 | ADM-20 | Field ↔ block links        | ADM-14, ADM-18 | S    |
 
+### Intake, access and entitlements
+
+| ID     | Task                                                         | Depends      | Size |
+| ------ | ------------------------------------------------------------ | ------------ | ---- |
+| ADM-54 | Transcript store, extraction to answers, confirmation (§5.5) | ADM-18       | L    |
+| ADM-55 | Retention jobs and the two erasure paths (§7.2)              | ADM-1, ADM-6 | M    |
+| ADM-56 | Break-glass grants, expiry and client notification (§7.3)    | ADM-6        | M    |
+| ADM-57 | Entitlements: one-off sets and platform plans (§8.6)         | ADM-1        | M    |
+
+ADM-55 sits next to ADM-6 for the same reason: a clock that starts late is not a retention policy,
+and the data it should have covered is already held.
+
 ### Law references
 
 | ID     | Task                                       | Depends        | Size |
@@ -861,59 +962,81 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   lawyer's manual responsibility (§9.14).
 - A signal is triaged within one business day; the deadline for fixing a confirmed impact is set
   by the lawyer at triage (§9.16).
+- The client's intake channel is a chat bot. The field dictionary stays canonical and
+  channel-independent; the transcript is provenance and generation never reads it (§5.5).
+- An answer extracted from a conversation is `ai_generated` trust and must be confirmed before it
+  feeds generation (§5.5).
+- Erasure runs on two mechanisms — destroy the pseudonym mapping, hard-delete transcripts (§7.2).
+- Retention is set per artifact class before the first upload, not after (§7.2).
+- Role governs platform capability; assignment governs case data. An admin is depersonalised by
+  default and reaches named data only through a recorded, time-boxed break-glass grant (§7.3).
+- Consent is not the gate for the assigned lawyer — it is the gate for secondary use (§7.3).
+- Clients do not live in `profiles`; client identity is its own table and holds the pseudonym
+  mapping (ADR-0014).
+- A one-off purchase covers a set of services; a subscription is to the platform and its plan
+  decides coverage. Both resolve to one entitlement → services relation (§8.6).
+- Price is a row per currency on a version, and the freeze trigger covers it (§8.6).
+- Inside the catalogue the split is commercial versus professional, not senior versus junior. An
+  admin decides what is on sale, at what price, and when it is published; the assigned lawyer owns
+  the draft of their own service, `review_mode` included, because they are the only person who can
+  judge whether a document needs a lawyer in the loop (ADR-0005, §4.3).
 
 ## 14. Open questions
 
+Questions keep their id when they are answered and move to the closed list below, so that a
+reference to "Q9" written six months ago still points at the same question. Ids are never reused.
+
 **Blocking the split of work into issues**
 
-1. **Condition editor (ADM-16): visual builder or a text expression with field autocomplete?** The
-   second is several times cheaper and enough for a first version. This decides whether B fits
-   inside their half of the wave.
-2. **Who corrects an extraction — a human in an editor, or the AI on request with the patch
-   confirmed by a human?** This decides whether ADM-15 is a full editor or a review surface.
-3. **Does `packages/ui` get a temporary second owner for this wave?** Item 4 above.
+- **Q1. Condition editor (ADM-16): visual builder or a text expression with field autocomplete?**
+  The second is several times cheaper and enough for a first version. This decides whether B fits
+  inside their half of the wave.
+- **Q2. Who corrects an extraction — a human in an editor, or the AI on request with the patch
+  confirmed by a human?** This decides whether ADM-15 is a full editor or a review surface.
+- **Q3. Does `packages/ui` get a temporary second owner for this wave?** Item 4 of §12.
 
 **Blocking law monitoring (§9)**
 
-4. **What detection window do we promise clients?** A day, a week. Every interval in §9.8 is
-   derived from this number, and the floor that configuration cannot cross is set by it. This is
-   the first question to answer in this group — the rest depend on it.
-5. **Does a published service pause itself when an impact is confirmed?** §9.16 proposes yes.
-   It costs revenue on a false positive and prevents selling a document we know to be wrong.
-6. **Is the client told as soon as an impact is confirmed, or only once the fix ships?** §9.16
-   proposes immediately, with a note that an update is being prepared. A product call.
-7. **When a change has a known future effective date, do we tell affected clients in advance or on
-   the day?** Advance notice is better product and more support load.
-8. **Does a confirmed impact trigger automatic re-issue, or a notification with a human deciding?**
-   §9 stops at the signal; this decides what happens after "impact confirmed".
+- **Q4. What detection window do we promise clients?** A day, a week. Every interval in §9.8 is
+  derived from this number, and the floor that configuration cannot cross is set by it. This is
+  the first question to answer in this group — the rest depend on it.
+- **Q5. Does a published service pause itself when an impact is confirmed?** §9.16 proposes yes.
+  It costs revenue on a false positive and prevents selling a document we know to be wrong.
+- **Q6. Is the client told as soon as an impact is confirmed, or only once the fix ships?** §9.16
+  proposes immediately, with a note that an update is being prepared. A product call.
+- **Q7. When a change has a known future effective date, do we tell affected clients in advance or
+  on the day?** Advance notice is better product and more support load.
+- **Q8. Does a confirmed impact trigger automatic re-issue, or a notification with a human
+  deciding?** §9 stops at the signal; this decides what happens after "impact confirmed".
 
 **Blocking schema design**
 
-9. **What are the actual hryvnia prices?** The currency is settled (§8); the amounts are not. The
-   euro figures that were discussed are recorded there as a conversion so the order of magnitude
-   survives, and they should be replaced by real numbers rather than treated as decided.
-10. **Does a one-off purchase cover one document or a package?** This shapes the entitlement
-    record.
-11. **Is a subscription tied to specific services or to the platform as a whole?**
-12. **Does an admin see clients' personal data, or only depersonalized orders?** This is an RLS
-    question, not a UI one.
-13. **How long do uploaded source documents and run outputs live?** Retention has to be set before
-    the first upload, not after.
-14. **Delivery format to the client — .docx, .pdf, or both?**
+- **Q9. What are the actual hryvnia prices?** The currency and its shape are settled (§8, §8.6);
+  the amounts are not. The euro figures discussed in §8 are a recorded conversion so the order of
+  magnitude survives, not a decision.
+- **Q14. Delivery format to the client — .docx, .pdf, or both?** Part of the passport (§5.3).
 
 **Blocking wave planning**
 
-15. **Which mode does the first service launch in?** If it is not `template` + `auto`, the
-    per-order review queue moves from "deferred" into the first waves, because ADR-0005 requires a
-    lawyer in the loop for the other two modes.
-16. **Invitations or self-registration?** ADM-34 either exists or does not.
-17. **Deactivation: soft disable or account deletion?**
-18. **Who covers a service while its assigned lawyer is away?** Settled: at least one lawyer per
-    service. Still open, and now operational rather than theoretical, because §9.16 commits to one
-    business day: a signal arriving on Friday against a single unavailable lawyer breaches the SLA
-    by Monday with nobody at fault.
+- **Q15. Which mode does the first service launch in?** If it is not `template` + `auto`, the
+  per-order review queue moves from "deferred" into the first waves, because ADR-0005 requires a
+  lawyer in the loop for the other two modes.
+- **Q16. Invitations or self-registration?** ADM-34 either exists or does not.
+- **Q17. Deactivation: soft disable or account deletion?**
+- **Q18. Who covers a service while its assigned lawyer is away?** Settled: at least one lawyer per
+  service. Still open, and now operational rather than theoretical, because §9.16 commits to one
+  business day: a signal arriving on Friday against a single unavailable lawyer breaches the SLA
+  by Monday with nobody at fault.
 
 **Already answered, listed so they stop being reopened**
+
+- **Q10** — a one-off covers a set of services; a package is an entitlement with several, not a
+  separate kind (§8.6).
+- **Q11** — the subscription is to the platform, and the plan decides which services it covers
+  (§8.6).
+- **Q12** — an admin does not see client personal data by role. Assignment grants it; break-glass
+  is the recorded exception (§7.3, ADR-0014).
+- **Q13** — retention is fixed per artifact class in §7.2, transcripts included and shortest.
 
 - One-off versus subscription — both (§8).
 - Currency — UAH (§8). The amounts themselves are still open.

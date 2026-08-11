@@ -32,14 +32,32 @@ select relacl from pg_class where relname = '<table>' and relnamespace = 'public
 
 ## Every policy needs a verification scenario
 
-A PR that adds or changes a policy must describe, in the PR description, how it was verified —
-which role/user was used, which rows were expected to be visible or writable, and the actual
-result. "Looks correct" is not a scenario.
+Not a paragraph in a PR description — a **script**, at `snippets/verify_<area>.sql`. It creates its
+own fixtures, attempts to break every rule the migration claims to enforce, prints PASS/FAIL per
+scenario, and ends in `rollback` so it leaves nothing behind. `snippets/verify_catalogue.sql` is
+the worked example: 23 scenarios over the catalogue migration.
+
+Run it against the local sandbox, never against the cloud:
+
+```bash
+docker exec -i supabase_db_Legal-AI-UA psql -U postgres -d postgres < supabase/snippets/verify_catalogue.sql
+```
+
+Prose is not re-runnable and nobody can check it six months later. A script can be run again the
+day someone adds a table that quietly widens a policy.
+
+**Cover the denials, not only the grants.** A denied write under RLS is silent: a `USING` clause
+filters the row out, the statement matches nothing, and the client sees an empty array rather than
+an error. A scenario that only proves the allowed case proves half of nothing.
 
 ## The one hard review rule
 
 Any migration touching access control (RLS policies, `auth.*`, JWT `app_metadata`, consents)
-always requires a second reviewer before merge — no self-merge, ever, regardless of who wrote it.
-Core owner preferred as reviewer. This is the one exception to the default review matrix in
+requires a second reviewer before merge — no self-merge, regardless of who wrote it. Core owner
+preferred as reviewer. This is the one exception to the default review matrix in
 `docs/CONTRIBUTING.md`. Separately, any migration is automatically Tier 2 (full spec + ADR, see
 `docs/CONTRIBUTING.md`) regardless of how small the diff looks.
+
+**Suspended while the team is one developer** — see "While the team is one developer" in
+`docs/CONTRIBUTING.md` for what stands in for the reviewer and when the rule comes back. An AI
+assistant does not count as the second reviewer of a migration it wrote.

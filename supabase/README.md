@@ -29,10 +29,24 @@ as production: it only ever changes by applying merged migration files.
 
 1. Branch, write a new file in `migrations/` (timestamp prefix, snake_case name).
 2. Test it locally: `pnpm exec supabase db reset` must run clean.
-3. PR. Access-control migrations (RLS, `auth.*`, consents) always need a second reviewer —
-   see `supabase/CLAUDE.md`. Every policy ships with a verification scenario.
-4. After merge, the migration is applied to the cloud project (today: manually via the SQL
+3. Write the verification script at `snippets/verify_<area>.sql` and run it against the sandbox.
+   Every policy ships with scenarios, denials included — see `supabase/CLAUDE.md`.
+4. PR. Access-control migrations (RLS, `auth.*`, consents) need a second reviewer when there is
+   one; while the team is a single developer that rule is suspended against the substitutes in
+   `docs/CONTRIBUTING.md`.
+5. After merge, the migration is applied to the cloud project (today: manually via the SQL
    editor by the product owner; next: `supabase db push` from CI).
+
+**Before the first `db push`, repair the ledger.** Migrations applied by hand are invisible to the
+CLI, which keeps its own record in `supabase_migrations.schema_migrations`. A `db push` would try
+to replay them and fail on objects that already exist. Once the project is linked:
+
+```bash
+pnpm exec supabase migration repair --status applied <version> [<version> ...]
+```
+
+Check what the cloud already believes with
+`select version from supabase_migrations.schema_migrations order by version;`.
 
 ## Seed
 

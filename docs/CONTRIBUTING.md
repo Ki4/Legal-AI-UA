@@ -40,10 +40,31 @@ This is a **default matrix**, not a hard gate — use judgment.
 Any of the three may push directly or self-approve when it's pragmatic — a small change, inside
 their own zone. The matrix is the default expectation, not a lock.
 
-**The one hard exception, no self-merge ever:** migrations touching access control (RLS policies,
-`auth.*`, JWT `app_metadata`, consents) always require a second reviewer, core owner
-preferred. See `supabase/CLAUDE.md`. This exception overrides everything above, including
-self-approval and the "no mandatory reviewer" row.
+**The one hard exception:** migrations touching access control (RLS policies, `auth.*`, JWT
+`app_metadata`, consents) require a second reviewer, core owner preferred, and no self-merge. See
+`supabase/CLAUDE.md`. This exception overrides everything above, including self-approval and the
+"no mandatory reviewer" row.
+
+### While the team is one developer
+
+The rule above assumes a second human is available. Today the repo is worked by one developer with
+an AI assistant, and an assistant cannot be the second reviewer: it wrote the migration, so its
+review of that migration is not independent evidence of anything.
+
+A rule that is broken on every change stops meaning anything, so it is suspended rather than
+quietly ignored — and it is suspended against a substitute, not against nothing:
+
+1. **Every policy ships with a runnable verification script**, not a paragraph in a PR description.
+   It lives in `supabase/snippets/verify_<area>.sql`, creates its own fixtures, attempts to break
+   every rule it claims to enforce, prints PASS/FAIL, and rolls back. Re-runnable months later.
+2. **The author reads the SQL themselves before applying it.** A verification script proves the
+   rules it thought to test; a human reading proves nothing was left untested.
+3. **The deviation is recorded** in the PR description or the session journal — which migration,
+   which date. Not to apologise for it, but so the backlog of unreviewed access-control changes is
+   a list rather than a feeling.
+
+**This clause expires the day a second developer joins.** At that point the rule above applies
+unchanged, and the migrations recorded under point 3 get the review they did not get at the time.
 
 **SLA:** 24 hours. If a review hasn't happened after 24 hours, escalate at the Monday sync instead
 of waiting further.

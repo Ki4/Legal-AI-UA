@@ -6,7 +6,7 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 ## Done — bootstrap (2026-08-01)
 
 - Monorepo: pnpm + Turborepo, ESLint/Prettier/TS strict, Husky + lint-staged + commitlint, CI
-  (lint → typecheck → test → build on every PR/push). `main` always deployable.
+  (lint → typecheck → test → docs:check → build on every PR/push). `main` always deployable.
 - Supabase project (EU Frankfurt): auth migration with registration → pending approval →
   `approve_user` RPC; roles (`admin | lawyer`) in JWT `app_metadata`, RLS on `profiles`.
   Verified live end-to-end.

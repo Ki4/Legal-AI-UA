@@ -10,20 +10,11 @@
 -- needs an access token and the database password, so until that happens this
 -- script is the same operation by hand. Run it in the SQL editor, once.
 --
--- Safe to run more than once: the insert is idempotent.
-
--- 1. What does the cloud believe today? Run this first and read it.
---    An error saying the schema does not exist means the CLI has never touched
---    this project, and there is nothing to repair — the insert below will create
---    the ledger and fill it in one go.
-select version, name
-from supabase_migrations.schema_migrations
-order by version;
-
--- 2. Record every migration this repository has shipped.
---    `statements` is left null on purpose: it is a convenience the CLI writes
---    when it applies a file itself, and nothing reads it back. Version and name
---    are what `db push` compares against.
+-- Safe to run more than once, and safe on a project the CLI has never touched:
+-- every statement is idempotent, and the ledger is created before anything
+-- reads it. An earlier version of this script queried the table first and died
+-- on a project where it did not exist yet — the SQL editor runs the whole
+-- script as one batch, so the first failing statement takes the rest with it.
 
 create schema if not exists supabase_migrations;
 
@@ -33,6 +24,14 @@ create table if not exists supabase_migrations.schema_migrations (
   name text
 );
 
+-- What the cloud believed before this ran. Empty is the normal answer.
+select version, name
+from supabase_migrations.schema_migrations
+order by version;
+
+-- Every migration this repository has shipped. `statements` is left null on
+-- purpose: the CLI writes it as a convenience when it applies a file itself,
+-- and nothing reads it back. Version and name are what `db push` compares.
 insert into supabase_migrations.schema_migrations (version, name) values
   ('20260730120000', 'auth_profiles'),
   ('20260801120000', 'explicit_client_grants'),
@@ -43,10 +42,10 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260811160000', 'service_assignments')
 on conflict (version) do nothing;
 
--- 3. Confirm. Seven rows, and they must match the filenames in
---    supabase/migrations/ exactly — a version recorded here that was never
---    actually applied is worse than an unrecorded one, because `db push` will
---    skip it and the schema will silently lack whatever it contained.
+-- Confirm. Seven rows, matching the filenames in supabase/migrations/ exactly.
+-- A version recorded here that was never actually applied is worse than an
+-- unrecorded one: `db push` will skip it, and the schema will silently lack
+-- whatever it contained.
 select version, name
 from supabase_migrations.schema_migrations
 order by version;

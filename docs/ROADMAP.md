@@ -6,7 +6,7 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 ## Done — bootstrap (2026-08-01)
 
 - Monorepo: pnpm + Turborepo, ESLint/Prettier/TS strict, Husky + lint-staged + commitlint, CI
-  (lint → typecheck → build on every PR/push). `main` always deployable.
+  (lint → typecheck → test → build on every PR/push). `main` always deployable.
 - Supabase project (EU Frankfurt): auth migration with registration → pending approval →
   `approve_user` RPC; roles (`admin | lawyer`) in JWT `app_metadata`, RLS on `profiles`.
   Verified live end-to-end.
@@ -19,6 +19,24 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 - Anatomy screen renders a mock generation trace through the trust components.
 - Docs: VISION, ADR 0001–0006, CONTRIBUTING, root + zone CLAUDE.md, design spec
   (`docs/design/design-system.md`), session journal.
+
+## Done — console planning and the data-access layer (2026-08-04)
+
+- `docs/specs/admin-console.md` — the console's own spec: route map, 14 screens with user
+  stories, template metadata versus issued-document metadata, the document passport, the audit
+  model, GDPR consequences, the commercial model, legislative-change monitoring, backlog
+  ADM-1…53 with dependencies, waves, the two-developer split, decisions taken, and 18 open
+  questions.
+- ADR-0008…0012: templates from uploaded documents instead of a Word add-in; issued documents
+  pin frozen versions; append-only audit with pseudonymous subjects; monitoring legislative
+  change; the feature-local `api/` layer.
+- `docs/specs/console-feature-dod.md` — what "done" means for a console feature, and the
+  template for per-task acceptance criteria.
+- Vitest as the workspace runner; `pnpm test` joins the gates locally and in CI.
+- The `api/` layer exists, with `features/services` as the reference every other feature copies:
+  view models over rows, a typed contract, one swap point from fixtures to Supabase, `AppError`
+  with `expectOne` for RLS-denied writes, one shared fixture store. `packages/db` reshaped to row
+  types; price in integer minor units plus currency.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -53,8 +71,13 @@ written.
 
 ## Later (deliberately deferred)
 
-- Client platform `apps/web` — blocked on the chat-vs-forms channel spec (design spec §16)
-  and the one-off vs subscription positioning question (VISION, open question).
-- Payments, funnel dashboards, pricing — blocked on the same positioning answer.
+- Client platform `apps/web` — blocked on the chat-vs-forms channel spec (design spec §16).
+  The positioning question is answered: both one-off purchase and subscription, priced in UAH
+  (`docs/specs/admin-console.md` §8). The amounts themselves are still open.
+- Payments, funnel dashboards, pricing — no longer blocked on positioning; they now wait on
+  `apps/web` and on real orders.
+- Legislative-change monitoring (ADR-0011, spec §9) — the article watcher, the signal triage
+  queue and the effective-date calendar. Sequenced after the authoring loop; the publication
+  feed is deliberately neither built nor bought.
 - GDPR P1: data export, account deletion as anonymization, retention cron, subprocessor list.
 - Notifications, payouts, SLA tracking, audit-log UI.

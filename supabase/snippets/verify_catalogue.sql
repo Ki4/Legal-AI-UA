@@ -141,6 +141,38 @@ begin
   exception when others then
     raise notice 'FAIL 8. a draft was blocked: %', sqlerrm;
   end;
+
+  ------------------- 8b. the live slot cannot be taken without publishing
+  -- Found by probing, not by reading: "live" is defined by status and "frozen"
+  -- by published_at, and a version inserted straight as paused used to satisfy
+  -- the first without the second — live and editable at once.
+  begin
+    insert into public.service_versions
+      (service_id, version, generation_mode, review_mode, status)
+    values ('00000000-0000-0000-0000-0000000000b1', 50, 'template', 'auto', 'paused');
+    raise notice 'FAIL 8b. a never-published version took the live slot';
+  exception when check_violation then
+    raise notice 'PASS 8b. the live slot requires publication';
+  end;
+
+  ------------------------------------- 8c. publication is a one-way door
+  begin
+    update public.service_versions set status = 'draft'
+    where id = '00000000-0000-0000-0000-0000000000c2';
+    raise notice 'FAIL 8c. a published version walked back to draft';
+  exception when others then
+    raise notice 'PASS 8c. no walk-back to a pre-publication status';
+  end;
+
+  ------------------------- 8d. but archiving an unpublished draft is fine
+  begin
+    insert into public.service_versions
+      (service_id, version, generation_mode, review_mode, status)
+    values ('00000000-0000-0000-0000-0000000000b1', 51, 'template', 'auto', 'archived');
+    raise notice 'PASS 8d. an abandoned draft can still be archived';
+  exception when others then
+    raise notice 'FAIL 8d. archiving a draft was blocked: %', sqlerrm;
+  end;
 end;
 $$;
 

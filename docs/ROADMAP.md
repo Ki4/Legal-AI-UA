@@ -38,6 +38,18 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   with `expectOne` for RLS-denied writes, one shared fixture store. `packages/db` reshaped to row
   types; price in integer minor units plus currency.
 
+## Done — the data-model decisions (2026-08-11)
+
+- ADR-0013: the client's intake channel is a chat bot; the field dictionary stays canonical and
+  channel-independent, the transcript is provenance only, an extracted answer must be confirmed
+  before it feeds generation, and erasure gains a second mechanism.
+- ADR-0014: role governs platform capability, assignment governs case data; admins are
+  depersonalised by default with break-glass as the recorded exception; clients do not live in
+  `profiles`.
+- `docs/specs/admin-console.md` §5.5 (where an answer comes from), §7.2 (the retention schedule),
+  §7.3 (who may read client data), §8.6 (entitlements and per-currency prices); backlog
+  ADM-54…57. Open questions Q10–Q13 closed; questions now carry stable ids.
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (design-system owner; DoD per design spec §11 for every item):
@@ -51,9 +63,12 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 6. StatCard · ChartCard · Avatar · Breadcrumbs · LangSwitcher.
 
 **Data layer** (PO): domain migrations — `services` + `service_versions`
-(`generation_mode`, `review_mode`), `document_blocks`, `orders` + `order_events` (append-only),
-law refs; explicit grants + RLS with a verification scenario per policy; seed; generated types
-replacing the hand-written mocks in `packages/db`.
+(`generation_mode`, `review_mode`), per-currency price rows, `document_blocks`, questionnaire
+fields with the GDPR triad and the Art. 9 marker, `orders` + `order_events` (append-only), law
+refs; freeze triggers per ADR-0009; explicit grants + RLS keyed on assignment rather than role
+(ADR-0014), with a verification scenario per policy; seed; generated types replacing the
+hand-written mocks in `packages/db`. Client-bearing tables wait on nothing else now that Q10–Q13
+are closed.
 
 **Core contract** (PO drafts, core owner countersigns): `packages/core-client` — typed HTTP
 contract + MSW mocks; the generation trace schema (stable block IDs, trust status,
@@ -71,9 +86,10 @@ written.
 
 ## Later (deliberately deferred)
 
-- Client platform `apps/web` — blocked on the chat-vs-forms channel spec (design spec §16).
-  The positioning question is answered: both one-off purchase and subscription, priced in UAH
-  (`docs/specs/admin-console.md` §8). The amounts themselves are still open.
+- Client platform `apps/web` — the channel question is now answered: intake is conversational
+  (ADR-0013), and the chat primitives are specified in design spec §16 but not built. Positioning
+  is answered too: one-off purchase and platform subscription, priced in UAH
+  (`docs/specs/admin-console.md` §8, §8.6). The amounts themselves are still open (Q9).
 - Payments, funnel dashboards, pricing — no longer blocked on positioning; they now wait on
   `apps/web` and on real orders.
 - Legislative-change monitoring (ADR-0011, spec §9) — the article watcher, the signal triage

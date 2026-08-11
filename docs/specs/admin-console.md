@@ -976,6 +976,10 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 - A one-off purchase covers a set of services; a subscription is to the platform and its plan
   decides coverage. Both resolve to one entitlement → services relation (§8.6).
 - Price is a row per currency on a version, and the freeze trigger covers it (§8.6).
+- Publication is a one-way door for a version's status, but not a one-way street: an archived
+  version may be returned to the live slot, which archives whatever held it. The content stays
+  frozen and issued documents keep pinning what they always pinned, so provenance is untouched —
+  this is a rollback, not an edit.
 - Inside the catalogue the split is commercial versus professional, not senior versus junior. An
   admin decides what is on sale, at what price, and when it is published; the assigned lawyer owns
   the draft of their own service, `review_mode` included, because they are the only person who can

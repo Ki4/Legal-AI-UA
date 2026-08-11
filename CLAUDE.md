@@ -17,7 +17,9 @@ Read this before any change. Zone files add detail; this file is the map.
 - `packages/db` — mock data + shared types, standing in for Supabase queries until wired.
 - `packages/i18n` — uk/en dictionaries (adding a locale is one line — see ADR-0006).
 - `supabase/` — migrations, edge functions, seed. See `supabase/CLAUDE.md`.
-- `docs/` — vision, ADRs, `docs/CONTRIBUTING.md`, session journals.
+- `docs/` — vision, ADRs, specs (`docs/specs/`), `docs/CONTRIBUTING.md`, session journals.
+- `.claude/` — `/session-start` and `/session-end`, and a SessionStart hook that puts branch
+  state, recent commits and the docs-check result into a fresh session's context.
 
 ## Language rule
 
@@ -54,3 +56,7 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
 - `supabase/CLAUDE.md` — migrations, RLS, grants.
 - `docs/CONTRIBUTING.md` — ownership zones, git workflow, review policy, spec tiers, GDPR rule,
   the assistant protocol. Read this before your first PR.
+- `docs/specs/admin-console.md` — the console's plan: screens, metadata, audit, law monitoring,
+  the backlog, and the questions still open.
+- `docs/specs/console-feature-dod.md` — what "done" means for a console feature, and how to write
+  acceptance criteria. `apps/console/src/features/services` is the reference it describes.

@@ -1,17 +1,23 @@
+import { asRole } from "@legal-ai/db";
+import type { Role } from "@legal-ai/db";
 import { Badge, Button } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
 import { supabase } from "../../../app/supabase";
 
-interface ProfileRow {
+// A screen-local shape, not a table row: `role` is narrowed here because the
+// column is plain `text` (see asRole). Typing the client with the generated
+// schema is what surfaced the gap — the previous hand-written row type simply
+// asserted the union and was believed.
+interface TeamMember {
   id: string;
   email: string;
   full_name: string | null;
-  role: "admin" | "lawyer" | null;
+  role: Role | null;
   created_at: string;
 }
 
 export function TeamPage() {
-  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [profiles, setProfiles] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -28,7 +34,7 @@ export function TeamPage() {
       setError(loadError.message);
       return;
     }
-    setProfiles(data ?? []);
+    setProfiles((data ?? []).map((row) => ({ ...row, role: asRole(row.role) })));
   }
 
   useEffect(() => {

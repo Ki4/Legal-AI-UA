@@ -1,3 +1,4 @@
+import type { Database } from "@legal-ai/db";
 import { createClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
@@ -9,4 +10,6 @@ if (!url || !anonKey) {
   );
 }
 
-export const supabase = createClient(url, anonKey);
+// Typed with the generated schema, so a query naming a column that no longer
+// exists fails to compile instead of returning undefined at runtime.
+export const supabase = createClient<Database>(url, anonKey);

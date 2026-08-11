@@ -33,17 +33,22 @@ begin
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","app_metadata":{"role":"admin"}}';
 
   ------------------------------------------------ 1. a write becomes an event
-  insert into public.services (id, slug, title, assigned_lawyer_id)
-  values ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce',
-          '00000000-0000-0000-0000-0000000000a1');
+  insert into public.services (id, slug, title)
+  values ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce');
+  insert into public.service_assignments (service_id, lawyer_id, is_primary)
+  values ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a1', true);
 
   set local role postgres;
+  -- Scoped to this script's own service: seed.sql creates its own, and their
+  -- events are just as real.
   select count(*) into n from public.audit_events
-  where entity_table = 'services' and action = 'insert';
+  where entity_table = 'services' and action = 'insert'
+    and service_id = '00000000-0000-0000-0000-0000000000b1';
 
   select actor_id, actor_role, service_id into who, role_at_the_time, svc
   from public.audit_events
   where entity_table = 'services' and action = 'insert'
+    and service_id = '00000000-0000-0000-0000-0000000000b1'
   order by id desc limit 1;
 
   raise notice '% 1. creating a service is recorded (% event)',
@@ -215,13 +220,15 @@ begin
 
   --------------------------------------------- 11. a lawyer sees their own
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","app_metadata":{"role":"lawyer"}}';
-  select count(*) into n from public.audit_events;
+  select count(*) into n from public.audit_events
+  where service_id = '00000000-0000-0000-0000-0000000000b1';
   raise notice '% 11. the assigned lawyer reads their service history (% rows)',
     case when n > 0 then 'PASS' else 'FAIL' end, n;
 
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a3","app_metadata":{"role":"lawyer"}}';
-  select count(*) into n from public.audit_events;
-  raise notice '% 11b. an unrelated lawyer reads none of it (% rows)',
+  select count(*) into n from public.audit_events
+  where service_id = '00000000-0000-0000-0000-0000000000b1';
+  raise notice '% 11b. an unrelated lawyer reads none of this service (% rows)',
     case when n = 0 then 'PASS' else 'FAIL' end, n;
 
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","app_metadata":{}}';

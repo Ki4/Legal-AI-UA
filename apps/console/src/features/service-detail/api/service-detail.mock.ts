@@ -1,5 +1,6 @@
 import { AppError } from "../../../shared/api/errors";
 import {
+  assignmentsOf,
   currentVersionRowOf,
   fixtureDelay,
   priceRowOf,
@@ -22,17 +23,19 @@ export const mockServiceDetailApi: ServiceDetailApi = {
     }
 
     const version = currentVersionRowOf(service.id);
+    // The accountable lawyer. Cover is not surfaced on this screen yet — the
+    // overview shows who answers for the service, and the assignment editor is
+    // ADM-10.
+    const primary = assignmentsOf(service.id).find((a) => a.is_primary);
 
     const detail: ServiceDetail = {
       id: service.id,
       slug: service.slug,
       title: service.title,
       summary: service.summary,
-      assignedLawyerId: service.assigned_lawyer_id,
+      assignedLawyerId: primary?.lawyer_id ?? null,
       assignedLawyerName:
-        service.assigned_lawyer_id === null
-          ? null
-          : (profileById(service.assigned_lawyer_id)?.full_name ?? null),
+        primary === undefined ? null : (profileById(primary.lawyer_id)?.full_name ?? null),
       currentVersion:
         version === null
           ? null

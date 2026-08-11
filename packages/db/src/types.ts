@@ -64,6 +64,13 @@ export type ServiceVersionPriceRow = Tables["service_version_prices"]["Row"];
 
 export type QuestionnaireFieldRow = Tables["questionnaire_fields"]["Row"];
 
+/**
+ * Who may act on a service. Exactly one row per service carries `is_primary`
+ * and with it the obligations; the rest are cover, with the same rights and
+ * none of the accountability.
+ */
+export type ServiceAssignmentRow = Tables["service_assignments"]["Row"];
+
 export type AuditEventRow = Tables["audit_events"]["Row"];
 
 /**

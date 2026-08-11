@@ -11,15 +11,19 @@ begin;
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'lawyer@test.local'),
-  ('00000000-0000-0000-0000-0000000000a2', 'admin@test.local');
+  ('00000000-0000-0000-0000-0000000000a2', 'admin@test.local'),
+  ('00000000-0000-0000-0000-0000000000a3', 'cover@test.local');
 
 update public.profiles set role = 'lawyer' where id = '00000000-0000-0000-0000-0000000000a1';
 update public.profiles set role = 'admin'  where id = '00000000-0000-0000-0000-0000000000a2';
+update public.profiles set role = 'lawyer' where id = '00000000-0000-0000-0000-0000000000a3';
 
-insert into public.services (id, slug, title, assigned_lawyer_id) values
-  ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce petition',
-   '00000000-0000-0000-0000-0000000000a1'),
-  ('00000000-0000-0000-0000-0000000000b2', 'orphan', 'Service with no lawyer', null);
+insert into public.services (id, slug, title) values
+  ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce petition'),
+  ('00000000-0000-0000-0000-0000000000b2', 'orphan', 'Service with no lawyer');
+
+insert into public.service_assignments (service_id, lawyer_id, is_primary) values
+  ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a1', true);
 
 insert into public.service_versions (id, service_id, version, generation_mode, review_mode) values
   ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000b1', 1,
@@ -189,8 +193,10 @@ begin
   ---------------------------------------------------------------- 9. lawyer
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","app_metadata":{"role":"lawyer"}}';
 
-  select count(*) into n from public.services;
-  raise notice '% 9. lawyer reads the catalogue (saw % rows)',
+  -- Scoped to this script's own fixtures: seed.sql also creates services, and
+  -- a scenario that counts the whole table asserts how much demo data exists.
+  select count(*) into n from public.services where slug in ('divorce', 'orphan');
+  raise notice '% 9. lawyer reads the catalogue (saw % of its 2 fixtures)',
     case when n = 2 then 'PASS' else 'FAIL' end, n;
 
   begin
@@ -218,11 +224,11 @@ begin
   end;
 
   begin
-    update public.services set assigned_lawyer_id = null
-    where id = '00000000-0000-0000-0000-0000000000b1';
-    raise notice 'FAIL 9e. lawyer reassigned their own service';
+    perform public.set_primary_lawyer('00000000-0000-0000-0000-0000000000b1',
+                                      '00000000-0000-0000-0000-0000000000a3');
+    raise notice 'FAIL 9e. lawyer handed accountability to someone else';
   exception when others then
-    raise notice 'PASS 9e. reassignment guarded: %', sqlerrm;
+    raise notice 'PASS 9e. only an admin changes who is accountable: %', sqlerrm;
   end;
 
   begin

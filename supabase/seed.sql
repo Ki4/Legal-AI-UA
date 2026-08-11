@@ -23,14 +23,21 @@ where id = '10000000-0000-0000-0000-000000000001';
 update public.profiles set full_name = 'Taras Bondarenko', role = 'lawyer'
 where id = '10000000-0000-0000-0000-000000000002';
 
-insert into public.services (id, slug, title, summary, assigned_lawyer_id) values
+insert into public.services (id, slug, title, summary) values
   ('20000000-0000-0000-0000-000000000001', 'divorce-application', 'Divorce application',
-   'Application to dissolve a marriage, filed with a district court.',
-   '10000000-0000-0000-0000-000000000001'),
+   'Application to dissolve a marriage, filed with a district court.'),
   ('20000000-0000-0000-0000-000000000002', 'alimony-claim', 'Alimony claim',
-   'Claim for child maintenance.', '10000000-0000-0000-0000-000000000002'),
+   'Claim for child maintenance.'),
   ('20000000-0000-0000-0000-000000000003', 'power-of-attorney', 'Power of attorney',
-   'General power of attorney, no legal consequences for the grantor.', null);
+   'General power of attorney, no legal consequences for the grantor.');
+
+-- Olena is accountable for the divorce service and Taras covers it, which is
+-- the arrangement the assignment table exists for. power-of-attorney has
+-- nobody, so the list has an unassigned row to render.
+insert into public.service_assignments (service_id, lawyer_id, is_primary) values
+  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', true),
+  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', false),
+  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', true);
 
 insert into public.service_versions
   (id, service_id, version, generation_mode, review_mode) values

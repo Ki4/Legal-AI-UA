@@ -9,6 +9,7 @@
 import type {
   GenerationTrace,
   ProfileRow,
+  ServiceAssignmentRow,
   ServiceRow,
   ServiceVersionPriceRow,
   ServiceVersionRow,
@@ -44,7 +45,6 @@ export const mockServices: ServiceRow[] = [
     slug: "divorce-application",
     title: "Divorce application",
     summary: "Application to dissolve a marriage, filed with a district court.",
-    assigned_lawyer_id: "usr-olena",
     created_at: "2026-05-12T09:20:00.000Z",
     updated_at: "2026-07-30T14:05:00.000Z",
   },
@@ -53,7 +53,6 @@ export const mockServices: ServiceRow[] = [
     slug: "alimony-claim",
     title: "Alimony claim",
     summary: "Claim for child maintenance.",
-    assigned_lawyer_id: "usr-taras",
     created_at: "2026-06-02T11:00:00.000Z",
     updated_at: "2026-07-28T08:41:00.000Z",
   },
@@ -62,9 +61,35 @@ export const mockServices: ServiceRow[] = [
     slug: "power-of-attorney",
     title: "Power of attorney",
     summary: "General power of attorney, no legal consequences for the grantor.",
-    assigned_lawyer_id: null,
     created_at: "2026-06-19T16:30:00.000Z",
     updated_at: "2026-07-04T10:15:00.000Z",
+  },
+];
+
+// Olena is accountable for the divorce service and Taras covers it — the
+// arrangement the assignment table exists for. svc-poa has nobody, so the list
+// has an unassigned row to render.
+export const mockServiceAssignments: ServiceAssignmentRow[] = [
+  {
+    service_id: "svc-divorce",
+    lawyer_id: "usr-olena",
+    is_primary: true,
+    assigned_at: "2026-05-12T09:20:00.000Z",
+    assigned_by: "usr-admin",
+  },
+  {
+    service_id: "svc-divorce",
+    lawyer_id: "usr-taras",
+    is_primary: false,
+    assigned_at: "2026-07-01T09:00:00.000Z",
+    assigned_by: "usr-olena",
+  },
+  {
+    service_id: "svc-alimony",
+    lawyer_id: "usr-taras",
+    is_primary: true,
+    assigned_at: "2026-06-02T11:00:00.000Z",
+    assigned_by: "usr-admin",
   },
 ];
 

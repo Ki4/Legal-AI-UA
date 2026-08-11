@@ -8,20 +8,21 @@
 import type { ServiceRow, ServiceVersionRow } from "@legal-ai/db";
 import { AppError } from "../../../shared/api/errors";
 import {
+  assignmentsOf,
   currentVersionRowOf,
   fixtureDelay,
   priceRowOf,
   profileById,
   profileRows,
+  serviceAssignmentRows,
   serviceRows,
 } from "../../../shared/api/fixture-store";
 import type { ServicesApi } from "./contract";
 import type { LawyerRef, ServiceFilter, ServiceListItem, ServiceVersionSummary } from "./types";
 
-function toLawyerRef(lawyerId: string | null): LawyerRef | null {
-  if (lawyerId === null) return null;
+function toLawyerRef(lawyerId: string): LawyerRef {
   // An id that resolves to no profile still means someone is assigned. Keeping
-  // the ref with a null name says "assigned, name unavailable"; returning null
+  // the ref with a null name says "assigned, name unavailable"; dropping it
   // would say "nobody assigned", which is a different and false statement.
   return { id: lawyerId, fullName: profileById(lawyerId)?.full_name ?? null };
 }
@@ -51,7 +52,13 @@ function toListItem(service: ServiceRow): ServiceListItem {
     id: service.id,
     slug: service.slug,
     title: service.title,
-    assignedLawyer: toLawyerRef(service.assigned_lawyer_id),
+    primaryLawyer:
+      assignmentsOf(service.id)
+        .filter((a) => a.is_primary)
+        .map((a) => toLawyerRef(a.lawyer_id))[0] ?? null,
+    coverLawyers: assignmentsOf(service.id)
+      .filter((a) => !a.is_primary)
+      .map((a) => toLawyerRef(a.lawyer_id)),
     currentVersion: currentVersionOf(service.id),
     createdAt: service.created_at,
     updatedAt: service.updated_at,
@@ -64,8 +71,11 @@ function matches(item: ServiceListItem, filter: ServiceFilter): boolean {
     if (status === undefined || !filter.status.includes(status)) return false;
   }
 
-  if (filter.lawyerId !== undefined && item.assignedLawyer?.id !== filter.lawyerId) {
-    return false;
+  if (filter.lawyerId !== undefined) {
+    const attached = [item.primaryLawyer, ...item.coverLawyers].some(
+      (ref) => ref?.id === filter.lawyerId,
+    );
+    if (!attached) return false;
   }
 
   if (filter.query !== undefined && filter.query.trim() !== "") {
@@ -95,7 +105,7 @@ export const mockServicesApi: ServicesApi = {
     return toListItem(service);
   },
 
-  async assignLawyer(id, lawyerId) {
+  async setPrimaryLawyer(id, lawyerId) {
     await fixtureDelay();
 
     const service = serviceRows.find((candidate) => candidate.id === id);
@@ -107,13 +117,30 @@ export const mockServicesApi: ServicesApi = {
       throw new AppError("validation", `No profile with id ${lawyerId}.`);
     }
 
-    // The Supabase implementation runs its returned rows through `expectOne`
-    // from shared/api/errors — a denial by an RLS USING clause writes nothing
-    // and reports no error, so the row count is the only signal. There is no
-    // RLS here, hence no call: the guard belongs where the risk is.
-    service.assigned_lawyer_id = lawyerId;
-    service.updated_at = new Date().toISOString();
+    // Mirrors set_primary_lawyer: the previous holder is demoted rather than
+    // detached, because losing accountability is not losing access.
+    for (const row of serviceAssignmentRows) {
+      if (row.service_id === id && row.is_primary) row.is_primary = false;
+    }
 
+    if (lawyerId !== null) {
+      const existing = serviceAssignmentRows.find(
+        (row) => row.service_id === id && row.lawyer_id === lawyerId,
+      );
+      if (existing) {
+        existing.is_primary = true;
+      } else {
+        serviceAssignmentRows.push({
+          service_id: id,
+          lawyer_id: lawyerId,
+          is_primary: true,
+          assigned_at: new Date().toISOString(),
+          assigned_by: null,
+        });
+      }
+    }
+
+    service.updated_at = new Date().toISOString();
     return toListItem(service);
   },
 };

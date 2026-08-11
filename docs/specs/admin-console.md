@@ -86,7 +86,7 @@ created, last changed, price. Filters by status, mode and lawyer. Search by titl
 
 - As an admin, I see every service with its status and mode, so I know what is currently on sale.
 - As an admin, I filter by status, so drafts stop competing with live services for my attention.
-- As an admin, I see who a service is assigned to, so I know who to ask about it.
+- As an admin, I see who is accountable for a service and who covers it, so I know who to ask.
 - As an admin, I create a service and land straight in its card.
 
 ### 4.2 Overview — `/services/:id`
@@ -95,7 +95,10 @@ Title, slug, description, assigned lawyer, dates, which version is live, quick a
 version, pause, reassign.
 
 - As an admin, I see at a glance which version is live and since when.
-- As an admin, I reassign a service to another lawyer, and the change is recorded.
+- As an admin, I move accountability for a service to another lawyer, and the change is recorded.
+  The previous holder stays on as cover — losing accountability is not losing access.
+- As the accountable lawyer, I add a colleague as cover before going away, without waiting for an
+  admin.
 - As an admin, I pause a service, so it stops accepting orders without being deleted.
 
 ### 4.3 Versions — `/services/:id/versions`
@@ -976,6 +979,13 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 - A one-off purchase covers a set of services; a subscription is to the platform and its plan
   decides coverage. Both resolve to one entitlement → services relation (§8.6).
 - Price is a row per currency on a version, and the freeze trigger covers it (§8.6).
+- Several lawyers may be attached to a service, exactly one of them accountable. Cover carries the
+  same rights and none of the obligation; the cabinet's obligations and the §9.16 triage deadline
+  address the accountable one. Only an admin moves accountability; the accountable lawyer arranges
+  their own cover (§14, Q18).
+- Staff read staff names. `profiles` is the staff directory and clients do not live in it
+  (ADR-0014), so a lawyer seeing a colleague's name is ordinary — but a registration awaiting
+  approval is a stranger who filled in a form, not a colleague, and stays hidden.
 - Publication is a one-way door for a version's status, but not a one-way street: an archived
   version may be returned to the live slot, which archives whatever held it. The content stays
   frozen and issued documents keep pinning what they always pinned, so provenance is untouched —
@@ -1027,12 +1037,7 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   lawyer in the loop for the other two modes.
 - **Q16. Invitations or self-registration?** ADM-34 either exists or does not.
 - **Q17. Deactivation: soft disable or account deletion?**
-- **Q18. Who covers a service while its assigned lawyer is away?** Settled: at least one lawyer per
-  service. Still open, and now operational rather than theoretical, because §9.16 commits to one
-  business day: a signal arriving on Friday against a single unavailable lawyer breaches the SLA
-  by Monday with nobody at fault.
-
-**Already answered, listed so they stop being reopened**
+  **Already answered, listed so they stop being reopened**
 
 - **Q10** — a one-off covers a set of services; a package is an entitlement with several, not a
   separate kind (§8.6).
@@ -1041,6 +1046,10 @@ reference to "Q9" written six months ago still points at the same question. Ids 
 - **Q12** — an admin does not see client personal data by role. Assignment grants it; break-glass
   is the recorded exception (§7.3, ADR-0014).
 - **Q13** — retention is fixed per artifact class in §7.2, transcripts included and shortest.
+- **Q18** — cover is a real assignment, not an arrangement. A service carries one accountable
+  lawyer and any number of cover lawyers with the same rights; the accountable one can add cover
+  themselves, so a Friday absence no longer breaches the §9.16 deadline by Monday with nobody at
+  fault (§13).
 
 - One-off versus subscription — both (§8).
 - Currency — UAH (§8). The amounts themselves are still open.

@@ -16,11 +16,19 @@ export interface ServicesApi {
   get(id: string): Promise<ServiceListItem>;
 
   /**
-   * Returns the updated service so the caller refreshes without a second round
-   * trip (ADR-0012, convention 5). Pass null to unassign.
+   * Moves accountability for a service. Admin-only, and atomic: it runs through
+   * the `set_primary_lawyer` RPC rather than two writes from the browser, since
+   * clearing the old primary and setting the new one halfway leaves a service
+   * with nobody accountable.
    *
-   * Not yet wired to a screen — it is here as the mutation exemplar the other
-   * features copy, and it is ADM-10 in docs/specs/admin-console.md.
+   * The previous holder stays attached as cover rather than being detached —
+   * losing accountability is not the same as losing access.
+   *
+   * Returns the updated service so the caller refreshes without a second round
+   * trip (ADR-0012, convention 5). Pass null to leave nobody accountable.
+   *
+   * Not yet wired to a screen — it is the mutation exemplar other features
+   * copy, and it is ADM-10 in docs/specs/admin-console.md.
    */
-  assignLawyer(id: string, lawyerId: string | null): Promise<ServiceListItem>;
+  setPrimaryLawyer(id: string, lawyerId: string | null): Promise<ServiceListItem>;
 }

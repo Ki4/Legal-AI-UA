@@ -58,8 +58,16 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   `full_generation` can no longer be configured to skip lawyer review.
 - `questionnaire_fields`: the canonical per-service dictionary, GDPR triad enforced by constraint
   (ADR-0008), Art. 9 special-category marker with its own basis (ADR-0013), keys immutable.
+- `audit_events` (ADM-6): the append-only action log of ADR-0010. Written by a `SECURITY DEFINER`
+  trigger with no INSERT grant anywhere else, immutable against UPDATE/DELETE/TRUNCATE, redaction
+  of personal-data columns by trigger argument. The access log waits for client data and the
+  gateway (§6.2).
 - Verification scripts at `supabase/snippets/verify_*.sql` — runnable, denials covered, and now
-  the required form for any policy (`supabase/CLAUDE.md`).
+  the required form for any policy (`supabase/CLAUDE.md`). 65 scenarios across three files.
+- Two defects in already-deployed schema, found by an adversarial probe rather than by review:
+  a version could hold the live slot without being published (and so stayed editable), and a
+  published version could walk back to `draft`. Both closed; both had passed a green 23-scenario
+  verification.
 
 ## Now — wave 1 (parallel, no file overlap)
 

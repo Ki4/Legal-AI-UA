@@ -78,6 +78,25 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   published version could walk back to `draft`. Both closed; both had passed a green 23-scenario
   verification.
 
+## Done — the card, and what a lawyer needs to see (2026-08-12)
+
+- The service card runs on live data (ADM-58). The list and the card had been reading different
+  sources, so every row in the list led to "Service not found" — two screens on two sources of
+  truth disagree about which records exist, not merely about content. Found by clicking around a
+  freshly seeded sandbox; no gate can see it, because both halves were individually correct.
+- `docs/specs/admin-console.md` §4.4 gains the field map (used / extra / missing) and §4.5 the
+  branching view. The tree of questions is a projection of block conditions over the field
+  dictionary, computed rather than authored: there is deliberately no editor for the chat bot's
+  script, because a second place to author the flow is a second source of truth (ADR-0013). Q19
+  opens on where a field's group lives.
+- The cloud project's migration ledger is **repaired** — seven rows, matching the filenames in
+  `supabase/migrations/` exactly. This closes the first item under "Left open" in the 2026-08-11
+  journal, which is where a reader would otherwise still find it recorded as outstanding.
+  `supabase db push` is unblocked; the CLI is still not linked to the project.
+- The root map claimed `packages/core-client` and `packages/i18n` as parts of the repository.
+  Neither directory exists; both are marked planned. `docs:check` cannot catch this — a package
+  that was never created is not a broken link.
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (design-system owner; DoD per design spec §11 for every item):

@@ -15,4 +15,4 @@ import { supabaseServiceDetailApi } from "./service-detail.supabase";
 export const serviceDetailApi: ServiceDetailApi = supabaseServiceDetailApi;
 
 export type { ServiceDetailApi } from "./contract";
-export type { ServiceDetail } from "./types";
+export type { AssignableLawyer, LawyerRef, ServiceDetail } from "./types";

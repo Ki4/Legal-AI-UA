@@ -105,37 +105,8 @@ describe("get", () => {
   });
 });
 
-describe("assignLawyer", () => {
-  it("returns the updated entity so the caller need not refetch", async () => {
-    const updated = await mockServicesApi.setPrimaryLawyer("svc-poa", "usr-taras");
-    expect(updated.primaryLawyer?.fullName).toBe("Taras Bondarenko");
-  });
-
-  it("makes the write visible to the next read", async () => {
-    await mockServicesApi.setPrimaryLawyer("svc-poa", "usr-taras");
-    expect((await mockServicesApi.get("svc-poa")).primaryLawyer?.id).toBe("usr-taras");
-  });
-
-  it("unassigns when given null", async () => {
-    await mockServicesApi.setPrimaryLawyer("svc-divorce", null);
-    const after = await mockServicesApi.get("svc-divorce");
-    expect(after.primaryLawyer).toBeNull();
-    // Demoted, not detached: losing accountability is not losing access.
-    expect(after.coverLawyers.map((l) => l.id)).toContain("usr-olena");
-  });
-
-  it("rejects an unknown profile", async () => {
-    await expect(mockServicesApi.setPrimaryLawyer("svc-poa", "usr-ghost")).rejects.toMatchObject({
-      code: "validation",
-    });
-  });
-
-  it("throws not_found for an unknown service", async () => {
-    await expect(mockServicesApi.setPrimaryLawyer("svc-nope", null)).rejects.toMatchObject({
-      code: "not_found",
-    });
-  });
-});
+// The `setPrimaryLawyer` cases moved with the operation itself, to
+// `features/service-detail/api/service-detail.mock.test.ts` (ADM-10).
 
 describe("a lawyer who is assigned but unreadable", () => {
   it("is not reported as unassigned", async () => {

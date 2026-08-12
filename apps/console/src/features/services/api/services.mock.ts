@@ -13,8 +13,6 @@ import {
   fixtureDelay,
   priceRowOf,
   profileById,
-  profileRows,
-  serviceAssignmentRows,
   serviceRows,
 } from "../../../shared/api/fixture-store";
 import type { ServicesApi } from "./contract";
@@ -102,45 +100,6 @@ export const mockServicesApi: ServicesApi = {
     if (!service) {
       throw new AppError("not_found", `No service with id ${id}.`);
     }
-    return toListItem(service);
-  },
-
-  async setPrimaryLawyer(id, lawyerId) {
-    await fixtureDelay();
-
-    const service = serviceRows.find((candidate) => candidate.id === id);
-    if (!service) {
-      throw new AppError("not_found", `No service with id ${id}.`);
-    }
-
-    if (lawyerId !== null && !profileRows.some((profile) => profile.id === lawyerId)) {
-      throw new AppError("validation", `No profile with id ${lawyerId}.`);
-    }
-
-    // Mirrors set_primary_lawyer: the previous holder is demoted rather than
-    // detached, because losing accountability is not losing access.
-    for (const row of serviceAssignmentRows) {
-      if (row.service_id === id && row.is_primary) row.is_primary = false;
-    }
-
-    if (lawyerId !== null) {
-      const existing = serviceAssignmentRows.find(
-        (row) => row.service_id === id && row.lawyer_id === lawyerId,
-      );
-      if (existing) {
-        existing.is_primary = true;
-      } else {
-        serviceAssignmentRows.push({
-          service_id: id,
-          lawyer_id: lawyerId,
-          is_primary: true,
-          assigned_at: new Date().toISOString(),
-          assigned_by: null,
-        });
-      }
-    }
-
-    service.updated_at = new Date().toISOString();
     return toListItem(service);
   },
 };

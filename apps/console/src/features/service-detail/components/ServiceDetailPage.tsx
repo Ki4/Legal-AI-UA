@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router";
 import { AppError } from "../../../shared/api/errors";
 import { formatDate, formatMoney } from "../../../shared/format";
 import { serviceDetailApi, type ServiceDetail } from "../api";
+import { AssignmentSection } from "./AssignmentSection";
 
 export function ServiceDetailPage() {
   const { serviceId } = useParams();
@@ -88,15 +89,14 @@ export function ServiceDetailPage() {
             ? formatMoney(version.priceMinor, version.currency)
             : "—"}
         </dd>
-        <dt className="text-inkSoft">Assigned lawyer</dt>
-        <dd>
-          {service.assignedLawyerId === null
-            ? "nobody"
-            : (service.assignedLawyerName ?? "assigned — name unavailable")}
-        </dd>
         <dt className="text-inkSoft">Last changed</dt>
         <dd>{formatDate(service.updatedAt)}</dd>
       </dl>
+
+      {/* Who is assigned used to be one line in the table above. It is a
+          section of its own now because it is editable and because there is
+          more than one of them: an accountable lawyer and any number of cover. */}
+      <AssignmentSection service={service} onChanged={setService} />
 
       <Link
         to={`/services/${service.id}/anatomy`}

@@ -170,22 +170,4 @@ export const supabaseServicesApi: ServicesApi = {
 
     return toListItem(data);
   },
-
-  async setPrimaryLawyer(id, lawyerId) {
-    // An RPC rather than two writes: clearing the old primary and setting the
-    // new one are one decision, and a browser interrupted between them leaves a
-    // service with nobody accountable. The function checks the admin role
-    // itself, so a denial arrives as an error rather than as silence.
-    const { error } = await supabase.rpc("set_primary_lawyer", {
-      target_service: id,
-      // `supabase gen types` cannot express argument nullability, so it types
-      // this as string. Postgres accepts null for a uuid argument, and the
-      // function treats it as "leave nobody accountable" — which is the whole
-      // reason the contract allows null.
-      new_lawyer: lawyerId as string,
-    });
-    if (error) throw fromPostgrest(error, "Changing the accountable lawyer");
-
-    return this.get(id);
-  },
 };

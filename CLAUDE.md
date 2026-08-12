@@ -10,12 +10,13 @@ Read this before any change. Zone files add detail; this file is the map.
 - `apps/web` — client platform (not built yet).
 - `apps/core` (future) — AI generation pipeline, owned by the core owner, called only
   through a Supabase Edge Function gateway. See `docs/adr/0004-ai-core-separate-service.md`.
-- `packages/core-client` — typed HTTP contract + mocks for the core, so frontend work proceeds
-  before the core exists.
+- `packages/core-client` (planned, not yet created) — typed HTTP contract + mocks for the core, so
+  frontend work proceeds before the core exists.
 - `packages/ui` — the design system (owned by the design-system owner). Console features consume
   it; it never imports from `apps/*`.
 - `packages/db` — mock data + shared types, standing in for Supabase queries until wired.
-- `packages/i18n` — uk/en dictionaries (adding a locale is one line — see ADR-0006).
+- `packages/i18n` (planned, not yet created) — uk/en dictionaries (adding a locale is one line —
+  see ADR-0006). Console copy is hardcoded English until it exists.
 - `supabase/` — migrations, edge functions, seed. See `supabase/CLAUDE.md`.
 - `docs/` — vision, ADRs, specs (`docs/specs/`), `docs/CONTRIBUTING.md`, session journals.
 - `.claude/` — `/session-start` and `/session-end`, and a SessionStart hook that puts branch

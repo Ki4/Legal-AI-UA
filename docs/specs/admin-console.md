@@ -126,6 +126,28 @@ Key, label, type, required, personal-data flag with legal basis and retention. D
   period — the field will not save without them.
 - As a lawyer, I see how many blocks use a field, and I cannot delete one that is in use.
 
+**Two views of the same dictionary.** The list is for editing; the map is for judging. The map
+groups fields the way a client meets them — claimant, respondent, children, money — and colours
+each by whether the template actually uses it:
+
+- `used` — a block references the field.
+- `extra` — the client is asked and no block uses the answer. Not automatically a defect: a field
+  may exist for triage or for the lawyer's own notes. It is a question worth having asked once.
+- `missing` — a block needs the field and nothing collects it. This one is always a defect, and it
+  is why the map exists. Today it surfaces as a blank line in a finished court filing, found by a
+  lawyer reading the output — which is to say, found by the last person who should have to.
+
+Coverage is computed from the block ↔ field links, so the map ships with ADM-20 and not before.
+Without them the three colours would be guesses.
+
+- As a lawyer, I see which fields the template needs and nobody asks for, before a client meets the
+  questionnaire rather than after.
+- As a lawyer, I see fields the client is asked for that no block uses, and decide whether they
+  earn their place.
+
+Grouping has no home in the schema yet — the dictionary carries `position` and nothing else
+(Q19).
+
 ### 4.5 Template — `/services/:id/template`
 
 Upload of the source document and extraction status. Block tree: title, text, branching condition,
@@ -137,6 +159,27 @@ linked fields, linked law articles, "needs attention" flag. Condition editor.
 - As a lawyer, blocks flagged "needs attention" come first, so I do not have to read everything.
 - As a lawyer, I edit a block's text and its condition, to correct what was extracted wrongly.
 - As a lawyer, I cannot edit a published template version — I create a new one.
+
+**The branching view.** Conditions on blocks are what make a questionnaire a tree rather than a
+list, and the tree is worth seeing whole: a lawyer judging a service wants to know which questions
+hang off which answer, not read twenty conditions one block at a time.
+
+Read from the other end, that same graph _is_ the order the chat bot asks its questions. ADR-0013
+settles what follows: chat renders the schema and is not a parallel model, so the tree is a
+**projection** of block conditions over the field dictionary, computed rather than authored.
+
+There is therefore deliberately no editor for the bot's script. A second place to author the flow
+would be a second source of truth, and the two would disagree inside a month — the shape of every
+"one thing said twice" defect this project has already hit. The lawyer edits conditions on blocks
+(ADM-16) and reads the resulting tree here.
+
+- As a lawyer, I see the questionnaire as a tree, so I know which answer opens which branch.
+- As a lawyer, I see a branch no answer can reach, because a condition nothing satisfies is a
+  block that will never appear in any document.
+
+**Who may look.** The template, the field map and the law dependencies carry no client data, so
+both roles read them freely. An issued document is the other case entirely and is governed by §7.3:
+assignment grants it, and an admin reaches it only through a recorded break-glass grant.
 
 ### 4.6 Runs — `/services/:id/runs`
 
@@ -1035,6 +1078,12 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   the amounts are not. The euro figures discussed in §8 are a recorded conversion so the order of
   magnitude survives, not a decision.
 - **Q14. Delivery format to the client — .docx, .pdf, or both?** Part of the passport (§5.3).
+- **Q19. Does a questionnaire field carry a group, or is grouping read off the key prefix?** The
+  map in §4.4 shows fields grouped the way a client meets them, and the dictionary has only
+  `position`. The prefix convention (`respondent_*`) already exists in practice and costs nothing
+  today; a column costs one migration and survives the day a group is renamed. Grouping in a key
+  is data hidden inside a string, and keys are immutable — which makes the cheap answer the one
+  that cannot be undone. Blocks only the grouped view, not the field list.
 
 **Blocking wave planning**
 

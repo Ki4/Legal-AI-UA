@@ -31,8 +31,8 @@ export function ServicesListPage() {
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Services</h1>
       <p className="text-sm text-inkSoft">
-        Served by this feature&apos;s <code>api/</code> layer. It reads fixtures today and Supabase
-        later; no component on this screen changes when that happens.
+        Served by this feature&apos;s <code>api/</code> layer, reading Supabase. Moving it off
+        fixtures changed one line and no component on this screen.
       </p>
 
       {error !== null && (

@@ -105,10 +105,11 @@ written.
 
 ## Next — wave 2
 
-- Console screens on real data: the service list is there (ADM-7). Still on fixtures or unbuilt —
-  the service card, the versions tab with pause/resume, the assignment editor (ADM-10, whose RPC
-  already exists), and the orders table with its event timeline. `team` and `anatomy` never joined
-  the api/ layer at all, and `team` is now the only feature querying Supabase outside it.
+- Console screens on real data: the service list (ADM-7) and the service card (ADM-58) are there.
+  Still on fixtures or unbuilt — the versions tab with pause/resume, the assignment editor
+  (ADM-10, whose RPC already exists), and the orders table with its event timeline. `team` and
+  `anatomy` never joined the api/ layer at all, and `team` is now the only feature querying
+  Supabase outside it.
 - `packages/i18n` (uk + en; adding a locale = one line, per ADR-0006) and dictionary adoption
   in console.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.

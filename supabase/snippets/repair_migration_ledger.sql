@@ -32,6 +32,10 @@ order by version;
 -- Every migration this repository has shipped. `statements` is left null on
 -- purpose: the CLI writes it as a convenience when it applies a file itself,
 -- and nothing reads it back. Version and name are what `db push` compares.
+--
+-- This list has to grow with every migration, and it will not do so by itself.
+-- The only thing that makes it honest is the check at the bottom: a version
+-- recorded here that was never applied is worse than an unrecorded one.
 insert into supabase_migrations.schema_migrations (version, name) values
   ('20260730120000', 'auth_profiles'),
   ('20260801120000', 'explicit_client_grants'),
@@ -39,10 +43,11 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260811130000', 'questionnaire_fields'),
   ('20260811140000', 'service_version_lifecycle_guards'),
   ('20260811150000', 'audit_event_log'),
-  ('20260811160000', 'service_assignments')
+  ('20260811160000', 'service_assignments'),
+  ('20260812120000', 'practice_areas')
 on conflict (version) do nothing;
 
--- Confirm. Seven rows, matching the filenames in supabase/migrations/ exactly.
+-- Confirm. One row per file in supabase/migrations/, and no more.
 -- A version recorded here that was never actually applied is worse than an
 -- unrecorded one: `db push` will skip it, and the schema will silently lack
 -- whatever it contained.

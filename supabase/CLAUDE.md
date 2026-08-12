@@ -30,6 +30,21 @@ sandbox and read the ACL:
 select relacl from pg_class where relname = '<table>' and relnamespace = 'public'::regnamespace;
 ```
 
+## Applying a migration by hand means repairing the ledger
+
+`psql < migration.sql` puts the schema in place and tells the CLI nothing. The next `db push` then
+believes the migration was never applied, which is how the cloud project spent a week with seven
+migrations the CLI could not see.
+
+Two consequences, both cheap and both easy to skip:
+
+- `snippets/repair_migration_ledger.sql` lists every migration this repository has shipped. It does
+  not grow by itself. **A new migration adds a line to it in the same PR.**
+- Prefer `pnpm exec supabase db reset` locally over applying a file by hand. It rebuilds from the
+  migrations and the seed, so the ledger is honest by construction — and it is the only thing that
+  checks the migration applies to an _empty_ database, which is the case every fresh environment is
+  and no incremental apply ever tests.
+
 ## Every policy needs a verification scenario
 
 Not a paragraph in a PR description — a **script**, at `snippets/verify_<area>.sql`. It creates its

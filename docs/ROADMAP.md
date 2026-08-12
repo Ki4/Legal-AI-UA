@@ -92,7 +92,8 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 - The cloud project's migration ledger is **repaired** — seven rows, matching the filenames in
   `supabase/migrations/` exactly. This closes the first item under "Left open" in the 2026-08-11
   journal, which is where a reader would otherwise still find it recorded as outstanding.
-  `supabase db push` is unblocked; the CLI is still not linked to the project.
+  `supabase db push` is unblocked. The CLI was not linked at that point; it was on 2026-08-13 —
+  see below.
 - The root map claimed `packages/core-client` and `packages/i18n` as parts of the repository.
   Neither directory exists; both are marked planned. `docs:check` cannot catch this — a package
   that was never created is not a broken link.
@@ -105,6 +106,45 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   them turned scenario 11 red, correctly — it had been reading the audit log as whichever lawyer
   the previous scenario left in the session. A scenario that depends on the order of the ones
   before it measures the script, not the schema.
+
+## Done — the catalogue gains an axis (2026-08-13)
+
+- ADR-0015 and spec §5.6: a service sits in exactly one practice area, a lawyer holds competences
+  an admin grants, and competence steers the assignment picker without locking the table. The
+  client's rubrics and the client's industry are separate axes — Ukrainian firms' own service
+  pages list `сімейне` next to `IT`, which is three axes flattened into one menu because a menu is
+  all a website has.
+- `practice_areas` (ADM-59), keyed by its code and seeded with fifteen branches. A table rather
+  than an enum so that the first maritime matter is an insert, not a deploy. `services.practice_area`
+  is `not null`; existing rows backfilled to `civil`, because an axis half the catalogue lacks is
+  not an axis.
+- The catalogue is browsable (ADM-61): cards by default grouped by area, the table for scanning,
+  chips carrying their counts, search over title, slug and summary, and filter state in the URL so
+  a narrowed catalogue is a link. Three emptinesses — nothing exists, nothing matches, the request
+  failed — rather than the one screen lists usually collapse them into.
+- The assignment editor landed on the card (ADM-10). Everything it needed had existed since
+  2026-08-11: the table, the RPC, the policies, and `setPrimaryLawyer` written as an exemplar and
+  never called. What was missing was the screen, which is a shape worth recognising — work can look
+  blocked when it is only unassembled.
+- Two failures that only appeared because something new leaned on the old: a verification scenario
+  that had been passing because of the session state a previous scenario left behind, and four
+  scripts whose fixtures predated a `not null` column. Both were found by adding scenarios rather
+  than by reading. 98 scenarios across five files now.
+- The CLI is linked, and both ledgers hold the same eight versions. The practice-area migration had
+  been applied to the cloud by hand, so `db push` would have tried to create a table that already
+  exists — `migration repair` was the instrument, and knowing which one required looking rather
+  than assuming. `db diff` confirmed the hand-application was complete _before_ the ledger was told
+  it was: a version recorded as applied when it only half was is worse than one that is missing.
+  The same drift had appeared locally that morning, one day after the journal wrote it down for the
+  cloud, which is why `supabase/CLAUDE.md` now carries the rule rather than the story.
+- Two things live in the cloud that no migration creates, found by that same diff and left alone
+  deliberately: the `ensure_rls` event trigger with `rls_auto_enable`, which enables RLS on any new
+  table by itself, and `alter default privileges … revoke update on sequences` for the three client
+  roles. The first means the two environments disagree about what protects a table that forgot its
+  own `enable row level security` — the cloud is covered, the sandbox where it would be caught is
+  not. The second looks like ADR-0007 applied through the dashboard and never captured, which
+  `supabase/CLAUDE.md` forbids. Both need a decision: written into a migration, or recorded as
+  accepted divergence.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -133,10 +173,15 @@ written.
 
 ## Next — wave 2
 
-- Console screens on real data: the service list (ADM-7), the service card (ADM-58) and the
-  assignment editor on it (ADM-10) are there. Still on fixtures or unbuilt — the versions tab with
-  pause/resume, and the orders table with its event timeline. `team` and `anatomy` never joined the
-  api/ layer at all, and `team` is now the only feature querying Supabase outside it.
+- Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
+  service card (ADM-58) and the assignment editor on it (ADM-10) are there. Still on fixtures or
+  unbuilt — the versions tab with pause/resume, and the orders table with its event timeline.
+  `team` and `anatomy` never joined the api/ layer at all, and `team` is now the only feature
+  querying Supabase outside it.
+- Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
+  lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
+  on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
+  into a claim the firm makes about a person, with a retention question attached.
 - `packages/i18n` (uk + en; adding a locale = one line, per ADR-0006) and dictionary adoption
   in console.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.

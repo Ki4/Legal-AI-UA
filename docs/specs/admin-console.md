@@ -90,6 +90,45 @@ one screen, and a **card grid** where each service shows what it is — area, st
 accountable lawyer, price — without being opened. The card view is the default. The table exists
 because a table is better at forty rows than any grid, not as a fallback.
 
+In the card view, cards are grouped under practice-area headings while no area filter is active,
+and ungrouped once one is chosen — a heading above a list of one thing is noise. Card order is
+area, then title. Sorting by column belongs to the table and waits for the design system's table
+sorting; inventing a sort control for the grid would be a local one-off (DoD §6).
+
+**The filter state lives in the URL**, not in component state:
+`/services?area=family,inheritance&status=draft&q=аліменти&view=cards`. This is what makes the back
+button work, a reload survivable, and "look at this" a link a lawyer can paste to a colleague.
+The view toggle is remembered locally as the next visit's default; the URL still wins when present.
+
+**Every filter value carries the count behind it**, and values with a count of zero are not
+offered at all. A filter that can be clicked into an empty result teaches the reader that the
+screen is broken when it is merely honest.
+
+The counts have a cost worth stating rather than hiding. To know how many services each area holds,
+the layer needs the set with every filter applied _except_ the area one — so the query carries the
+other filters, the counts are computed over its result, and the area filter is applied in memory
+afterwards. That is one round trip and it is honest up to a few hundred services. Past that the
+counts move into an RPC that aggregates in Postgres. Recording the ceiling is the point: an
+undocumented limit is discovered as a bug.
+
+**Three different emptinesses, three different screens.** DoD §4 requires that empty and error not
+share a rendering; the catalogue needs one distinction more than that:
+
+| What happened         | What the reader is told                              |
+| --------------------- | ---------------------------------------------------- |
+| No services exist yet | "No services yet" — with the way to create the first |
+| Filters excluded all  | "Nothing matches" — with a control that clears them  |
+| The request failed    | An error, and no claim about how many services exist |
+
+And the case that decides whether search feels helpful or stupid: a search that matches nothing
+_inside the current area filter_ while matching elsewhere must say so — "nothing in Family; 2
+matches in other areas" — and offer to drop the filter. Rendered as a plain empty result, it tells
+a lawyer the firm has no such service, and the next thing they do is create a duplicate of one that
+already exists.
+
+Search matches title, slug and summary, case-insensitively. It is not scoped silently by anything
+the reader cannot see.
+
 - As an admin, I see every service with its status and mode, so I know what is currently on sale.
 - As an admin, I filter by status, so drafts stop competing with live services for my attention.
 - As a lawyer, I narrow the catalogue to my practice area, so I am reading the services I could
@@ -1096,6 +1135,10 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   genre generated from a template; if that changes it is a decision, not an omission.
 - The catalogue has two renderings and the reader picks: a card grid, which is the default, and a
   table for scanning many rows (§4.1).
+- Catalogue filter state lives in the URL, so a filtered view is a link. Filter values carry their
+  counts and a value with no rows behind it is not offered (§4.1).
+- "Nothing exists", "nothing matches your filter" and "the request failed" are three screens, not
+  one (§4.1).
 - Inside the catalogue the split is commercial versus professional, not senior versus junior. An
   admin decides what is on sale, at what price, and when it is published; the assigned lawyer owns
   the draft of their own service, `review_mode` included, because they are the only person who can

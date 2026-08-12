@@ -39,6 +39,10 @@ declare
   ok boolean;
   msg text;
 begin
+  -- Stated rather than inherited: as the owner, so this block's assertions are
+  -- about the schema and not about anybody's rights.
+  set local role postgres;
+
   ------------------------------------------------------------------ 1. publish
   update public.service_versions set status = 'published'
   where id = '00000000-0000-0000-0000-0000000000c1';
@@ -177,6 +181,11 @@ begin
   exception when others then
     raise notice 'FAIL 8d. archiving a draft was blocked: %', sqlerrm;
   end;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -282,6 +291,11 @@ begin
   select count(*) into n from public.services;
   raise notice '% 11. a user with no role sees nothing (saw % rows)',
     case when n = 0 then 'PASS' else 'FAIL' end, n;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 

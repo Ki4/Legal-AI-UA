@@ -65,6 +65,28 @@ day someone adds a table that quietly widens a policy.
 filters the row out, the statement matches nothing, and the client sees an empty array rather than
 an error. A scenario that only proves the allowed case proves half of nothing.
 
+**Every `do $$` block states who it is acting as, and hands the session back.** `set local` lasts
+for the whole transaction, so a block that declares nothing runs as whoever the block before it
+happened to leave behind. That is not hypothetical: one scenario here was passing only because its
+predecessor had left a conveniently-assigned lawyer in the session, and detaching that lawyer
+turned the check red while the thing it tested worked perfectly. So every block opens with
+`set local role …` or `set local request.jwt.claims …`, and closes with:
+
+```sql
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+```
+
+A block that then forgets to declare itself runs with no role and no claims, gets denied
+everywhere, and fails loudly instead of passing for the wrong reason. `pnpm check:sql` enforces
+both halves.
+
+**The scripts run in CI, not only by hand** (`.github/workflows/sql.yml`, on any change under
+`supabase/`). `pnpm verify:sql` runs the same thing locally against the sandbox. This is the
+difference that mattered on 2026-08-12: a `not null` column broke the TypeScript fixtures and the
+SQL fixtures identically, and only the TypeScript ones said so, because only they were being
+executed by something.
+
 ## The one hard review rule
 
 Any migration touching access control (RLS policies, `auth.*`, JWT `app_metadata`, consents)

@@ -36,6 +36,10 @@ do $$
 declare
   n integer;
 begin
+  -- Stated rather than inherited: as the owner, so this block's assertions are
+  -- about the schema and not about anybody's rights.
+  set local role postgres;
+
   ---------------------------------------- 1. a service cannot exist without one
   begin
     insert into public.services (slug, title) values ('no-area', 'No area');
@@ -102,6 +106,11 @@ begin
   exception when check_violation then
     raise notice 'PASS 6b. a code has to be usable in a URL';
   end;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -167,6 +176,11 @@ begin
     and 'practice_area' = any (changed_columns);
   raise notice '% 11b. the move is on the record with the column named (% events)',
     case when n = 1 then 'PASS' else 'FAIL' end, n;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 

@@ -37,6 +37,10 @@ insert into public.service_assignments (service_id, lawyer_id, is_primary) value
 
 do $$
 begin
+  -- Stated rather than inherited: as the owner, so this block's assertions are
+  -- about the schema and not about anybody's rights.
+  set local role postgres;
+
   ------------------------------------------- 1. exactly one primary per service
   begin
     insert into public.service_assignments (service_id, lawyer_id, is_primary)
@@ -71,6 +75,11 @@ begin
   exception when others then
     raise notice 'PASS 3. cover is not enough to publish against: %', sqlerrm;
   end;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -162,6 +171,11 @@ begin
     and lawyer_id = '00000000-0000-0000-0000-0000000000a1';
   raise notice '% 9b. the previous holder stays on as cover rather than vanishing',
     case when n = 1 then 'PASS' else 'FAIL' end;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -226,6 +240,11 @@ begin
   get diagnostics n = row_count;
   raise notice '% 14b. an admin can detach the accountable lawyer (% rows) — app-level filter only',
     case when n = 1 then 'PASS' else 'FAIL' end, n;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -247,6 +266,11 @@ begin
   where id = '00000000-0000-0000-0000-0000000000a5';
   raise notice '% 10b. a pending registration is not a colleague (% rows)',
     case when n = 0 then 'PASS' else 'FAIL' end, n;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -271,6 +295,11 @@ begin
     and service_id = '00000000-0000-0000-0000-0000000000b1';
   raise notice '% 11. assignment changes are on the record (% events)',
     case when n > 0 then 'PASS' else 'FAIL' end, n;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 

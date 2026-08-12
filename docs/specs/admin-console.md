@@ -81,11 +81,20 @@ a person looks for what is owed today.
 
 ### 4.1 Service list — `/services`
 
-Columns: title, generation mode, review mode, status, current published version, assigned lawyer,
-created, last changed, price. Filters by status, mode and lawyer. Search by title. Sort.
+Columns: title, practice area, generation mode, review mode, status, current published version,
+assigned lawyer, created, last changed, price. Filters by status, mode, lawyer and practice area.
+Search by title. Sort.
+
+Two renderings of the same list, and the reader picks: a **table** for scanning many services on
+one screen, and a **card grid** where each service shows what it is — area, status, live version,
+accountable lawyer, price — without being opened. The card view is the default. The table exists
+because a table is better at forty rows than any grid, not as a fallback.
 
 - As an admin, I see every service with its status and mode, so I know what is currently on sale.
 - As an admin, I filter by status, so drafts stop competing with live services for my attention.
+- As a lawyer, I narrow the catalogue to my practice area, so I am reading the services I could
+  actually be asked about.
+- As a lawyer, I see what a service is from the list itself, without opening each one to find out.
 - As an admin, I see who is accountable for a service and who covers it, so I know who to ask.
 - As an admin, I create a service and land straight in its card.
 
@@ -97,6 +106,9 @@ version, pause, reassign.
 - As an admin, I see at a glance which version is live and since when.
 - As an admin, I move accountability for a service to another lawyer, and the change is recorded.
   The previous holder stays on as cover — losing accountability is not losing access.
+- As an admin, the picker shows me who is competent in this service's area first, so I am not
+  choosing from a roll of every lawyer in the firm. Picking somebody outside their competence is
+  possible and takes a reason (§5.6).
 - As the accountable lawyer, I add a colleague as cover before going away, without waiting for an
   admin.
 - As an admin, I pause a service, so it stops accepting orders without being deleted.
@@ -327,6 +339,38 @@ produced, an extraction over it, canonical structured data as the only thing dow
 The field dictionary (§4.4) gains one attribute for this: a special-category marker with its own
 Art. 9(2) basis, because that is a different statement from an Art. 6(1) basis and one column
 cannot hold both.
+
+### 5.6 Practice area and competence
+
+Every service sits in exactly one practice area, and it is required (ADR-0015). The area is a row
+in `practice_areas`, not a value in an enum, so adding one is an insert and retiring one is a
+flag — the day this firm takes its first maritime matter must not be a migration.
+
+A lawyer holds competences: a set of areas an admin has granted them. The two together answer a
+question nothing could answer before — **who should be offered this service, or cover on it**.
+
+The rule the screens follow:
+
+- The assignment picker (§4.2) offers competent lawyers first, and everyone else under a heading
+  that says they are outside their competence.
+- Choosing somebody outside it is allowed and takes a reason, which goes to `audit_events`.
+- Nothing about competence is enforced by a constraint. A lock would break the case cover exists
+  for — Friday, the competent lawyers away, the document due — and a firm that cannot staff around
+  a lock will keep the table loose enough never to block anything, which is the same as not having
+  it. Recorded exceptions are the pattern this repo already uses for the same shape (ADR-0014).
+
+Three things this is deliberately not:
+
+- **Not the client's menu.** A person looking for help thinks "my father died and there is a
+  flat", not "спадкове право". The client-facing rubrics are a second axis, many-to-many with
+  services, and they arrive with `apps/web`. They do not touch competence.
+- **Not the norm register.** Which articles a service depends on is tracked per norm (§9.3,
+  ADR-0011). An area is for people; the register is for monitoring.
+- **Not the client's industry.** `IT`, `агро`, `медицина` are how firms segment clients, not
+  branches of law. If that is ever wanted it is a third axis.
+
+A service carries its area on `services` rather than on a version: the area is what the service
+_is_, and one that changes area is a different service.
 
 ## 6. Audit
 
@@ -788,13 +832,15 @@ Whatever is not recorded when it happens is gone.
 
 ### Catalogue
 
-| ID     | Task                         | Depends | Size |
-| ------ | ---------------------------- | ------- | ---- |
-| ADM-7  | Service list on live data    | ADM-1   | S    |
-| ADM-8  | Create and edit a service    | ADM-1   | S    |
-| ADM-9  | Service versions             | ADM-1   | M    |
-| ADM-10 | Assign a service to a lawyer | ADM-1   | S    |
-| ADM-58 | Service card on live data    | ADM-7   | S    |
+| ID     | Task                                       | Depends | Size |
+| ------ | ------------------------------------------ | ------- | ---- |
+| ADM-7  | Service list on live data                  | ADM-1   | S    |
+| ADM-8  | Create and edit a service                  | ADM-1   | S    |
+| ADM-9  | Service versions                           | ADM-1   | M    |
+| ADM-10 | Assign a service to a lawyer               | ADM-1   | S    |
+| ADM-58 | Service card on live data                  | ADM-7   | S    |
+| ADM-59 | Practice areas, one per service (§5.6)     | ADM-1   | S    |
+| ADM-61 | Catalogue browsing: area filter, card view | ADM-59  | M    |
 
 ADM-58 is listed separately from ADM-7 rather than folded into it, because the gap between them
 had a symptom: a list reading Postgres and a card reading fixtures disagree about which records
@@ -894,12 +940,13 @@ Publication-feed ingestion is deliberately not in this table (§9.14).
 
 ### Access
 
-| ID     | Task                                     | Depends | Size |
-| ------ | ---------------------------------------- | ------- | ---- |
-| ADM-33 | Deactivation and role change             | —       | M    |
-| ADM-34 | Invitations instead of self-registration | —       | M    |
-| ADM-35 | Lawyer profile card                      | ADM-1   | S    |
-| ADM-36 | Own account screen                       | —       | S    |
+| ID     | Task                                                     | Depends        | Size |
+| ------ | -------------------------------------------------------- | -------------- | ---- |
+| ADM-33 | Deactivation and role change                             | —              | M    |
+| ADM-34 | Invitations instead of self-registration                 | —              | M    |
+| ADM-35 | Lawyer profile card                                      | ADM-1          | S    |
+| ADM-36 | Own account screen                                       | —              | S    |
+| ADM-60 | Lawyer competences and the picker that reads them (§5.6) | ADM-59, ADM-10 | M    |
 
 ### Cross-cutting
 
@@ -1039,6 +1086,16 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   version may be returned to the live slot, which archives whatever held it. The content stays
   frozen and issued documents keep pinning what they always pinned, so provenance is untouched —
   this is a rollback, not an edit.
+- A service sits in exactly one practice area, required, held in a table rather than an enum so
+  that adding or retiring one is data (ADR-0015, §5.6).
+- Competence steers the assignment picker and does not lock it: choosing a lawyer outside their
+  area is allowed, takes a reason and is recorded (§5.6).
+- The client's rubrics and the client's industry are separate axes from the practice area, and
+  neither of them decides competence (ADR-0015).
+- Criminal law is not in the seed list of practice areas. A document in a criminal matter is not a
+  genre generated from a template; if that changes it is a decision, not an omission.
+- The catalogue has two renderings and the reader picks: a card grid, which is the default, and a
+  table for scanning many rows (§4.1).
 - Inside the catalogue the split is commercial versus professional, not senior versus junior. An
   admin decides what is on sale, at what price, and when it is published; the assigned lawyer owns
   the draft of their own service, `review_mode` included, because they are the only person who can
@@ -1087,6 +1144,13 @@ reference to "Q9" written six months ago still points at the same question. Ids 
 
 **Blocking wave planning**
 
+- **Q20. Does a competence carry evidence and an expiry, or is an admin's word enough?** §5.6
+  makes a competence something an admin grants. A firm that admits lawyers on the strength of a
+  свідоцтво про право на заняття адвокатською діяльністю may want the certificate number and its
+  validity recorded against the grant — at which point competence stops being an internal opinion
+  and becomes a claim the firm makes about a person. That is a different table and a retention
+  question (§7.2), so it is worth deciding before the first grant rather than after. Blocks only
+  ADM-60's shape, not ADM-59.
 - **Q15. Which mode does the first service launch in?** If it is not `template` + `auto`, the
   per-order review queue moves from "deferred" into the first waves, because ADR-0005 requires a
   lawyer in the loop for the other two modes.

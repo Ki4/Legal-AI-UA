@@ -92,7 +92,8 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 - The cloud project's migration ledger is **repaired** — seven rows, matching the filenames in
   `supabase/migrations/` exactly. This closes the first item under "Left open" in the 2026-08-11
   journal, which is where a reader would otherwise still find it recorded as outstanding.
-  `supabase db push` is unblocked; the CLI is still not linked to the project.
+  `supabase db push` is unblocked. The CLI was not linked at that point; it was on 2026-08-13 —
+  see below.
 - The root map claimed `packages/core-client` and `packages/i18n` as parts of the repository.
   Neither directory exists; both are marked planned. `docs:check` cannot catch this — a package
   that was never created is not a broken link.
@@ -128,7 +129,22 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 - Two failures that only appeared because something new leaned on the old: a verification scenario
   that had been passing because of the session state a previous scenario left behind, and four
   scripts whose fixtures predated a `not null` column. Both were found by adding scenarios rather
-  than by reading. 94 scenarios across five files now.
+  than by reading. 98 scenarios across five files now.
+- The CLI is linked, and both ledgers hold the same eight versions. The practice-area migration had
+  been applied to the cloud by hand, so `db push` would have tried to create a table that already
+  exists — `migration repair` was the instrument, and knowing which one required looking rather
+  than assuming. `db diff` confirmed the hand-application was complete _before_ the ledger was told
+  it was: a version recorded as applied when it only half was is worse than one that is missing.
+  The same drift had appeared locally that morning, one day after the journal wrote it down for the
+  cloud, which is why `supabase/CLAUDE.md` now carries the rule rather than the story.
+- Two things live in the cloud that no migration creates, found by that same diff and left alone
+  deliberately: the `ensure_rls` event trigger with `rls_auto_enable`, which enables RLS on any new
+  table by itself, and `alter default privileges … revoke update on sequences` for the three client
+  roles. The first means the two environments disagree about what protects a table that forgot its
+  own `enable row level security` — the cloud is covered, the sandbox where it would be caught is
+  not. The second looks like ADR-0007 applied through the dashboard and never captured, which
+  `supabase/CLAUDE.md` forbids. Both need a decision: written into a migration, or recorded as
+  accepted divergence.
 
 ## Now — wave 1 (parallel, no file overlap)
 

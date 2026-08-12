@@ -108,7 +108,10 @@ because how a firm divides its own work is a fact about that firm.
 
 ## Consequences
 
-- One migration: `practice_areas`, `services.practice_area_id` (not null), `lawyer_competences`.
+- One migration: `practice_areas` keyed by its code — a reference table this small has no use for a
+  second identity, and the key being the code is what makes `?area=family` a readable filter and a
+  seed a readable file. The code is therefore immutable, which decision 7 wanted anyway.
+  `services.practice_area` (not null), and `lawyer_competences`.
   Everyone signed in reads areas; only an admin writes them. Staff read competences; only an admin
   grants them. Being Tier 2, it ships with verification scenarios covering the denials.
 - Backfilling `not null` onto existing rows needs a default area for what is already there. With

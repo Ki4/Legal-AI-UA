@@ -11,12 +11,33 @@ import {
   assignmentsOf,
   currentVersionRowOf,
   fixtureDelay,
+  practiceAreaByCode,
   priceRowOf,
   profileById,
   serviceRows,
 } from "../../../shared/api/fixture-store";
 import type { ServicesApi } from "./contract";
-import type { LawyerRef, ServiceFilter, ServiceListItem, ServiceVersionSummary } from "./types";
+import { facetAndFilter } from "./facets";
+import type {
+  CatalogueFilter,
+  LawyerRef,
+  PracticeAreaRef,
+  ServiceListItem,
+  ServiceVersionSummary,
+} from "./types";
+
+/**
+ * Mirrors the Supabase mapping, unresolved code included: the real embed can
+ * come back null, so the fixture has to be able to produce that shape too. A
+ * fixture that can only succeed builds screens that have never seen bad data.
+ */
+function toPracticeAreaRef(code: string): PracticeAreaRef {
+  const row = practiceAreaByCode(code);
+  if (row === null) {
+    return { code, label: code, position: Number.MAX_SAFE_INTEGER };
+  }
+  return { code: row.code, label: row.label_en, position: row.position };
+}
 
 function toLawyerRef(lawyerId: string): LawyerRef {
   // An id that resolves to no profile still means someone is assigned. Keeping
@@ -50,6 +71,8 @@ function toListItem(service: ServiceRow): ServiceListItem {
     id: service.id,
     slug: service.slug,
     title: service.title,
+    summary: service.summary,
+    practiceArea: toPracticeAreaRef(service.practice_area),
     primaryLawyer:
       assignmentsOf(service.id)
         .filter((a) => a.is_primary)
@@ -63,12 +86,10 @@ function toListItem(service: ServiceRow): ServiceListItem {
   };
 }
 
-function matches(item: ServiceListItem, filter: ServiceFilter): boolean {
-  if (filter.status && filter.status.length > 0) {
-    const status = item.currentVersion?.status;
-    if (status === undefined || !filter.status.includes(status)) return false;
-  }
-
+// Only the two filters the database applies. Area and status are counted and
+// applied by `facetAndFilter`, which both implementations share — a fixture with
+// its own copy of that logic would be a second answer to the same question.
+function matches(item: ServiceListItem, filter: CatalogueFilter): boolean {
   if (filter.lawyerId !== undefined) {
     const attached = [item.primaryLawyer, ...item.coverLawyers].some(
       (ref) => ref?.id === filter.lawyerId,
@@ -78,7 +99,7 @@ function matches(item: ServiceListItem, filter: ServiceFilter): boolean {
 
   if (filter.query !== undefined && filter.query.trim() !== "") {
     const needle = filter.query.trim().toLowerCase();
-    const haystack = `${item.title} ${item.slug}`.toLowerCase();
+    const haystack = `${item.title} ${item.slug} ${item.summary ?? ""}`.toLowerCase();
     if (!haystack.includes(needle)) return false;
   }
 
@@ -86,12 +107,13 @@ function matches(item: ServiceListItem, filter: ServiceFilter): boolean {
 }
 
 export const mockServicesApi: ServicesApi = {
-  async list(filter) {
+  async browse(filter) {
     await fixtureDelay();
-    return serviceRows
+    const matched = serviceRows
       .map(toListItem)
-      .filter((item) => (filter ? matches(item, filter) : true))
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      .filter((item) => (filter ? matches(item, filter) : true));
+
+    return facetAndFilter(matched, filter);
   },
 
   async get(id) {

@@ -104,12 +104,19 @@ The view toggle is remembered locally as the next visit's default; the URL still
 offered at all. A filter that can be clicked into an empty result teaches the reader that the
 screen is broken when it is merely honest.
 
-The counts have a cost worth stating rather than hiding. To know how many services each area holds,
-the layer needs the set with every filter applied _except_ the area one — so the query carries the
-other filters, the counts are computed over its result, and the area filter is applied in memory
-afterwards. That is one round trip and it is honest up to a few hundred services. Past that the
-counts move into an RPC that aggregates in Postgres. Recording the ceiling is the point: an
-undocumented limit is discovered as a bug.
+The counts have a cost worth stating rather than hiding. A value's count is how many services it
+_would_ show, which is a count over the set with that value's own filter **not** applied — so the
+query carries the search and the lawyer filter, the counts are computed over its result, and area
+and status are applied in memory afterwards. Status was already being applied there, because the
+status a catalogue row shows belongs to the version chosen in JavaScript and cannot be a `where`
+clause without a second definition of "current". That is one round trip and it is honest up to a
+few hundred services. Past that the counts move into an RPC that aggregates in Postgres. Recording
+the ceiling is the point: an undocumented limit is discovered as a bug.
+
+One consequence to keep in mind when writing the copy: because the counts precede both filters, a
+number quoted while a status filter is active would describe a larger set than the reader would
+actually get. The cross-area message below is therefore shown only when the area filter is the only
+thing narrowing.
 
 **Three different emptinesses, three different screens.** DoD §4 requires that empty and error not
 share a rendering; the catalogue needs one distinction more than that:

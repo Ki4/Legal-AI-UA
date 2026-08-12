@@ -96,6 +96,15 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 - The root map claimed `packages/core-client` and `packages/i18n` as parts of the repository.
   Neither directory exists; both are marked planned. `docs:check` cannot catch this — a package
   that was never created is not a broken link.
+- The card assigns lawyers (ADM-10). The schema, the RPC and the policies had been in place since
+  2026-08-11 and `setPrimaryLawyer` had been written as an exemplar and never called — what was
+  missing was the screen, and a card view model that could express cover at all. There is no
+  dropdown, because `packages/ui` has no Select yet and a local one-off is what the DoD forbids.
+  Cover deletion gained the four verification scenarios nothing had covered: every scenario before
+  them tested who may _add_ an assignment, and a DELETE is the half that fails silently. One of
+  them turned scenario 11 red, correctly — it had been reading the audit log as whichever lawyer
+  the previous scenario left in the session. A scenario that depends on the order of the ones
+  before it measures the script, not the schema.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -124,11 +133,10 @@ written.
 
 ## Next — wave 2
 
-- Console screens on real data: the service list (ADM-7) and the service card (ADM-58) are there.
-  Still on fixtures or unbuilt — the versions tab with pause/resume, the assignment editor
-  (ADM-10, whose RPC already exists), and the orders table with its event timeline. `team` and
-  `anatomy` never joined the api/ layer at all, and `team` is now the only feature querying
-  Supabase outside it.
+- Console screens on real data: the service list (ADM-7), the service card (ADM-58) and the
+  assignment editor on it (ADM-10) are there. Still on fixtures or unbuilt — the versions tab with
+  pause/resume, and the orders table with its event timeline. `team` and `anatomy` never joined the
+  api/ layer at all, and `team` is now the only feature querying Supabase outside it.
 - `packages/i18n` (uk + en; adding a locale = one line, per ADR-0006) and dictionary adoption
   in console.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.

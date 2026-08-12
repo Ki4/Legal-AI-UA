@@ -11,10 +11,10 @@
 // row → view model translation is where the decisions live, and it is pure.
 
 import { supabase } from "../../../app/supabase";
-import { AppError } from "../../../shared/api/errors";
+import { AppError, expectOne } from "../../../shared/api/errors";
 import { fromPostgrest } from "../../../shared/api/postgrest";
 import type { ServiceDetailApi } from "./contract";
-import type { ServiceDetail } from "./types";
+import type { AssignableLawyer, LawyerRef, ServiceDetail } from "./types";
 
 /** The currency the catalogue screens display (spec §8). */
 const DISPLAY_CURRENCY = "UAH";
@@ -52,6 +52,7 @@ export interface ServiceDetailQueryRow {
 }
 
 type VersionRow = ServiceDetailQueryRow["service_versions"][number];
+type AssignmentRow = ServiceDetailQueryRow["service_assignments"][number];
 
 /**
  * The version the card reflects: the live one — published or paused — when
@@ -92,23 +93,40 @@ function currentVersionOf(row: ServiceDetailQueryRow): ServiceDetail["currentVer
   };
 }
 
+/**
+ * Two different nulls, kept apart (DoD §5): nobody attached, versus attached to
+ * someone whose profile this caller cannot read — a deactivated account, or a
+ * row RLS hides. Collapsing them would let the card claim a service has nobody
+ * responsible for it when it does.
+ */
+function toLawyerRef(assignment: AssignmentRow): LawyerRef {
+  return { id: assignment.lawyer_id, fullName: assignment.profiles?.full_name ?? null };
+}
+
 export function toServiceDetail(row: ServiceDetailQueryRow): ServiceDetail {
-  // The accountable lawyer. Cover carries the same rights and none of the
-  // obligation (spec §13), and the card answers "who answers for this" — so
-  // cover is not surfaced here. The assignment editor is ADM-10.
   const primary = row.service_assignments.find((a) => a.is_primary) ?? null;
+
+  // Sorted, because PostgREST embeds arrive in whatever order the planner
+  // produced and a list that reshuffles between loads reads as a change that
+  // did not happen. Nameless rows sort last rather than first: they are the
+  // exceptional case, and putting them at the top makes every service with one
+  // look broken.
+  const cover = row.service_assignments
+    .filter((a) => !a.is_primary)
+    .map(toLawyerRef)
+    .sort((a, b) => {
+      if (a.fullName === null) return b.fullName === null ? a.id.localeCompare(b.id) : 1;
+      if (b.fullName === null) return -1;
+      return a.fullName.localeCompare(b.fullName) || a.id.localeCompare(b.id);
+    });
 
   return {
     id: row.id,
     slug: row.slug,
     title: row.title,
     summary: row.summary,
-    assignedLawyerId: primary?.lawyer_id ?? null,
-    // Two different nulls, kept apart (DoD §5): nobody assigned, versus
-    // assigned to someone whose profile this caller cannot read — a
-    // deactivated account, or a row RLS hides. Collapsing them would let the
-    // card claim a service has nobody responsible for it when it does.
-    assignedLawyerName: primary === null ? null : (primary.profiles?.full_name ?? null),
+    primaryLawyer: primary === null ? null : toLawyerRef(primary),
+    coverLawyers: cover,
     currentVersion: currentVersionOf(row),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -132,5 +150,90 @@ export const supabaseServiceDetailApi: ServiceDetailApi = {
     }
 
     return toServiceDetail(data);
+  },
+
+  async listAssignableLawyers() {
+    // `profiles_select_staff` already hides pending registrations from
+    // everyone; filtering on the role again here is not that check repeated but
+    // a different one — an admin is staff and readable, and still may not be
+    // made accountable for a service.
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("role", "lawyer")
+      .order("full_name", { nullsFirst: false });
+
+    if (error) throw fromPostgrest(error, "Loading lawyers");
+
+    return (data ?? []).map((row): AssignableLawyer => ({
+      id: row.id,
+      fullName: row.full_name,
+      email: row.email,
+    }));
+  },
+
+  async setPrimaryLawyer(id, lawyerId) {
+    // An RPC rather than two writes: clearing the old holder and setting the
+    // new one are one decision, and a browser interrupted between them leaves a
+    // service with nobody accountable. The function checks the admin role
+    // itself, so a denial arrives as an error rather than as silence.
+    const { error } = await supabase.rpc("set_primary_lawyer", {
+      target_service: id,
+      // `supabase gen types` cannot express argument nullability, so it types
+      // this as string. Postgres accepts null for a uuid argument, and the
+      // function treats it as "leave nobody accountable" — which is the whole
+      // reason the contract allows null.
+      new_lawyer: lawyerId as string,
+    });
+    if (error) throw fromPostgrest(error, "Changing the accountable lawyer");
+
+    return this.get(id);
+  },
+
+  async addCover(id, lawyerId) {
+    // INSERT is checked by WITH CHECK, which raises — so a denial here is loud
+    // (42501) and arrives as an error. DELETE below is the quiet one.
+    const { data, error } = await supabase
+      .from("service_assignments")
+      .insert({ service_id: id, lawyer_id: lawyerId, is_primary: false })
+      .select("lawyer_id");
+
+    if (error?.code === "23505") {
+      // The primary key is (service_id, lawyer_id), so this is the only way to
+      // collide — and the generic "that value is already taken" would leave the
+      // reader guessing which value.
+      throw new AppError(
+        "conflict",
+        "That lawyer is already attached to this service, as cover or as the accountable lawyer.",
+        { cause: error },
+      );
+    }
+    if (error) throw fromPostgrest(error, "Adding cover");
+
+    expectOne(data ?? [], "Adding cover");
+    return this.get(id);
+  },
+
+  async removeCover(id, lawyerId) {
+    // The quiet path, and the reason `expectOne` exists: a DELETE denied by an
+    // RLS USING clause matches no rows and reports no error, so without the
+    // check below the screen would report success and show the lawyer still
+    // attached after a reload.
+    //
+    // `is_primary = false` is a filter rather than a check afterwards: the
+    // accountable lawyer is moved, never dropped, and a filter cannot be raced
+    // the way a read-then-write can.
+    const { data, error } = await supabase
+      .from("service_assignments")
+      .delete()
+      .eq("service_id", id)
+      .eq("lawyer_id", lawyerId)
+      .eq("is_primary", false)
+      .select("lawyer_id");
+
+    if (error) throw fromPostgrest(error, "Removing cover");
+
+    expectOne(data ?? [], "Removing cover");
+    return this.get(id);
   },
 };

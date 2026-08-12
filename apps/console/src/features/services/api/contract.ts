@@ -14,21 +14,9 @@ export interface ServicesApi {
 
   /** Throws AppError("not_found") when there is no such service. */
   get(id: string): Promise<ServiceListItem>;
-
-  /**
-   * Moves accountability for a service. Admin-only, and atomic: it runs through
-   * the `set_primary_lawyer` RPC rather than two writes from the browser, since
-   * clearing the old primary and setting the new one halfway leaves a service
-   * with nobody accountable.
-   *
-   * The previous holder stays attached as cover rather than being detached —
-   * losing accountability is not the same as losing access.
-   *
-   * Returns the updated service so the caller refreshes without a second round
-   * trip (ADR-0012, convention 5). Pass null to leave nobody accountable.
-   *
-   * Not yet wired to a screen — it is the mutation exemplar other features
-   * copy, and it is ADM-10 in docs/specs/admin-console.md.
-   */
-  setPrimaryLawyer(id: string, lawyerId: string | null): Promise<ServiceListItem>;
 }
+
+// `setPrimaryLawyer` used to live here as the mutation exemplar. It moved to
+// `features/service-detail` with ADM-10, where the screen that calls it is,
+// rather than being copied: one mutation with two homes is the "one thing said
+// twice" that produced both defects found on 2026-08-11.

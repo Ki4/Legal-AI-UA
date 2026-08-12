@@ -165,6 +165,70 @@ begin
 end;
 $$;
 
+-- Detaching cover ------------------------------------------------------------
+--
+-- Added with ADM-10, when the console gained a screen that deletes these rows.
+-- Everything above tests who may *add* an assignment, and a DELETE is the half
+-- that fails quietly: the USING clause filters the row out, the statement
+-- matches nothing, and the client receives an empty array with no error. Only
+-- the affected-row count can tell the difference, which is why every scenario
+-- here reads ROW_COUNT rather than trusting that no exception was raised.
+--
+-- State on entry: b1's accountable lawyer is a3 (moved in scenario 9), with a1
+-- and a4 attached as cover.
+
+do $$
+declare
+  n integer;
+begin
+  set local role authenticated;
+
+  ------------------------------- 12. cover cannot detach another cover lawyer
+  set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a4","app_metadata":{"role":"lawyer"}}';
+  delete from public.service_assignments
+  where service_id = '00000000-0000-0000-0000-0000000000b1'
+    and lawyer_id = '00000000-0000-0000-0000-0000000000a1';
+  get diagnostics n = row_count;
+  raise notice '% 12. cover cannot detach a colleague — silently, % rows',
+    case when n = 0 then 'PASS' else 'FAIL' end, n;
+
+  ----------------------------- 13. the accountable lawyer detaches their cover
+  set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a3","app_metadata":{"role":"lawyer"}}';
+  delete from public.service_assignments
+  where service_id = '00000000-0000-0000-0000-0000000000b1'
+    and lawyer_id = '00000000-0000-0000-0000-0000000000a4';
+  get diagnostics n = row_count;
+  raise notice '% 13. the accountable lawyer removes cover (% rows)',
+    case when n = 1 then 'PASS' else 'FAIL' end, n;
+
+  ------------------------ 14. ...and cannot drop their own accountability
+  -- The policy requires `not is_primary` on both sides, so this deletes
+  -- nothing. Accountability is moved with set_primary_lawyer, never dropped: a
+  -- service with nobody answering for it is the state the table exists to
+  -- prevent (spec §13).
+  delete from public.service_assignments
+  where service_id = '00000000-0000-0000-0000-0000000000b1'
+    and lawyer_id = '00000000-0000-0000-0000-0000000000a3';
+  get diagnostics n = row_count;
+  raise notice '% 14. the accountable lawyer cannot delete their own row (% rows)',
+    case when n = 0 then 'PASS' else 'FAIL' end, n;
+
+  --------------------------------- 14b. an admin can, and the console does not
+  -- Recorded rather than fixed. `service_assignments_write_admin` covers every
+  -- row, so an admin deleting the accountable one is permitted by the schema —
+  -- what keeps the console from doing it is the `is_primary = false` filter in
+  -- `removeCover`, not a policy. Closing it needs a migration, which is Tier 2
+  -- and a decision of its own; noting it here is what stops it being rediscovered.
+  set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","app_metadata":{"role":"admin"}}';
+  delete from public.service_assignments
+  where service_id = '00000000-0000-0000-0000-0000000000b1'
+    and lawyer_id = '00000000-0000-0000-0000-0000000000a3';
+  get diagnostics n = row_count;
+  raise notice '% 14b. an admin can detach the accountable lawyer (% rows) — app-level filter only',
+    case when n = 1 then 'PASS' else 'FAIL' end, n;
+end;
+$$;
+
 -- The staff directory --------------------------------------------------------
 
 do $$
@@ -192,6 +256,16 @@ do $$
 declare
   n integer;
 begin
+  -- Read as postgres, deliberately. The question here is whether the trigger
+  -- *wrote* the events, not who may read them — that is scenario 4's job and
+  -- `verify_audit_events.sql`'s. Without this line the block inherits whatever
+  -- session the previous block left behind, and it did: it passed only because
+  -- the lawyer still set from scenario 10 happened to be assigned to b1, so
+  -- detaching them in scenario 13 turned this green check red while the log was
+  -- working perfectly. A scenario that depends on the order of the ones before
+  -- it is measuring the script, not the schema.
+  set local role postgres;
+
   select count(*) into n from public.audit_events
   where entity_table = 'service_assignments'
     and service_id = '00000000-0000-0000-0000-0000000000b1';

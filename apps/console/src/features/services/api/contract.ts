@@ -6,11 +6,22 @@
 // `ServicesApi`, so a drifting implementation fails to compile rather than
 // failing in the browser.
 
-import type { ServiceFilter, ServiceListItem } from "./types";
+import type { CatalogueFilter, CatalogueView, ServiceListItem } from "./types";
 
 export interface ServicesApi {
-  /** Catalogue, newest first. An empty result is not an error. */
-  list(filter?: ServiceFilter): Promise<ServiceListItem[]>;
+  /**
+   * The catalogue, and the shape of the set it was drawn from.
+   *
+   * Named `browse` rather than `list` because it answers more than "which
+   * rows": the facets it returns are what the filter bar renders, and a screen
+   * that had to count them itself would be counting a page rather than a
+   * catalogue.
+   *
+   * An empty result is not an error. `matchedBeforeFacets` is how the caller
+   * tells "there is nothing here" from "your filters excluded everything",
+   * which are two different screens (§4.1).
+   */
+  browse(filter?: CatalogueFilter): Promise<CatalogueView>;
 
   /** Throws AppError("not_found") when there is no such service. */
   get(id: string): Promise<ServiceListItem>;

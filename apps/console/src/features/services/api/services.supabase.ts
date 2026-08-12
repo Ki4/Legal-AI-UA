@@ -1,4 +1,4 @@
-// Supabase implementation of ServicesApi (ADM-7).
+// Supabase implementation of ServicesApi (ADM-7, ADM-61).
 //
 // It does the same work the fixture implementation did — read rows, join them,
 // produce the view model — which is why swapping index.ts changes no component
@@ -6,16 +6,20 @@
 //
 // One embed is worth understanding before reading the mapping below. Staff can
 // read approved colleagues' names, but a profile can still come back null — a
-// deactivated account, or a row RLS hides. `assigned_lawyer_id` being set with
-// no readable profile means "assigned, name unavailable", which is not the same
-// statement as "nobody assigned", and `toLawyerRef` keeps them apart. Collapsing
-// them would make the screen lie about who is responsible for a service.
+// deactivated account, or a row RLS hides. An assignment row with no readable
+// profile means "assigned, name unavailable", which is not the same statement
+// as "nobody assigned", and `toLawyerRef` keeps them apart. Collapsing them
+// would make the screen lie about who is responsible for a service.
+//
+// Where the filtering happens is the other thing to understand, and it is
+// deliberate rather than lazy — see `browse`.
 
 import { supabase } from "../../../app/supabase";
 import { AppError } from "../../../shared/api/errors";
 import { escapeSearchTerm, fromPostgrest } from "../../../shared/api/postgrest";
 import type { ServicesApi } from "./contract";
-import type { LawyerRef, ServiceListItem, ServiceVersionSummary } from "./types";
+import { facetAndFilter } from "./facets";
+import type { LawyerRef, PracticeAreaRef, ServiceListItem, ServiceVersionSummary } from "./types";
 
 /** The currency the catalogue screens display (spec §8). */
 const DISPLAY_CURRENCY = "UAH";
@@ -27,7 +31,8 @@ function selectFor({ innerJoinAssignments = false } = {}): string {
   const assignments = innerJoinAssignments ? "service_assignments!inner" : "service_assignments";
 
   return `
-    id, slug, title, created_at, updated_at,
+    id, slug, title, summary, practice_area, created_at, updated_at,
+    practice_areas ( code, label_en, position ),
     ${assignments} ( lawyer_id, is_primary, profiles ( id, full_name ) ),
     service_versions (
       id, version, status, generation_mode, review_mode,
@@ -42,8 +47,11 @@ interface ServiceQueryRow {
   id: string;
   slug: string;
   title: string;
+  summary: string | null;
+  practice_area: string;
   created_at: string;
   updated_at: string;
+  practice_areas: { code: string; label_en: string; position: number } | null;
   service_assignments: {
     lawyer_id: string;
     is_primary: boolean;
@@ -63,6 +71,21 @@ type AssignmentRow = ServiceQueryRow["service_assignments"][number];
 
 function toLawyerRef(assignment: AssignmentRow): LawyerRef {
   return { id: assignment.lawyer_id, fullName: assignment.profiles?.full_name ?? null };
+}
+
+/**
+ * The column is `not null` and the embed should always resolve. Should is not a
+ * guarantee a screen can be built on: an unresolved embed would otherwise take
+ * the whole catalogue down, and a total mapping renders the raw code instead —
+ * visibly odd, which is what bad data should look like (DoD §5). Sorting it
+ * last keeps an oddity from leading the page.
+ */
+function toPracticeAreaRef(row: ServiceQueryRow): PracticeAreaRef {
+  const area = row.practice_areas;
+  if (area === null) {
+    return { code: row.practice_area, label: row.practice_area, position: Number.MAX_SAFE_INTEGER };
+  }
+  return { code: area.code, label: area.label_en, position: area.position };
 }
 
 /**
@@ -104,6 +127,8 @@ function toListItem(row: ServiceQueryRow): ServiceListItem {
     id: row.id,
     slug: row.slug,
     title: row.title,
+    summary: row.summary,
+    practiceArea: toPracticeAreaRef(row),
     primaryLawyer: row.service_assignments.filter((a) => a.is_primary).map(toLawyerRef)[0] ?? null,
     coverLawyers: row.service_assignments.filter((a) => !a.is_primary).map(toLawyerRef),
     currentVersion: currentVersionOf(row),
@@ -113,7 +138,7 @@ function toListItem(row: ServiceQueryRow): ServiceListItem {
 }
 
 export const supabaseServicesApi: ServicesApi = {
-  async list(filter) {
+  async browse(filter) {
     const byLawyer = filter?.lawyerId !== undefined;
 
     let query = supabase
@@ -130,27 +155,26 @@ export const supabaseServicesApi: ServicesApi = {
     if (filter?.query !== undefined && filter.query.trim() !== "") {
       const term = escapeSearchTerm(filter.query);
       if (term !== "") {
-        query = query.or(`title.ilike.%${term}%,slug.ilike.%${term}%`);
+        query = query.or(`title.ilike.%${term}%,slug.ilike.%${term}%,summary.ilike.%${term}%`);
       }
     }
 
     const { data, error } = await query.returns<ServiceQueryRow[]>();
     if (error) throw fromPostgrest(error, "Loading services");
 
-    const items = data.map(toListItem);
-
+    // Area and status are counted and applied here rather than in the WHERE
+    // clause, and the two have the same reason underneath.
+    //
     // Status is a property of the *current* version, which is chosen in
     // JavaScript above — so it cannot be a WHERE clause without a view that
-    // resolves the live version in SQL. Filtering here keeps one definition of
-    // "current" instead of two that will disagree. Revisit if the catalogue
-    // ever outgrows a single page; at a few dozen services it is not a cost.
-    const wanted = filter?.status;
-    if (wanted === undefined || wanted.length === 0) return items;
-
-    return items.filter((item) => {
-      const status = item.currentVersion?.status;
-      return status !== undefined && wanted.includes(status);
-    });
+    // resolves the live version in SQL, and two definitions of "current" would
+    // eventually disagree. The area could be filtered in SQL, but then the
+    // counts could not: a chip has to say how many services it would show,
+    // which is a count over the set with that filter *not* applied. One query
+    // that fetches the search-and-lawyer set and narrows it here gives honest
+    // counts for both, and §4.1 records the ceiling — a few hundred services,
+    // after which this becomes an RPC that aggregates in Postgres.
+    return facetAndFilter(data.map(toListItem), filter);
   },
 
   async get(id) {

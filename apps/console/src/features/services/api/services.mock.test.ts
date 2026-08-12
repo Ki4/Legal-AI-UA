@@ -27,64 +27,142 @@ afterEach(() => {
   serviceAssignmentRows.push(...originalAssignments.map((row) => ({ ...row })));
 });
 
-describe("list", () => {
+describe("browse", () => {
   it("returns every service", async () => {
-    expect(await mockServicesApi.list()).toHaveLength(3);
+    expect((await mockServicesApi.browse()).items).toHaveLength(3);
   });
 
   it("shows the live version, not an archived predecessor", async () => {
-    const divorce = (await mockServicesApi.list()).find((s) => s.id === "svc-divorce");
+    const divorce = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-divorce");
     expect(divorce?.currentVersion?.version).toBe(2);
     expect(divorce?.currentVersion?.status).toBe("published");
   });
 
   it("falls back to the newest version when nothing was ever published", async () => {
-    const alimony = (await mockServicesApi.list()).find((s) => s.id === "svc-alimony");
+    const alimony = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-alimony");
     expect(alimony?.currentVersion?.status).toBe("draft");
   });
 
   it("treats paused as live — it is still the version on the catalogue", async () => {
-    const poa = (await mockServicesApi.list()).find((s) => s.id === "svc-poa");
+    const poa = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-poa");
     expect(poa?.currentVersion?.status).toBe("paused");
   });
 
   it("joins the assigned lawyer's name", async () => {
-    const divorce = (await mockServicesApi.list()).find((s) => s.id === "svc-divorce");
+    const divorce = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-divorce");
     expect(divorce?.primaryLawyer?.fullName).toBe("Olena Kovalchuk");
   });
 
   it("returns null for a service nobody is assigned to", async () => {
-    const poa = (await mockServicesApi.list()).find((s) => s.id === "svc-poa");
+    const poa = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-poa");
     expect(poa?.primaryLawyer).toBeNull();
   });
 
-  it("orders by most recently updated", async () => {
-    const all = await mockServicesApi.list();
-    const timestamps = all.map((item) => item.updatedAt);
-    expect([...timestamps].sort().reverse()).toEqual(timestamps);
+  it("names the practice area rather than passing the code through", async () => {
+    const divorce = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-divorce");
+    expect(divorce?.practiceArea).toEqual({ code: "family", label: "Family", position: 10 });
+  });
+
+  it("renders an area it cannot resolve as its raw code, and sorts it last", async () => {
+    // The column is not null and the embed should always resolve. "Should" is
+    // not something a screen can be built on: an unresolved area must look odd
+    // rather than take the catalogue down (DoD §5).
+    serviceRows.push({
+      id: "svc-orphan",
+      slug: "orphan-area",
+      title: "Filed under something unknown",
+      summary: null,
+      practice_area: "astrology",
+      created_at: "2026-08-12T09:00:00.000Z",
+      updated_at: "2026-08-12T09:00:00.000Z",
+    });
+
+    const items = (await mockServicesApi.browse()).items;
+    expect(items.at(-1)?.practiceArea).toEqual({
+      code: "astrology",
+      label: "astrology",
+      position: Number.MAX_SAFE_INTEGER,
+    });
+  });
+
+  it("orders by area, then title — never by whatever order the rows arrived in", async () => {
+    // The grid groups by area, and a group that reshuffles between loads reads
+    // as a change that did not happen (DoD §5).
+    const items = (await mockServicesApi.browse()).items;
+    expect(items.map((s) => s.id)).toEqual(["svc-alimony", "svc-divorce", "svc-poa"]);
   });
 });
 
-describe("list filters", () => {
-  it("narrows by status", async () => {
-    expect(await mockServicesApi.list({ status: ["published"] })).toHaveLength(1);
+describe("facets", () => {
+  it("counts each area over the whole matched set", async () => {
+    const { areas } = await mockServicesApi.browse();
+    expect(areas.map((f) => [f.area.code, f.count])).toEqual([
+      ["family", 2],
+      ["civil", 1],
+    ]);
   });
 
-  it("matches the query case-insensitively against title and slug", async () => {
-    expect(await mockServicesApi.list({ query: "ALIMONY" })).toHaveLength(1);
-    expect(await mockServicesApi.list({ query: "power-of" })).toHaveLength(1);
+  it("offers no value with nothing behind it", async () => {
+    // `labour` is a seeded area no fixture service sits in. A chip that leads
+    // to an empty screen teaches the reader that the screen is broken.
+    const { areas } = await mockServicesApi.browse();
+    expect(areas.map((f) => f.area.code)).not.toContain("labour");
+  });
+
+  it("keeps counting the areas the reader filtered out", async () => {
+    // This is what lets the screen say "nothing here, 2 matches elsewhere"
+    // instead of rendering a blank result.
+    const { items, areas } = await mockServicesApi.browse({ areas: ["civil"] });
+    expect(items).toHaveLength(1);
+    expect(areas.find((f) => f.area.code === "family")?.count).toBe(2);
+  });
+
+  it("counts statuses, and leaves a version-less service out of all of them", async () => {
+    const { statuses } = await mockServicesApi.browse();
+    expect(statuses.map((f) => f.status).sort()).toEqual(["draft", "paused", "published"]);
+  });
+
+  it("reports what matched before the facets narrowed it", async () => {
+    // Zero items with a positive total is "your filters did this"; zero and
+    // zero is "there is nothing here". The screen renders them differently.
+    const result = await mockServicesApi.browse({ areas: ["family"], status: ["archived"] });
+    expect(result.items).toHaveLength(0);
+    expect(result.matchedBeforeFacets).toBe(3);
+  });
+});
+
+describe("browse filters", () => {
+  it("narrows by status", async () => {
+    expect((await mockServicesApi.browse({ status: ["published"] })).items).toHaveLength(1);
+  });
+
+  it("narrows by area, and by several at once", async () => {
+    expect((await mockServicesApi.browse({ areas: ["family"] })).items).toHaveLength(2);
+    expect((await mockServicesApi.browse({ areas: ["family", "civil"] })).items).toHaveLength(3);
+  });
+
+  it("matches the query case-insensitively against title, slug and summary", async () => {
+    expect((await mockServicesApi.browse({ query: "ALIMONY" })).items).toHaveLength(1);
+    expect((await mockServicesApi.browse({ query: "power-of" })).items).toHaveLength(1);
+    expect((await mockServicesApi.browse({ query: "district court" })).items).toHaveLength(1);
   });
 
   it("narrows by lawyer, cover included", async () => {
     // Taras is accountable for alimony and covers divorce. Both are his work:
     // a filter that returned only what he is accountable for would hide the
     // service he was brought in to look after (spec §14, Q18).
-    const result = await mockServicesApi.list({ lawyerId: "usr-taras" });
-    expect(result.map((s) => s.id).sort()).toEqual(["svc-alimony", "svc-divorce"]);
+    const result = await mockServicesApi.browse({ lawyerId: "usr-taras" });
+    expect(result.items.map((s) => s.id).sort()).toEqual(["svc-alimony", "svc-divorce"]);
+  });
+
+  it("counts facets over the lawyer's services only, not the whole catalogue", async () => {
+    const { areas, matchedBeforeFacets } = await mockServicesApi.browse({ lawyerId: "usr-taras" });
+    expect(matchedBeforeFacets).toBe(2);
+    expect(areas.map((f) => f.area.code)).toEqual(["family"]);
   });
 
   it("does not confuse cover with accountability", async () => {
-    const divorce = (await mockServicesApi.list({ lawyerId: "usr-taras" })).find(
+    const divorce = (await mockServicesApi.browse({ lawyerId: "usr-taras" })).items.find(
       (s) => s.id === "svc-divorce",
     );
     expect(divorce?.primaryLawyer?.id).toBe("usr-olena");
@@ -92,7 +170,11 @@ describe("list filters", () => {
   });
 
   it("treats a blank query as no filter", async () => {
-    expect(await mockServicesApi.list({ query: "   " })).toHaveLength(3);
+    expect((await mockServicesApi.browse({ query: "   " })).items).toHaveLength(3);
+  });
+
+  it('treats an empty filter array as no filter, not as "match nothing"', async () => {
+    expect((await mockServicesApi.browse({ areas: [], status: [] })).items).toHaveLength(3);
   });
 });
 
@@ -120,7 +202,7 @@ describe("a lawyer who is assigned but unreadable", () => {
       assigned_by: null,
     });
 
-    const poa = (await mockServicesApi.list()).find((s) => s.id === "svc-poa");
+    const poa = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-poa");
     expect(poa?.primaryLawyer).not.toBeNull();
     expect(poa?.primaryLawyer?.id).toBe("usr-hidden");
     expect(poa?.primaryLawyer?.fullName).toBeNull();
@@ -129,7 +211,7 @@ describe("a lawyer who is assigned but unreadable", () => {
 
 describe("price", () => {
   it("reads the display currency out of the price table", async () => {
-    const divorce = (await mockServicesApi.list()).find((s) => s.id === "svc-divorce");
+    const divorce = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-divorce");
     expect(divorce?.currentVersion?.priceMinor).toBe(520000);
     expect(divorce?.currentVersion?.currency).toBe("UAH");
   });
@@ -137,7 +219,7 @@ describe("price", () => {
   it("reports no price rather than a zero when a version has none", async () => {
     // An unpriced draft is an ordinary state, and 0 UAH is a different claim
     // from "not priced yet" — one of them says the document is free.
-    const alimony = (await mockServicesApi.list()).find((s) => s.id === "svc-alimony");
+    const alimony = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-alimony");
     expect(alimony?.currentVersion?.version).toBe(1);
     expect(alimony?.currentVersion?.priceMinor).toBeNull();
     expect(alimony?.currentVersion?.currency).toBeNull();
@@ -152,7 +234,7 @@ describe("price", () => {
       amount_minor: 13000,
     });
 
-    const alimony = (await mockServicesApi.list()).find((s) => s.id === "svc-alimony");
+    const alimony = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-alimony");
     expect(alimony?.currentVersion?.priceMinor).toBeNull();
   });
 });

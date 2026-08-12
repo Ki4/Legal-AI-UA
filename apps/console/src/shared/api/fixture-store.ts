@@ -13,6 +13,7 @@
 // a `*.mock.ts` may import it.
 
 import {
+  mockPracticeAreas,
   mockProfiles,
   mockServiceAssignments,
   mockServices,
@@ -20,6 +21,7 @@ import {
   mockServiceVersions,
 } from "@legal-ai/db";
 import type {
+  PracticeAreaRow,
   ProfileRow,
   ServiceAssignmentRow,
   ServiceRow,
@@ -51,6 +53,16 @@ export const serviceAssignmentRows: ServiceAssignmentRow[] = mockServiceAssignme
   ...row,
 }));
 export const profileRows: ProfileRow[] = mockProfiles.map((row) => ({ ...row }));
+export const practiceAreaRows: PracticeAreaRow[] = mockPracticeAreas.map((row) => ({ ...row }));
+
+/**
+ * The reference row a service points at. Null when the code resolves to
+ * nothing, which the real embed can also return — the api/ layer decides what
+ * to render for it, and both implementations must be given the same chance to.
+ */
+export function practiceAreaByCode(code: string): PracticeAreaRow | null {
+  return practiceAreaRows.find((row) => row.code === code) ?? null;
+}
 
 /** Every lawyer attached to a service, accountable or cover. */
 export function assignmentsOf(serviceId: string): ServiceAssignmentRow[] {

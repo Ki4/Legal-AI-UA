@@ -8,6 +8,7 @@
 
 import type {
   GenerationTrace,
+  PracticeAreaRow,
   ProfileRow,
   ServiceAssignmentRow,
   ServiceRow,
@@ -39,12 +40,43 @@ export const mockProfiles: ProfileRow[] = [
   },
 ];
 
+// A slice of the seeded areas, not all fifteen: fixtures exist to exercise the
+// screens, and the two the mock catalogue actually uses plus one nobody is filed
+// under is what proves a filter value with nothing behind it is not offered.
+export const mockPracticeAreas: PracticeAreaRow[] = [
+  {
+    code: "family",
+    label_uk: "Сімейне право",
+    label_en: "Family",
+    position: 10,
+    is_active: true,
+    created_at: "2026-08-12T09:00:00.000Z",
+  },
+  {
+    code: "civil",
+    label_uk: "Цивільне та договірне право",
+    label_en: "Civil and contract",
+    position: 30,
+    is_active: true,
+    created_at: "2026-08-12T09:00:00.000Z",
+  },
+  {
+    code: "labour",
+    label_uk: "Трудове право",
+    label_en: "Labour",
+    position: 50,
+    is_active: true,
+    created_at: "2026-08-12T09:00:00.000Z",
+  },
+];
+
 export const mockServices: ServiceRow[] = [
   {
     id: "svc-divorce",
     slug: "divorce-application",
     title: "Divorce application",
     summary: "Application to dissolve a marriage, filed with a district court.",
+    practice_area: "family",
     created_at: "2026-05-12T09:20:00.000Z",
     updated_at: "2026-07-30T14:05:00.000Z",
   },
@@ -53,6 +85,7 @@ export const mockServices: ServiceRow[] = [
     slug: "alimony-claim",
     title: "Alimony claim",
     summary: "Claim for child maintenance.",
+    practice_area: "family",
     created_at: "2026-06-02T11:00:00.000Z",
     updated_at: "2026-07-28T08:41:00.000Z",
   },
@@ -61,6 +94,7 @@ export const mockServices: ServiceRow[] = [
     slug: "power-of-attorney",
     title: "Power of attorney",
     summary: "General power of attorney, no legal consequences for the grantor.",
+    practice_area: "civil",
     created_at: "2026-06-19T16:30:00.000Z",
     updated_at: "2026-07-04T10:15:00.000Z",
   },

@@ -18,9 +18,9 @@ update public.profiles set role = 'lawyer' where id = '00000000-0000-0000-0000-0
 update public.profiles set role = 'admin'  where id = '00000000-0000-0000-0000-0000000000a2';
 update public.profiles set role = 'lawyer' where id = '00000000-0000-0000-0000-0000000000a3';
 
-insert into public.services (id, slug, title) values
-  ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce petition'),
-  ('00000000-0000-0000-0000-0000000000b2', 'orphan', 'Service with no lawyer');
+insert into public.services (id, slug, title, practice_area) values
+  ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce petition', 'family'),
+  ('00000000-0000-0000-0000-0000000000b2', 'orphan', 'Service with no lawyer', 'civil');
 
 insert into public.service_assignments (service_id, lawyer_id, is_primary) values
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a1', true);
@@ -200,7 +200,8 @@ begin
     case when n = 2 then 'PASS' else 'FAIL' end, n;
 
   begin
-    insert into public.services (slug, title) values ('sneaky', 'Lawyer-created');
+    insert into public.services (slug, title, practice_area)
+    values ('sneaky', 'Lawyer-created', 'family');
     raise notice 'FAIL 9b. lawyer inserted a service';
   exception when insufficient_privilege then
     raise notice 'PASS 9b. lawyer insert denied by policy';
@@ -271,7 +272,8 @@ begin
   ----------------------------------------------------------------- 10. admin
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","app_metadata":{"role":"admin"}}';
 
-  insert into public.services (slug, title) values ('by-admin', 'Admin-created');
+  insert into public.services (slug, title, practice_area)
+  values ('by-admin', 'Admin-created', 'family');
   raise notice 'PASS 10. admin insert allowed';
 
   -------------------------------------------------- 11. approved-but-no-role

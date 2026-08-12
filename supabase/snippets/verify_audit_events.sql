@@ -33,8 +33,8 @@ begin
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","app_metadata":{"role":"admin"}}';
 
   ------------------------------------------------ 1. a write becomes an event
-  insert into public.services (id, slug, title)
-  values ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce');
+  insert into public.services (id, slug, title, practice_area)
+  values ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce', 'family');
   insert into public.service_assignments (service_id, lawyer_id, is_primary)
   values ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a1', true);
 

@@ -106,6 +106,30 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   the previous scenario left in the session. A scenario that depends on the order of the ones
   before it measures the script, not the schema.
 
+## Done — the catalogue gains an axis (2026-08-13)
+
+- ADR-0015 and spec §5.6: a service sits in exactly one practice area, a lawyer holds competences
+  an admin grants, and competence steers the assignment picker without locking the table. The
+  client's rubrics and the client's industry are separate axes — Ukrainian firms' own service
+  pages list `сімейне` next to `IT`, which is three axes flattened into one menu because a menu is
+  all a website has.
+- `practice_areas` (ADM-59), keyed by its code and seeded with fifteen branches. A table rather
+  than an enum so that the first maritime matter is an insert, not a deploy. `services.practice_area`
+  is `not null`; existing rows backfilled to `civil`, because an axis half the catalogue lacks is
+  not an axis.
+- The catalogue is browsable (ADM-61): cards by default grouped by area, the table for scanning,
+  chips carrying their counts, search over title, slug and summary, and filter state in the URL so
+  a narrowed catalogue is a link. Three emptinesses — nothing exists, nothing matches, the request
+  failed — rather than the one screen lists usually collapse them into.
+- The assignment editor landed on the card (ADM-10). Everything it needed had existed since
+  2026-08-11: the table, the RPC, the policies, and `setPrimaryLawyer` written as an exemplar and
+  never called. What was missing was the screen, which is a shape worth recognising — work can look
+  blocked when it is only unassembled.
+- Two failures that only appeared because something new leaned on the old: a verification scenario
+  that had been passing because of the session state a previous scenario left behind, and four
+  scripts whose fixtures predated a `not null` column. Both were found by adding scenarios rather
+  than by reading. 94 scenarios across five files now.
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (design-system owner; DoD per design spec §11 for every item):
@@ -133,10 +157,15 @@ written.
 
 ## Next — wave 2
 
-- Console screens on real data: the service list (ADM-7), the service card (ADM-58) and the
-  assignment editor on it (ADM-10) are there. Still on fixtures or unbuilt — the versions tab with
-  pause/resume, and the orders table with its event timeline. `team` and `anatomy` never joined the
-  api/ layer at all, and `team` is now the only feature querying Supabase outside it.
+- Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
+  service card (ADM-58) and the assignment editor on it (ADM-10) are there. Still on fixtures or
+  unbuilt — the versions tab with pause/resume, and the orders table with its event timeline.
+  `team` and `anatomy` never joined the api/ layer at all, and `team` is now the only feature
+  querying Supabase outside it.
+- Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
+  lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
+  on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
+  into a claim the firm makes about a person, with a retention question attached.
 - `packages/i18n` (uk + en; adding a locale = one line, per ADR-0006) and dictionary adoption
   in console.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.

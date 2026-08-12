@@ -26,9 +26,9 @@ update public.profiles set role = 'lawyer', full_name = 'Unrelated Lawyer'
 where id = '00000000-0000-0000-0000-0000000000a4';
 -- a5 keeps role = null: registered, not yet approved.
 
-insert into public.services (id, slug, title) values
-  ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce petition'),
-  ('00000000-0000-0000-0000-0000000000b2', 'orphan', 'Nobody assigned');
+insert into public.services (id, slug, title, practice_area) values
+  ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce petition', 'family'),
+  ('00000000-0000-0000-0000-0000000000b2', 'orphan', 'Nobody assigned', 'civil');
 
 insert into public.service_assignments (service_id, lawyer_id, is_primary) values
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a1', true);

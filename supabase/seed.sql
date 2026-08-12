@@ -23,13 +23,16 @@ where id = '10000000-0000-0000-0000-000000000001';
 update public.profiles set full_name = 'Taras Bondarenko', role = 'lawyer'
 where id = '10000000-0000-0000-0000-000000000002';
 
-insert into public.services (id, slug, title, summary) values
+-- Two areas across three services, deliberately: a catalogue where every service
+-- sits in the same area cannot demonstrate grouping, and one where each sits in
+-- its own cannot demonstrate a group with more than one card in it.
+insert into public.services (id, slug, title, summary, practice_area) values
   ('20000000-0000-0000-0000-000000000001', 'divorce-application', 'Divorce application',
-   'Application to dissolve a marriage, filed with a district court.'),
+   'Application to dissolve a marriage, filed with a district court.', 'family'),
   ('20000000-0000-0000-0000-000000000002', 'alimony-claim', 'Alimony claim',
-   'Claim for child maintenance.'),
+   'Claim for child maintenance.', 'family'),
   ('20000000-0000-0000-0000-000000000003', 'power-of-attorney', 'Power of attorney',
-   'General power of attorney, no legal consequences for the grantor.');
+   'General power of attorney, no legal consequences for the grantor.', 'civil');
 
 -- Olena is accountable for the divorce service and Taras covers it, which is
 -- the arrangement the assignment table exists for. power-of-attorney has

@@ -65,6 +65,13 @@ export type ServiceVersionPriceRow = Tables["service_version_prices"]["Row"];
 export type QuestionnaireFieldRow = Tables["questionnaire_fields"]["Row"];
 
 /**
+ * A branch of law a service sits in (ADR-0015). Keyed by its code rather than by
+ * a surrogate id: fifteen immutable rows have no use for a second identity, and
+ * the code is what appears in a filter URL.
+ */
+export type PracticeAreaRow = Tables["practice_areas"]["Row"];
+
+/**
  * Who may act on a service. Exactly one row per service carries `is_primary`
  * and with it the obligations; the rest are cover, with the same rights and
  * none of the accountability.

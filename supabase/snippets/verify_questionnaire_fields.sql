@@ -21,8 +21,8 @@ update public.profiles set role = 'lawyer' where id = '00000000-0000-0000-0000-0
 update public.profiles set role = 'admin'  where id = '00000000-0000-0000-0000-0000000000a2';
 update public.profiles set role = 'lawyer' where id = '00000000-0000-0000-0000-0000000000a3';
 
-insert into public.services (id, slug, title) values
-  ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce petition');
+insert into public.services (id, slug, title, practice_area) values
+  ('00000000-0000-0000-0000-0000000000b1', 'divorce', 'Divorce petition', 'family');
 
 insert into public.service_assignments (service_id, lawyer_id, is_primary) values
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a1', true);

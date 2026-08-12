@@ -70,6 +70,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      practice_areas: {
+        Row: {
+          code: string;
+          created_at: string;
+          is_active: boolean;
+          label_en: string;
+          label_uk: string;
+          position: number;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          is_active?: boolean;
+          label_en: string;
+          label_uk: string;
+          position: number;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          is_active?: boolean;
+          label_en?: string;
+          label_uk?: string;
+          position?: number;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           created_at: string;
@@ -279,6 +306,7 @@ export type Database = {
         Row: {
           created_at: string;
           id: string;
+          practice_area: string;
           slug: string;
           summary: string | null;
           title: string;
@@ -287,6 +315,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           id?: string;
+          practice_area: string;
           slug: string;
           summary?: string | null;
           title: string;
@@ -295,12 +324,21 @@ export type Database = {
         Update: {
           created_at?: string;
           id?: string;
+          practice_area?: string;
           slug?: string;
           summary?: string | null;
           title?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "services_practice_area_fkey";
+            columns: ["practice_area"];
+            isOneToOne: false;
+            referencedRelation: "practice_areas";
+            referencedColumns: ["code"];
+          },
+        ];
       };
     };
     Views: {

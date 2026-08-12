@@ -751,6 +751,12 @@ Whatever is not recorded when it happens is gone.
 | ADM-8  | Create and edit a service    | ADM-1   | S    |
 | ADM-9  | Service versions             | ADM-1   | M    |
 | ADM-10 | Assign a service to a lawyer | ADM-1   | S    |
+| ADM-58 | Service card on live data    | ADM-7   | S    |
+
+ADM-58 is listed separately from ADM-7 rather than folded into it, because the gap between them
+had a symptom: a list reading Postgres and a card reading fixtures disagree about which records
+exist, so every row led to "Service not found". Two screens on two sources of truth is a state
+worth being able to name in a backlog.
 
 ### Upload and extraction
 

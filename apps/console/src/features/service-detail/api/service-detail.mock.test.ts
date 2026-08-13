@@ -103,6 +103,16 @@ describe("listAssignableLawyers", () => {
     expect(lawyers.map((lawyer) => lawyer.id)).toEqual(["usr-olena", "usr-taras"]);
     expect(lawyers[0]?.email).toBe("olena@example.test");
   });
+
+  it("does not offer a registration nobody has approved", async () => {
+    // The rule 20260811160000_service_assignments.sql states in SQL: somebody
+    // who filled in a form is a stranger, not a colleague. It had no fixture to
+    // demonstrate it until `usr-pending` existed, so the picker's behaviour
+    // here was assumed rather than checked.
+    const lawyers = await mockServiceDetailApi.listAssignableLawyers();
+
+    expect(lawyers.some((lawyer) => lawyer.id === "usr-pending")).toBe(false);
+  });
 });
 
 describe("setPrimaryLawyer", () => {

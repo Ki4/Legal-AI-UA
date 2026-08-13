@@ -1,89 +1,78 @@
-import { asRole } from "@legal-ai/db";
-import type { Role } from "@legal-ai/db";
 import { Badge, Button } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
-import { supabase } from "../../../app/supabase";
-
-// A screen-local shape, not a table row: `role` is narrowed here because the
-// column is plain `text` (see asRole). Typing the client with the generated
-// schema is what surfaced the gap — the previous hand-written row type simply
-// asserted the union and was believed.
-interface TeamMember {
-  id: string;
-  email: string;
-  full_name: string | null;
-  role: Role | null;
-  created_at: string;
-}
+import { AppError } from "../../../shared/api/errors";
+import { teamApi } from "../api";
+import type { GrantableRole, TeamMember } from "../api";
 
 export function TeamPage() {
-  const [profiles, setProfiles] = useState<TeamMember[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
-  async function loadProfiles() {
+  async function load() {
     setLoading(true);
     setError(null);
-    const { data, error: loadError } = await supabase
-      .from("profiles")
-      .select("id, email, full_name, role, created_at")
-      .order("created_at");
-    setLoading(false);
-    if (loadError) {
-      setError(loadError.message);
-      return;
+    try {
+      setMembers(await teamApi.list());
+    } catch (caught) {
+      setError(messageOf(caught));
+    } finally {
+      setLoading(false);
     }
-    setProfiles((data ?? []).map((row) => ({ ...row, role: asRole(row.role) })));
   }
 
   useEffect(() => {
-    void loadProfiles();
+    void load();
   }, []);
 
-  async function approve(targetUser: string, newRole: "admin" | "lawyer") {
-    setApprovingId(targetUser);
+  async function approve(memberId: string, role: GrantableRole) {
+    setApprovingId(memberId);
     setError(null);
-    const { error: rpcError } = await supabase.rpc("approve_user", {
-      target_user: targetUser,
-      new_role: newRole,
-    });
-    setApprovingId(null);
-    if (rpcError) {
-      setError(rpcError.message);
-      return;
+    try {
+      // The mutation returns the updated member (ADR-0012, convention 5), so
+      // one row is replaced rather than the screen reloaded. The previous
+      // version re-fetched everything, which threw away the approving admin's
+      // scroll position to learn one field.
+      const updated = await teamApi.approve(memberId, role);
+      setMembers((current) =>
+        current.map((member) => (member.id === updated.id ? updated : member)),
+      );
+    } catch (caught) {
+      setError(messageOf(caught));
+    } finally {
+      setApprovingId(null);
     }
-    await loadProfiles();
   }
 
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Team</h1>
       {loading && <p className="text-sm text-inkSoft">Loading…</p>}
-      {error && <p className="text-sm text-danger-ink">{error}</p>}
+      {error !== null && <p className="text-sm text-danger-ink">{error}</p>}
       <ul className="grid max-w-3xl gap-3">
-        {profiles.map((profile) => (
-          <li key={profile.id} className="rounded-card border border-line bg-paper p-4">
+        {members.map((member) => (
+          <li key={member.id} className="rounded-card border border-line bg-paper p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">{profile.full_name ?? profile.email}</div>
-                <div className="text-sm text-inkSoft">{profile.email}</div>
+                <div className="font-medium">{member.fullName ?? member.email}</div>
+                <div className="text-sm text-inkSoft">{member.email}</div>
               </div>
-              <Badge tone="neutral">{profile.role ?? "pending"}</Badge>
+              <Badge tone="neutral">{member.role ?? "pending"}</Badge>
             </div>
-            {profile.role === null && (
+            {member.awaitingApproval && (
               <div className="mt-3 flex gap-2">
                 <Button
                   variant="secondary"
-                  onClick={() => void approve(profile.id, "lawyer")}
-                  loading={approvingId === profile.id}
+                  onClick={() => void approve(member.id, "lawyer")}
+                  loading={approvingId === member.id}
                 >
                   Approve as lawyer
                 </Button>
                 <Button
                   variant="secondary"
-                  onClick={() => void approve(profile.id, "admin")}
-                  loading={approvingId === profile.id}
+                  onClick={() => void approve(member.id, "admin")}
+                  loading={approvingId === member.id}
                 >
                   Approve as admin
                 </Button>
@@ -94,4 +83,14 @@ export function TeamPage() {
       </ul>
     </section>
   );
+}
+
+/**
+ * The component knows `AppError` and nothing narrower. No `PostgrestError`
+ * reaches here any more, which is convention 4 — and the reason this screen no
+ * longer imports the Supabase client at all.
+ */
+function messageOf(caught: unknown): string {
+  if (caught instanceof AppError) return caught.message;
+  return "Something went wrong. Please try again.";
 }

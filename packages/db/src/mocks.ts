@@ -38,6 +38,18 @@ export const mockProfiles: ProfileRow[] = [
     role: "admin",
     created_at: "2026-03-20T09:00:00.000Z",
   },
+  // A registration nobody has approved yet: a profile row exists from the moment
+  // somebody signs up, and `role` stays null until an admin grants one. Without
+  // this row the team screen's whole reason to exist is untestable, and the rule
+  // that an unapproved registration is not an assignable colleague
+  // (20260811160000_service_assignments.sql) has nothing to demonstrate it.
+  {
+    id: "usr-pending",
+    email: "dmytro@example.test",
+    full_name: null,
+    role: null,
+    created_at: "2026-08-12T09:00:00.000Z",
+  },
 ];
 
 // A slice of the seeded areas, not all fifteen: fixtures exist to exercise the

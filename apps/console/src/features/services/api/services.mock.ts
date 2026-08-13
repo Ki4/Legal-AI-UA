@@ -34,9 +34,13 @@ import type {
 function toPracticeAreaRef(code: string): PracticeAreaRef {
   const row = practiceAreaByCode(code);
   if (row === null) {
-    return { code, label: code, position: Number.MAX_SAFE_INTEGER };
+    return { code, labels: { uk: code, en: code }, position: Number.MAX_SAFE_INTEGER };
   }
-  return { code: row.code, label: row.label_en, position: row.position };
+  return {
+    code: row.code,
+    labels: { uk: row.label_uk, en: row.label_en },
+    position: row.position,
+  };
 }
 
 function toLawyerRef(lawyerId: string): LawyerRef {

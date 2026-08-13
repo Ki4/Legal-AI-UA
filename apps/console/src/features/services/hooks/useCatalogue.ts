@@ -9,6 +9,7 @@
 // fetch, or an AppError code they have to interpret twice.
 
 import type { ServiceStatus } from "@legal-ai/db";
+import { useI18n, type TranslationKey } from "@legal-ai/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useAuth } from "../../../app/auth";
@@ -22,25 +23,30 @@ const SEARCH_DEBOUNCE_MS = 250;
 
 // Every code gets its own sentence, and nothing falls through to
 // `error.message` — those are written for whoever is reading a stack trace, not
-// for a lawyer looking at a screen ("No profile with id usr-ghost.").
-function messageFor(error: unknown): string {
+// for a lawyer looking at a screen ("No profile with id usr-ghost."), and they
+// are written in English whatever the reader chose.
+//
+// The switch returns a key rather than a string so the mapping stays a pure
+// function of the error: which sentence belongs to which failure is decided
+// here, and which language it is in is decided by whoever renders it.
+function messageKeyFor(error: unknown): TranslationKey {
   if (error instanceof AppError) {
     switch (error.code) {
       case "forbidden":
-        return "You do not have access to the service catalogue.";
+        return "catalogue.error.forbidden";
       case "not_found":
-        return "This catalogue no longer exists.";
+        return "catalogue.error.notFound";
       case "validation":
-        return "The filter could not be applied. Try clearing it.";
+        return "catalogue.error.validation";
       case "conflict":
-        return "Someone changed this while you were looking. Reload to see the current state.";
+        return "catalogue.error.conflict";
       case "network":
-        return "Could not reach the server. Check the connection and try again.";
+        return "catalogue.error.network";
       case "unknown":
-        return "Something went wrong loading the catalogue.";
+        return "catalogue.error.unknown";
     }
   }
-  return "Something went wrong loading the catalogue.";
+  return "catalogue.error.unknown";
 }
 
 const STATUSES: ServiceStatus[] = ["draft", "in_review", "published", "paused", "archived"];
@@ -94,11 +100,15 @@ export interface Catalogue {
 export function useCatalogue(): Catalogue {
   const [params, setParams] = useSearchParams();
   const { session } = useAuth();
+  const { t } = useI18n();
   const userId = session?.user.id ?? null;
 
   const [view, setView] = useState<CatalogueView | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // The key, not the sentence. A translated string in state is frozen in the
+  // language it was produced in, so a reader who switches while an error is on
+  // screen would keep reading the old one until they retried.
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const reload = useCallback(() => setReloadToken((token) => token + 1), []);
 
@@ -160,7 +170,7 @@ export function useCatalogue(): Catalogue {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setError(null);
+    setErrorKey(null);
 
     servicesApi
       .browse(JSON.parse(filterKey) as CatalogueFilter)
@@ -169,7 +179,7 @@ export function useCatalogue(): Catalogue {
       })
       .catch((cause: unknown) => {
         if (cancelled) return;
-        setError(messageFor(cause));
+        setErrorKey(messageKeyFor(cause));
         // Drop the previous result too. It belongs to the previous filter, and
         // leaving it on screen next to an error reads as "here are your
         // results" when they are somebody else's.
@@ -247,7 +257,7 @@ export function useCatalogue(): Catalogue {
   return {
     view,
     loading,
-    error,
+    error: errorKey === null ? null : t(errorKey),
     reload,
     areas,
     statuses,

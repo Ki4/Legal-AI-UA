@@ -6,6 +6,7 @@
 // in packages/db because only this feature's screens need this shape.
 
 import type { GenerationMode, ReviewMode, ServiceStatus } from "@legal-ai/db";
+import type { Locale } from "@legal-ai/i18n";
 
 export interface LawyerRef {
   id: string;
@@ -21,13 +22,22 @@ export interface LawyerRef {
 /**
  * The branch of law a service sits in (ADR-0015).
  *
- * `label` is the English one, because console copy is hardcoded English until
- * `packages/i18n` exists (ADR-0006). The row carries both, and the day the
- * dictionaries land this is the one line that changes.
+ * The labels are reference **data**, not dictionary keys, and that is the whole
+ * distinction this type carries. An admin adds `maritime` the day the firm
+ * takes its first shipping matter — an insert, deliberately not a deploy — so
+ * no dictionary shipped with the build can know its name. The row carries one
+ * column per language and the screen picks by the locale it is rendering in.
+ *
+ * The consequence is worth stating rather than discovering: `Record<Locale, …>`
+ * means adding a locale to `LOCALES` makes this fail to compile until the
+ * reference table has a column for it. ADR-0006's "adding a locale is one line"
+ * is about interface copy; content in a new language is content somebody has to
+ * write, and the compiler saying so is better than fifteen areas silently
+ * rendering in Ukrainian under English copy.
  */
 export interface PracticeAreaRef {
   code: string;
-  label: string;
+  labels: Record<Locale, string>;
   /** Display order, from the reference table. Never the array's own order. */
   position: number;
 }

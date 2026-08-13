@@ -182,6 +182,33 @@ all three held by one developer today (`docs/CONTRIBUTING.md`).
 - Not adopted yet: every feature screen. The shell is bilingual and the catalogue underneath it is
   not, which is a visible half-state and the reason this is one PR rather than three.
 
+## Done — the catalogue and the card speak both languages (2026-08-13)
+
+Part of ADM-37, continuing the entry above.
+
+- `features/services` and `features/service-detail` hold no copy in JSX: the catalogue with its
+  filters and both renderings, the three emptinesses, the service card and the assignment editor.
+- Three kinds of text turned out to need three different mechanisms, and conflating them is what
+  makes a half-translated screen:
+  - **Interface copy** is a dictionary key.
+  - **Enum values** — status, generation mode, review mode — go through `shared/vocabulary.ts`, a
+    `Record<Enum, TranslationKey>` per enum. Adding a value in a migration now fails to compile
+    here, which is the only moment anybody remembers the new state also needs a word. The role is
+    deliberately excluded: `admin` and `lawyer` are the words an RLS policy is written in.
+  - **Reference data** — practice-area labels — is neither. An admin adds an area at runtime
+    (ADR-0015), so no dictionary shipped with the build can name it; the row carries a label per
+    language and `PracticeAreaRef.labels` carries them to the screen. That is the "one line that
+    changes" the type comment had been promising since 2026-08-12.
+- Errors are held in state as keys, not sentences. A translated string in state is frozen in the
+  language it was produced in, so switching while an error is on screen used to leave the old one
+  there. `AssignmentSection` also stopped falling through to `error.message` — developer text
+  ("expected one record, got 2"), in English, shown to a lawyer.
+- `formatMoney` and `formatDate` now require a locale instead of defaulting to `uk-UA`. The default
+  was right by accident while there was one language and silently wrong the moment there were two.
+- Not adopted yet: `team` and `account`. `design-kit` and `anatomy` are deliberately out — the
+  gallery documents components for developers, and the anatomy screen renders a hardcoded trace
+  whose text is fixture content, not copy.
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):

@@ -1,16 +1,22 @@
+import { useI18n, type TranslationKey } from "@legal-ai/i18n";
 import { Spinner } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { AppError } from "../../../shared/api/errors";
 import { formatDate, formatMoney } from "../../../shared/format";
+import { generationModeKey, reviewModeKey, serviceStatusKey } from "../../../shared/vocabulary";
 import { serviceDetailApi, type ServiceDetail } from "../api";
 import { AssignmentSection } from "./AssignmentSection";
 
 export function ServiceDetailPage() {
   const { serviceId } = useParams();
+  const { t, intlLocale } = useI18n();
   const [service, setService] = useState<ServiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // The key rather than the sentence, so switching language re-renders the
+  // failure in the new one instead of leaving it in whichever was active when
+  // the request failed.
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
 
   useEffect(() => {
     // `loading` starts true, so bailing out without clearing it would leave the
@@ -18,13 +24,13 @@ export function ServiceDetailPage() {
     // param, which is exactly why it would go unnoticed if it ever were not.
     if (serviceId === undefined) {
       setLoading(false);
-      setError("No service selected.");
+      setErrorKey("card.error.noneSelected");
       return;
     }
 
     let cancelled = false;
     setLoading(true);
-    setError(null);
+    setErrorKey(null);
 
     serviceDetailApi
       .get(serviceId)
@@ -33,10 +39,10 @@ export function ServiceDetailPage() {
       })
       .catch((cause: unknown) => {
         if (cancelled) return;
-        setError(
+        setErrorKey(
           cause instanceof AppError && cause.code === "not_found"
-            ? "Service not found."
-            : "Could not load this service.",
+            ? "card.error.notFound"
+            : "card.error.load",
         );
       })
       .finally(() => {
@@ -52,17 +58,17 @@ export function ServiceDetailPage() {
     return (
       <div className="flex justify-center py-12" role="status" aria-live="polite">
         <Spinner />
-        <span className="sr-only">Loading service</span>
+        <span className="sr-only">{t("card.loading")}</span>
       </div>
     );
   }
 
-  if (error !== null) {
-    return <div className="text-inkSoft">{error}</div>;
+  if (errorKey !== null) {
+    return <div className="text-inkSoft">{t(errorKey)}</div>;
   }
 
   if (service === null) {
-    return <div className="text-inkSoft">Service not found.</div>;
+    return <div className="text-inkSoft">{t("card.error.notFound")}</div>;
   }
 
   const version = service.currentVersion;
@@ -75,22 +81,22 @@ export function ServiceDetailPage() {
       </div>
 
       <dl className="grid grid-cols-2 gap-3 rounded-card border border-line bg-paper p-4 text-sm">
-        <dt className="text-inkSoft">Status</dt>
-        <dd>{version?.status ?? "no versions yet"}</dd>
-        <dt className="text-inkSoft">Current version</dt>
-        <dd>{version ? `v${version.version}` : "—"}</dd>
-        <dt className="text-inkSoft">Generation mode</dt>
-        <dd>{version?.generationMode ?? "—"}</dd>
-        <dt className="text-inkSoft">Review mode</dt>
-        <dd>{version?.reviewMode ?? "—"}</dd>
-        <dt className="text-inkSoft">Price</dt>
+        <dt className="text-inkSoft">{t("service.field.status")}</dt>
+        <dd>{version ? t(serviceStatusKey[version.status]) : t("service.noVersionsYet")}</dd>
+        <dt className="text-inkSoft">{t("service.field.currentVersion")}</dt>
+        <dd>{version ? t("service.versionShort", { version: version.version }) : "—"}</dd>
+        <dt className="text-inkSoft">{t("service.field.generationMode")}</dt>
+        <dd>{version ? t(generationModeKey[version.generationMode]) : "—"}</dd>
+        <dt className="text-inkSoft">{t("service.field.reviewMode")}</dt>
+        <dd>{version ? t(reviewModeKey[version.reviewMode]) : "—"}</dd>
+        <dt className="text-inkSoft">{t("service.field.price")}</dt>
         <dd>
           {version?.priceMinor != null && version.currency != null
-            ? formatMoney(version.priceMinor, version.currency)
+            ? formatMoney(version.priceMinor, version.currency, intlLocale)
             : "—"}
         </dd>
-        <dt className="text-inkSoft">Last changed</dt>
-        <dd>{formatDate(service.updatedAt)}</dd>
+        <dt className="text-inkSoft">{t("service.field.lastChanged")}</dt>
+        <dd>{formatDate(service.updatedAt, intlLocale)}</dd>
       </dl>
 
       {/* Who is assigned used to be one line in the table above. It is a
@@ -102,7 +108,7 @@ export function ServiceDetailPage() {
         to={`/services/${service.id}/anatomy`}
         className="inline-block text-brand hover:underline"
       >
-        Document anatomy →
+        {t("card.anatomy")}
       </Link>
     </section>
   );

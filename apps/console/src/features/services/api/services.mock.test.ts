@@ -60,7 +60,14 @@ describe("browse", () => {
 
   it("names the practice area rather than passing the code through", async () => {
     const divorce = (await mockServicesApi.browse()).items.find((s) => s.id === "svc-divorce");
-    expect(divorce?.practiceArea).toEqual({ code: "family", label: "Family", position: 10 });
+    expect(divorce?.practiceArea).toEqual({
+      code: "family",
+      // Both languages, because the label is reference data: an area an admin
+      // adds tomorrow cannot be in a dictionary compiled today, so the layer
+      // carries every label and the screen picks by locale.
+      labels: { uk: "Сімейне право", en: "Family" },
+      position: 10,
+    });
   });
 
   it("renders an area it cannot resolve as its raw code, and sorts it last", async () => {
@@ -80,7 +87,9 @@ describe("browse", () => {
     const items = (await mockServicesApi.browse()).items;
     expect(items.at(-1)?.practiceArea).toEqual({
       code: "astrology",
-      label: "astrology",
+      // The raw code in every language. An unresolved area that read as a
+      // plausible label in one of them would be a bug nobody reports.
+      labels: { uk: "astrology", en: "astrology" },
       position: Number.MAX_SAFE_INTEGER,
     });
   });

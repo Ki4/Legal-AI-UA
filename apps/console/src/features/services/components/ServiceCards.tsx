@@ -5,13 +5,16 @@
 // picked one, every card is in it, and a heading above a homogeneous list is
 // noise (§4.1).
 
+import { useI18n } from "@legal-ai/i18n";
 import { Badge } from "@legal-ai/ui";
 import { Link } from "react-router";
 import { formatMoney } from "../../../shared/format";
+import { serviceStatusKey } from "../../../shared/vocabulary";
 import type { ServiceListItem } from "../api";
 import { statusTone } from "./statusTone";
 
 function ServiceCard({ service }: { service: ServiceListItem }) {
+  const { t, locale, intlLocale } = useI18n();
   const version = service.currentVersion;
 
   return (
@@ -21,9 +24,9 @@ function ServiceCard({ service }: { service: ServiceListItem }) {
           {service.title}
         </Link>
         {version ? (
-          <Badge tone={statusTone[version.status]}>{version.status}</Badge>
+          <Badge tone={statusTone[version.status]}>{t(serviceStatusKey[version.status])}</Badge>
         ) : (
-          <Badge tone="neutral">no versions</Badge>
+          <Badge tone="neutral">{t("service.noVersions")}</Badge>
         )}
       </div>
 
@@ -32,34 +35,37 @@ function ServiceCard({ service }: { service: ServiceListItem }) {
       )}
 
       <dl className="mt-auto grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        <dt className="text-inkMute">Area</dt>
-        <dd>{service.practiceArea.label}</dd>
+        <dt className="text-inkMute">{t("service.field.area")}</dt>
+        <dd>{service.practiceArea.labels[locale]}</dd>
 
-        <dt className="text-inkMute">Accountable</dt>
+        <dt className="text-inkMute">{t("service.field.accountable")}</dt>
         <dd>
           {service.primaryLawyer === null ? (
             // A dash means nobody is accountable. A service whose lawyer cannot
             // be read must not borrow it and claim to be unassigned (DoD §5).
-            <span className="text-inkMute">nobody</span>
+            <span className="text-inkMute">{t("service.nobody")}</span>
           ) : (
             <>
               {service.primaryLawyer.fullName ?? (
-                <span className="text-inkMute">name unavailable</span>
+                <span className="text-inkMute">{t("service.nameUnavailable")}</span>
               )}
               {service.coverLawyers.length > 0 && (
-                <span className="text-inkMute"> +{service.coverLawyers.length} cover</span>
+                <span className="text-inkMute">
+                  {" "}
+                  {t("service.coverExtra", { count: service.coverLawyers.length })}
+                </span>
               )}
             </>
           )}
         </dd>
 
-        <dt className="text-inkMute">Version</dt>
-        <dd>{version ? `v${version.version}` : "—"}</dd>
+        <dt className="text-inkMute">{t("service.field.version")}</dt>
+        <dd>{version ? t("service.versionShort", { version: version.version }) : "—"}</dd>
 
-        <dt className="text-inkMute">Price</dt>
+        <dt className="text-inkMute">{t("service.field.price")}</dt>
         <dd>
           {version?.priceMinor != null && version.currency != null
-            ? formatMoney(version.priceMinor, version.currency)
+            ? formatMoney(version.priceMinor, version.currency, intlLocale)
             : "—"}
         </dd>
       </dl>
@@ -84,11 +90,14 @@ interface Props {
 }
 
 export function ServiceCards({ services, grouped }: Props) {
+  const { locale } = useI18n();
+
   if (!grouped) return <Grid services={services} />;
 
   // The list arrives ordered by area already, so grouping is a walk rather than
   // a sort — and the order of the groups is the reference table's, not this
-  // component's opinion.
+  // component's opinion. It is `position`, not the label, so the groups do not
+  // reshuffle when the reader switches language.
   const groups: { code: string; label: string; services: ServiceListItem[] }[] = [];
   for (const service of services) {
     const last = groups.at(-1);
@@ -97,7 +106,7 @@ export function ServiceCards({ services, grouped }: Props) {
     } else {
       groups.push({
         code: service.practiceArea.code,
-        label: service.practiceArea.label,
+        label: service.practiceArea.labels[locale],
         services: [service],
       });
     }

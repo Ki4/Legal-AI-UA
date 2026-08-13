@@ -6,6 +6,13 @@
 // exception. There is no ErrorBoundary in the console yet, so a throw from a
 // formatter would replace a whole screen with a generic error page — a far
 // worse outcome than one wrong-looking cell.
+//
+// `locale` is required rather than defaulted. It used to default to `uk-UA`,
+// which was invisible for as long as there was one language: a call site that
+// forgot to pass anything was right by accident. With a switcher on screen the
+// same omission renders Ukrainian date order under English copy, and nothing
+// fails — so the compiler is asked to notice instead. Callers pass
+// `intlLocale` from `useI18n()`, which is what that field is for.
 
 /**
  * `minor` is an integer in the currency's smallest unit. Never a float: 0.1 +
@@ -15,7 +22,7 @@
  * JPY has no minor unit and KWD has three, so a fixed 100 would render those
  * 100× low and 10× high respectively, silently, on a billing surface.
  */
-export function formatMoney(minor: number, currency: string, locale = "uk-UA"): string {
+export function formatMoney(minor: number, currency: string, locale: string): string {
   try {
     const formatter = new Intl.NumberFormat(locale, { style: "currency", currency });
     const exponent = formatter.resolvedOptions().maximumFractionDigits ?? 2;
@@ -28,7 +35,7 @@ export function formatMoney(minor: number, currency: string, locale = "uk-UA"): 
 }
 
 /** ISO 8601 in, short readable date out. Unparsable input is returned as-is. */
-export function formatDate(iso: string, locale = "uk-UA"): string {
+export function formatDate(iso: string, locale: string): string {
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return iso;
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(parsed);

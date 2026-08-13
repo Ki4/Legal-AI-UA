@@ -46,6 +46,106 @@ export const en: Dictionary = {
   "common.loading": "Loading…",
   "common.tryAgain": "Try again",
   "common.somethingWentWrong": "Something went wrong. Please try again.",
+
+  // Domain vocabulary -------------------------------------------------------
+  "service.status.draft": "Draft",
+  "service.status.in_review": "In review",
+  "service.status.published": "Published",
+  "service.status.paused": "Paused",
+  "service.status.archived": "Archived",
+
+  "service.generationMode.template": "Template",
+  "service.generationMode.block_assembly": "Block assembly",
+  "service.generationMode.full_generation": "Full generation",
+
+  "service.reviewMode.auto": "Automatic",
+  "service.reviewMode.lawyer_required": "Lawyer required",
+
+  // Catalogue ---------------------------------------------------------------
+  "catalogue.title": "Services",
+  "catalogue.subtitle":
+    "Filter and search live in the address bar, so a narrowed catalogue is a link.",
+  "catalogue.search.placeholder": "Search title, slug or summary",
+  "catalogue.search.label": "Search services",
+  "catalogue.display.label": "How the catalogue is shown",
+  "catalogue.display.cards": "Cards",
+  "catalogue.display.table": "Table",
+  "catalogue.filter.area": "Practice area",
+  "catalogue.filter.status": "Status",
+  "catalogue.filter.mineOnly": "Only services I am attached to",
+  "catalogue.filter.on": "filtered",
+  "catalogue.filter.clear": "Clear filters",
+  "catalogue.loading": "Loading services",
+
+  "catalogue.empty.none.title": "No services yet",
+  "catalogue.empty.none.hint": "Create the first one — it takes minutes",
+  "catalogue.empty.search.title": "Nothing matches",
+  "catalogue.empty.search.hint":
+    "No service matches this search. Clear the filters to see the whole catalogue.",
+  "catalogue.empty.filters.title": "Nothing matches these filters",
+  "catalogue.empty.filters.hint": "Clear the filters to see the whole catalogue.",
+  "catalogue.empty.filters.elsewhere": "Nothing in the chosen area.",
+  "catalogue.failed.title": "Could not load the catalogue",
+  "catalogue.failed.hint": "Try again in a moment",
+
+  "catalogue.error.forbidden": "You do not have access to the service catalogue.",
+  "catalogue.error.notFound": "This catalogue no longer exists.",
+  "catalogue.error.validation": "The filter could not be applied. Try clearing it.",
+  "catalogue.error.conflict":
+    "Someone changed this while you were looking. Reload to see the current state.",
+  "catalogue.error.network": "Could not reach the server. Check the connection and try again.",
+  "catalogue.error.unknown": "Something went wrong loading the catalogue.",
+
+  // A service, as the catalogue and the card describe one ---------------------
+  "service.field.service": "Service",
+  "service.field.area": "Area",
+  "service.field.accountable": "Accountable",
+  "service.field.lawyer": "Lawyer",
+  "service.field.version": "Version",
+  "service.field.currentVersion": "Current version",
+  "service.field.price": "Price",
+  "service.field.status": "Status",
+  "service.field.generationMode": "Generation mode",
+  "service.field.reviewMode": "Review",
+  "service.field.lastChanged": "Last changed",
+  "service.versionShort": "v{version}",
+  "service.noVersions": "no versions",
+  "service.noVersionsYet": "no versions yet",
+  "service.nobody": "nobody",
+  "service.nameUnavailable": "name unavailable",
+  "service.coverExtra": "+{count} cover",
+  "service.coverExtraShort": "+{count}",
+
+  // The service card --------------------------------------------------------
+  "card.loading": "Loading service",
+  "card.error.noneSelected": "No service selected.",
+  "card.error.notFound": "Service not found.",
+  "card.error.load": "Could not load this service.",
+  "card.anatomy": "Document anatomy →",
+
+  // Who answers for a service (ADM-10) --------------------------------------
+  "assignment.title": "Who answers for this service",
+  "assignment.subtitle":
+    "One lawyer is accountable. Cover carries the same rights and none of the obligation.",
+  "assignment.accountable": "Accountable",
+  "assignment.nobodyAccountable": "Nobody accountable",
+  "assignment.nobodyAccountableHint": "This service cannot be published in this state.",
+  "assignment.leaveNobody": "Leave nobody accountable",
+  "assignment.cover": "Cover",
+  "assignment.noCover": "Nobody is covering this service.",
+  "assignment.makeAccountable": "Make accountable",
+  "assignment.remove": "Remove",
+  "assignment.attach": "Attach a lawyer",
+  "assignment.addAsCover": "Add as cover",
+  "assignment.loadingLawyers": "Loading lawyers…",
+  "assignment.lawyersFailed": "Could not load the list of lawyers.",
+  "assignment.noLawyers": "No approved lawyers yet.",
+  "assignment.allAttached": "Every lawyer is already attached to this service.",
+  "assignment.error.forbidden":
+    "You may not make that change. Only an admin moves accountability, and only the accountable lawyer arranges cover.",
+  "assignment.error.notFound": "This service no longer exists.",
+  "assignment.error.conflict": "Someone changed it first. Reload the page.",
+  "assignment.error.failed": "The change did not go through.",
 };
 
 /**

@@ -42,6 +42,15 @@ export const en: Dictionary = {
     "After approval, sign out and sign in again — your role arrives with a fresh session.",
   "auth.signOut": "Sign out",
 
+  "auth.error.invalidCredentials": "Wrong email or password.",
+  "auth.error.emailNotConfirmed": "This address is not confirmed yet — check your email.",
+  "auth.error.emailExists": "An account with this address already exists.",
+  "auth.error.weakPassword": "That password is too simple. Use a longer one.",
+  "auth.error.rateLimited": "Too many attempts. Try again in a few minutes.",
+  "auth.error.signupDisabled": "Registration is switched off.",
+  "auth.error.signInFailed": "Could not sign you in. Try again.",
+  "auth.error.registerFailed": "Could not create the account. Try again.",
+
   // Common ------------------------------------------------------------------
   "common.loading": "Loading…",
   "common.tryAgain": "Try again",
@@ -146,6 +155,24 @@ export const en: Dictionary = {
   "assignment.error.notFound": "This service no longer exists.",
   "assignment.error.conflict": "Someone changed it first. Reload the page.",
   "assignment.error.failed": "The change did not go through.",
+
+  // The team screen ---------------------------------------------------------
+  "team.title": "Team",
+  "team.pending": "pending",
+  "team.approveAsLawyer": "Approve as lawyer",
+  "team.approveAsAdmin": "Approve as admin",
+  "team.error.load": "Could not load the team.",
+  "team.error.forbidden": "Only an admin approves registrations.",
+  "team.error.notFound": "This person no longer exists.",
+  "team.error.conflict": "Someone changed it first. Reload the page.",
+  "team.error.network": "Could not reach the server. Check the connection and try again.",
+  "team.error.approve": "Could not approve the registration.",
+
+  // The account screen ------------------------------------------------------
+  "account.title": "Account",
+  "account.role": "Role",
+  "account.roleNone": "not assigned",
+  "account.userId": "User id",
 };
 
 /**

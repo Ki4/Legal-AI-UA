@@ -53,6 +53,22 @@ export const uk = {
     "Після підтвердження вийдіть і увійдіть знову — роль приходить із новою сесією.",
   "auth.signOut": "Вийти",
 
+  // What Supabase's auth errors say, in the reader's language.
+  //
+  // Keyed off `AuthError.code`, never off the message: the message is English
+  // prose from the auth server, it changes between releases, and matching on it
+  // is a translation that silently stops working. A code with no key here falls
+  // back to the generic sentence for the action, which is a worse message and
+  // never a wrong one.
+  "auth.error.invalidCredentials": "Невірна пошта або пароль.",
+  "auth.error.emailNotConfirmed": "Адресу ще не підтверджено — перевірте пошту.",
+  "auth.error.emailExists": "Обліковий запис із цією адресою вже існує.",
+  "auth.error.weakPassword": "Пароль надто простий. Візьміть довший.",
+  "auth.error.rateLimited": "Забагато спроб. Спробуйте за кілька хвилин.",
+  "auth.error.signupDisabled": "Реєстрацію вимкнено.",
+  "auth.error.signInFailed": "Не вдалося увійти. Спробуйте ще раз.",
+  "auth.error.registerFailed": "Не вдалося створити обліковий запис. Спробуйте ще раз.",
+
   // Common ------------------------------------------------------------------
   "common.loading": "Завантаження…",
   "common.tryAgain": "Спробувати ще раз",
@@ -171,6 +187,27 @@ export const uk = {
   "assignment.error.notFound": "Цієї послуги більше немає.",
   "assignment.error.conflict": "Хтось змінив це першим. Перезавантажте сторінку.",
   "assignment.error.failed": "Зміна не пройшла.",
+
+  // The team screen ---------------------------------------------------------
+  "team.title": "Команда",
+  // The role itself is not translated (see the domain-vocabulary note above),
+  // but the *absence* of one is not a role — it is our word for a registration
+  // nobody has decided on yet, and it belongs in the dictionary.
+  "team.pending": "очікує",
+  "team.approveAsLawyer": "Підтвердити як юриста",
+  "team.approveAsAdmin": "Підтвердити як адміністратора",
+  "team.error.load": "Не вдалося завантажити команду.",
+  "team.error.forbidden": "Підтверджувати реєстрації може лише адміністратор.",
+  "team.error.notFound": "Цього користувача більше немає.",
+  "team.error.conflict": "Хтось змінив це першим. Оновіть сторінку.",
+  "team.error.network": "Не вдалося зв’язатися із сервером. Перевірте з’єднання.",
+  "team.error.approve": "Не вдалося підтвердити реєстрацію.",
+
+  // The account screen ------------------------------------------------------
+  "account.title": "Профіль",
+  "account.role": "Роль",
+  "account.roleNone": "не призначено",
+  "account.userId": "Ідентифікатор користувача",
 } as const satisfies Record<string, string>;
 
 /**

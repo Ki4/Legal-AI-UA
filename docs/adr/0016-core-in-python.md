@@ -74,9 +74,14 @@ a licence for a second set of conventions inside the same repository.
 - **The gate is only honest if the second lane actually runs.** A Python service whose tests were
   never wired into `ci.yml` is the failure shape the 2026-08-11 journal already named: a missing
   check is not an error, it is silence. The CI job lands with the first Python file, not after it.
-- **`lint-staged` currently matches `*.{ts,tsx,js,jsx,mjs,cjs}` and `*.{json,md,yml,yaml,css}`.**
-  A `.py` file committed today passes every local hook without being seen by any of them. The globs
-  are extended in the same change that creates the package, for the same reason.
+- **`lint-staged` matched `*.{ts,tsx,js,jsx,mjs,cjs}` and `*.{json,md,yml,yaml,css}` and nothing
+  else**, so a `.py` file committed today would pass every local hook without being seen by any of
+  them. Extended here rather than later: a glob that matches no files costs nothing, and a glob
+  nobody remembered to add costs a review. `ruff` is invoked from `PATH` rather than added to
+  `devDependencies`, because the `ruff` package on npm is an unrelated library and Astral publishes
+  no npm build — it arrives with the Python toolchain. Until then the entry never fires, and the
+  first `.py` file committed without `ruff` installed fails its hook. That is the intended
+  direction: the lane exists before the code it checks.
 - **The contract cannot lean on a shared type.** That is a genuine loss, and it forces the contract
   to exist as a written schema — which is what "frozen before the generator is written" required
   anyway. The loss and the requirement are the same fact seen from two sides.

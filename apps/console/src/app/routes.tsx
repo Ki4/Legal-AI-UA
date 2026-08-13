@@ -6,6 +6,7 @@ import { serviceDetailRoutes } from "../features/service-detail";
 import { servicesRoutes } from "../features/services";
 import { teamRoutes } from "../features/team";
 import { AppShell } from "./AppShell";
+import { NotFound } from "./NotFound";
 import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
 import { RequireAuth } from "./RequireAuth";
@@ -29,7 +30,7 @@ export const router = createBrowserRouter([
       ...accountRoutes,
       ...teamRoutes,
       ...designKitRoutes,
-      { path: "*", element: <div className="text-inkMute">Page not found</div> },
+      { path: "*", element: <NotFound /> },
     ],
   },
 ]);

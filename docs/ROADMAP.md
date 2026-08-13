@@ -165,6 +165,23 @@ all three held by one developer today (`docs/CONTRIBUTING.md`).
   recorded rather than remembered, because nobody has read its body and replacing a production
   safety object with a guess is the thing this repository keeps learning not to do.
 
+## Done — the console speaks Ukrainian (2026-08-13)
+
+- `packages/i18n` exists and the shell is adopted: `uk` is the default because the users are
+  Ukrainian — lawyers in the console, clients on the platform — while the repository stays English
+  (root `CLAUDE.md`). The two facts are unrelated and were being confused.
+- `uk` defines the key set and `en` is typed against it, so a key added to one and missed in the
+  other is a compile error rather than a blank label somebody finds in production.
+- Counted phrases go through `Intl.PluralRules`, not a ternary. The catalogue already had
+  `count === 1 ? "service matches" : "services match"` — correct English, wrong Ukrainian, and
+  invisible until somebody counts to five. Ukrainian needs three forms: 1 послуга, 3 послуги,
+  5 послуг, and round again at 21.
+- The switcher is `Select` plus locale state rather than a new primitive, renders from
+  `LOCALES.map`, and shows endonyms — no flags, because a language is not a country and here that
+  mapping is politically loaded (ADR-0006).
+- Not adopted yet: every feature screen. The shell is bilingual and the catalogue underneath it is
+  not, which is a visible half-state and the reason this is one PR rather than three.
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):
@@ -206,8 +223,9 @@ console happens to own.
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
   into a claim the firm makes about a person, with a retention question attached.
-- `packages/i18n` (uk + en; adding a locale = one line, per ADR-0006) and dictionary adoption
-  in console.
+- Dictionary adoption in the console's feature screens. `packages/i18n` itself exists and the
+  shell speaks both languages; the catalogue, the service card, the team screen and the account
+  screen still hold their copy in JSX.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.
 - Core: LangGraph pipeline behind the frozen contract (the core zone).
 

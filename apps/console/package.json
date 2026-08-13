@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@legal-ai/db": "workspace:*",
+    "@legal-ai/i18n": "workspace:*",
     "@legal-ai/ui": "workspace:*",
     "@supabase/supabase-js": "^2.53.0",
     "lucide-react": "^0.544.0",

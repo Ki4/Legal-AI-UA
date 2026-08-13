@@ -1,3 +1,4 @@
+import { useI18n } from "@legal-ai/i18n";
 import { Button, FormField, Input } from "@legal-ai/ui";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
@@ -11,6 +12,7 @@ export function RegisterPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -31,7 +33,7 @@ export function RegisterPage() {
       navigate("/", { replace: true });
       return;
     }
-    setInfo("Check your email to confirm your address, then sign in.");
+    setInfo(t("auth.confirmEmail"));
   }
 
   return (
@@ -40,8 +42,8 @@ export function RegisterPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 rounded-card border border-line bg-paper p-8 shadow-card"
       >
-        <h1 className="text-xl font-semibold text-ink">Legal-AI-UA console</h1>
-        <FormField htmlFor="register-name" label="Full name">
+        <h1 className="text-xl font-semibold text-ink">{t("app.console")}</h1>
+        <FormField htmlFor="register-name" label={t("auth.fullName")}>
           <Input
             id="register-name"
             type="text"
@@ -51,7 +53,7 @@ export function RegisterPage() {
             onChange={(event) => setFullName(event.target.value)}
           />
         </FormField>
-        <FormField htmlFor="register-email" label="Email">
+        <FormField htmlFor="register-email" label={t("auth.email")}>
           <Input
             id="register-email"
             type="email"
@@ -61,7 +63,11 @@ export function RegisterPage() {
             onChange={(event) => setEmail(event.target.value)}
           />
         </FormField>
-        <FormField htmlFor="register-password" label="Password" error={error ?? undefined}>
+        <FormField
+          htmlFor="register-password"
+          label={t("auth.password")}
+          error={error ?? undefined}
+        >
           <Input
             id="register-password"
             type="password"
@@ -74,12 +80,12 @@ export function RegisterPage() {
         </FormField>
         {info && <p className="text-sm text-inkSoft">{info}</p>}
         <Button type="submit" variant="primary" loading={submitting} className="w-full">
-          {submitting ? "Creating account…" : "Register"}
+          {submitting ? t("auth.creatingAccount") : t("auth.register")}
         </Button>
         <p className="text-center text-sm text-inkSoft">
-          Already have an account?{" "}
+          {t("auth.haveAccount")}{" "}
           <Link to="/login" className="text-ink hover:underline">
-            Sign in
+            {t("auth.signIn")}
           </Link>
         </p>
       </form>

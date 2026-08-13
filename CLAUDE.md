@@ -21,8 +21,12 @@ Read this before any change. Zone files add detail; this file is the map.
 - `packages/config` — the shared base `tsconfig` packages extend. ADR-0002 also promised ESLint and
   Prettier here; they are single-rooted at the repository root instead, and that is fine while there
   is one lint lane. The ADR records the intent, this line records the state.
-- `packages/i18n` (planned, not yet created) — uk/en dictionaries (adding a locale is one line —
-  see ADR-0006). Console copy is hardcoded English until it exists.
+- `packages/i18n` — uk/en dictionaries, `t()` and `tCount()` through `useI18n()` (adding a locale
+  is one line — see ADR-0006). `uk` is the default and defines the key set; `en` is typed against
+  it, so a key added to one and missed in the other fails to compile. Counted phrases go through
+  `tCount`, because Ukrainian has three plural forms where English has two and a `count === 1`
+  ternary is correct English and wrong Ukrainian. The console shell is adopted; the feature screens
+  are not yet.
 - `supabase/` — migrations, edge functions, seed. See `supabase/CLAUDE.md`.
 - `docs/` — vision, ADRs, specs (`docs/specs/`), `docs/CONTRIBUTING.md`, session journals.
 - `.claude/` — `/session-start` and `/session-end`, and a SessionStart hook that puts branch

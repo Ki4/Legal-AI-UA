@@ -199,8 +199,9 @@ console happens to own.
 - Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
   service card (ADM-58) and the assignment editor on it (ADM-10) are there. Still on fixtures or
   unbuilt — the versions tab with pause/resume, and the orders table with its event timeline.
-  `team` and `anatomy` never joined the api/ layer at all, and `team` is now the only feature
-  querying Supabase outside it.
+  `team` has joined the api/ layer and no feature queries Supabase outside it any more; `anatomy`
+  is still outside, and is the cheap half — it renders a hardcoded trace and has no queries to
+  move.
 - Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion

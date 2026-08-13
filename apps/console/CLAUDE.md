@@ -56,8 +56,9 @@ screen renders. Mapping between the two is what the `api/` layer is _for_ — th
 regenerating types cannot reach a component. If you find yourself wanting a camelCase row, you are
 about to put the mapping in the wrong place.
 
-Still to migrate, and deliberately listed rather than hidden: `anatomy` and `team` bypass the
-layer. `team` is the more valuable of the two, being the only feature with real queries.
+Still to migrate, and deliberately listed rather than hidden: `anatomy` bypasses the layer. It
+renders a hardcoded trace and has no queries at all, so it is the cheap half — `team`, which had
+the real ones, is converted.
 
 ## `src/app/routes.tsx` — the one shared file
 

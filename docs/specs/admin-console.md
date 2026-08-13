@@ -2,7 +2,8 @@
 
 - Status: draft for discussion
 - Date: 2026-08-04
-- Audience: the two developers building the console, plus the core owner for the zone boundary
+- Audience: whoever is building the console, and the core zone for the boundary between them —
+  today the same developer in both (`docs/CONTRIBUTING.md`)
 
 This is one document on purpose: the screen map, the user stories, the metadata model behind them,
 and the backlog all constrain each other, and reading them apart is how they drift.
@@ -1040,6 +1041,11 @@ ADM-51, the scheduled full review, is worth pulling earlier than the rest of the
 only the event log, and it is the backstop that covers for everything in §9 not being built yet.
 
 ## 12. Two developers in parallel
+
+**A plan for a second developer, not a description of today.** One person holds every zone right
+now, so nothing below is in force — it is here so the split exists before it is needed, and so the
+structural decisions it depends on (the layout route, the single-touch-point `routes.tsx`, the
+feature-local `api/`) are not discovered to be missing on somebody's first day.
 
 Split by vertical, not by layer. "One writes the API, the other the UI" produces continuous
 blocking.

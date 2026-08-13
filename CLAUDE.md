@@ -8,22 +8,33 @@ Read this before any change. Zone files add detail; this file is the map.
 - `apps/console` — lawyer/admin cabinet. React + Vite + react-router + Tailwind (semantic tokens
   only) + Supabase JS client.
 - `apps/web` — client platform (not built yet).
-- `apps/core` (future) — AI generation pipeline, owned by the core owner, called only
+- `apps/core` (future) — AI generation pipeline, the core zone, called only
   through a Supabase Edge Function gateway. See `docs/adr/0004-ai-core-separate-service.md`.
   Written in **Python** (`docs/adr/0016-core-in-python.md`) — the one package in this repository
   that is not TypeScript, and therefore the one that carries its own lint, format and test lane
   rather than the root `pnpm` scripts.
 - `packages/core-client` (planned, not yet created) — typed HTTP contract + mocks for the core, so
   frontend work proceeds before the core exists.
-- `packages/ui` — the design system (owned by the design-system owner). Console features consume
+- `packages/ui` — the design system (the design-system zone). Console features consume
   it; it never imports from `apps/*`.
 - `packages/db` — mock data + shared types, standing in for Supabase queries until wired.
+- `packages/config` — the shared base `tsconfig` packages extend. ADR-0002 also promised ESLint and
+  Prettier here; they are single-rooted at the repository root instead, and that is fine while there
+  is one lint lane. The ADR records the intent, this line records the state.
 - `packages/i18n` (planned, not yet created) — uk/en dictionaries (adding a locale is one line —
   see ADR-0006). Console copy is hardcoded English until it exists.
 - `supabase/` — migrations, edge functions, seed. See `supabase/CLAUDE.md`.
 - `docs/` — vision, ADRs, specs (`docs/specs/`), `docs/CONTRIBUTING.md`, session journals.
 - `.claude/` — `/session-start` and `/session-end`, and a SessionStart hook that puts branch
   state, recent commits and the docs-check result into a fresh session's context.
+
+## Roles are zones, not people
+
+Product owner, core owner, design-system owner name **zones of the repository**. One developer holds
+all three. When a doc says "the core owner countersigns" it means the same person in a different
+zone — not somebody to wait for, and not a reason to call work blocked. The one rule that genuinely
+needs a second person is the access-control review in `docs/CONTRIBUTING.md`, which is suspended
+against a named substitute rather than ignored.
 
 ## Language rule
 

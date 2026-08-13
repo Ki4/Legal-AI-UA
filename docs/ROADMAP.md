@@ -137,6 +137,13 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   it was: a version recorded as applied when it only half was is worse than one that is missing.
   The same drift had appeared locally that morning, one day after the journal wrote it down for the
   cloud, which is why `supabase/CLAUDE.md` now carries the rule rather than the story.
+- ADR-0016 closes the one question ADR-0004 deliberately left open: the core is Python. Neither the
+  agent framework nor the Claude SDK decided it — LangGraph and the Anthropic SDK are at parity
+  across both languages. DOCX did. The Claude API reads a PDF natively, so PDF needs no library at
+  all; DOCX is not a native input type, has to be parsed locally, and is the format Ukrainian firms
+  actually work in. `python-docx` reads and writes numbering and styles through one object model,
+  which is the round trip the product is made of. The price is a second toolchain, and the ADR says
+  so rather than pretending otherwise.
 - Two things live in the cloud that no migration creates, found by that same diff and left alone
   deliberately: the `ensure_rls` event trigger with `rls_auto_enable`, which enables RLS on any new
   table by itself, and `alter default privileges … revoke update on sequences` for the three client
@@ -169,7 +176,9 @@ are closed.
 **Core contract** (PO drafts, core owner countersigns): `packages/core-client` — typed HTTP
 contract + MSW mocks; the generation trace schema (stable block IDs, trust status,
 `needs_attention`, law/questionnaire refs, tool calls) frozen **before** the generator is
-written.
+written. The language question ADR-0004 left open is closed — the core is Python (ADR-0016) — so
+the trace schema is written as a schema both sides conform to, not as a TypeScript type the
+console happens to own.
 
 ## Next — wave 2
 

@@ -7,6 +7,7 @@ import {
   FormField,
   Input,
   Provenance,
+  Select,
   Spinner,
   Table,
   TableCell,
@@ -80,6 +81,7 @@ function Section({
 export function DesignKitPage() {
   const [demoValue, setDemoValue] = useState("");
   const [demoTouched, setDemoTouched] = useState(false);
+  const [demoLawyer, setDemoLawyer] = useState("");
 
   const demoError = demoTouched && demoValue.trim() === "" ? "This field is required" : undefined;
 
@@ -216,6 +218,37 @@ export function DesignKitPage() {
             error="Not saved: “Marriage date” is empty"
           >
             <Input id="design-kit-demo-error" invalid />
+          </FormField>
+          <FormField
+            htmlFor="design-kit-demo-select"
+            label="Accountable lawyer"
+            hint="A native select: the control the person already knows, and 44px tall."
+          >
+            <Select
+              id="design-kit-demo-select"
+              placeholder="Choose a lawyer"
+              options={[
+                { value: "olena", label: "Olena Kovalchuk" },
+                { value: "taras", label: "Taras Bondarenko" },
+                { value: "dmytro", label: "Dmytro Lysenko — on leave", disabled: true },
+              ]}
+              value={demoLawyer}
+              onChange={(event) => setDemoLawyer(event.target.value)}
+            />
+          </FormField>
+          <FormField
+            htmlFor="design-kit-demo-select-error"
+            label="Practice area"
+            error="Not saved: every service sits in a practice area"
+          >
+            <Select
+              id="design-kit-demo-select-error"
+              placeholder="Choose an area"
+              options={[{ value: "family", label: "Family" }]}
+              value=""
+              onChange={() => undefined}
+              invalid
+            />
           </FormField>
           <p className="flex items-center gap-1 text-xs text-inkMute">
             <AlertCircle size={13} aria-hidden="true" />

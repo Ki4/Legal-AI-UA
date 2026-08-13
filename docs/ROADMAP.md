@@ -186,13 +186,18 @@ all three held by one developer today (`docs/CONTRIBUTING.md`).
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):
 
-1. Select · Checkbox · Radio · Switch (form controls to match FormField).
+1. ~~Select~~ (shipped — native, deliberately: the popover a custom listbox needs is item 2, and
+   building it as a side effect of wanting a dropdown is how a shared primitive ends up shaped by
+   the first screen that needed one) · Checkbox · Radio · Switch (form controls to match FormField).
 2. Popover infrastructure → Tooltip · DropdownMenu; then Citation gains its §8.3 popover.
 3. Dialog · Sheet · ConfirmModal + `useConfirm()`.
 4. Toast · Alert · ProgressBar (first animated components — must land with the
    `prefers-reduced-motion` behavior intact).
 5. Tabs · Accordion · Pagination · table sorting.
-6. StatCard · ChartCard · Avatar · Breadcrumbs · LangSwitcher.
+6. StatCard · ChartCard · Avatar · Breadcrumbs. LangSwitcher is deliberately **not** here any
+   more: it lives in `apps/console/src/app/` as `Select` plus locale state, because a design system
+   that renders the switcher has to import the dictionary and start knowing which languages the
+   product speaks.
 
 **Data layer** (PO): the catalogue half shipped — see the section above. What remains is
 `document_blocks`, which waits on the trace schema below because the two constrain each other's

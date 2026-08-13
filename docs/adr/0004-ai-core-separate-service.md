@@ -23,7 +23,8 @@ Functions are a **gateway**, not the pipeline's home — they authorize and audi
 generation, because their wall-clock limits make them unsuitable for a potentially long-running
 pipeline.
 
-Open question, deliberately not settled here: TypeScript vs. Python for the core.
+Open question, deliberately not settled here: TypeScript vs. Python for the core. **Settled on
+2026-08-13 by ADR-0016: Python.**
 
 ## Consequences
 
@@ -34,4 +35,5 @@ Open question, deliberately not settled here: TypeScript vs. Python for the core
 - Two hops (frontend → Edge Function → core) add latency and a second failure surface versus a
   direct call.
 - The TS-vs-Python choice remains open and will shape `packages/core-client`'s contract style
-  and available observability tooling once made — this ADR does not resolve it.
+  and available observability tooling once made — this ADR does not resolve it. ADR-0016 does:
+  the core is Python, and the contract is a schema rather than a type either side owns.

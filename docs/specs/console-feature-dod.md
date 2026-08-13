@@ -100,7 +100,10 @@ Learned from reviewing the reference, all of which it got wrong first time:
 - [ ] Status colour only through `Badge tone` or the health mapping, never hand-written.
 - [ ] Both themes checked. The theme flips at the CSS variable layer; a component never references
       it.
-- [ ] Missing a primitive is a request to the design-system owner, not a local one-off.
+- [ ] Missing a primitive is work in the design-system zone, not a local one-off. With one developer
+      that is not a handoff to anybody — it means stopping, building it in `packages/ui` to the
+      design spec, and coming back. ADM-10 is what skipping this looks like: the assignment editor
+      shipped without a dropdown because there was no `Select`, and the gap outlived the feature.
 
 ## 7. Access
 

@@ -1,7 +1,8 @@
 # Roadmap
 
 Status board lives in GitHub issues; this file is the map — what exists, what's next, in what
-order and why. Roles: product owner (PO), core owner, design-system owner.
+order and why. Roles: product owner (PO), core owner, design-system owner — zones of the repository,
+all three held by one developer today (`docs/CONTRIBUTING.md`).
 
 ## Done — bootstrap (2026-08-01)
 
@@ -166,7 +167,7 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
 
 ## Now — wave 1 (parallel, no file overlap)
 
-**Design system completion** (design-system owner; DoD per design spec §11 for every item):
+**Design system completion** (the design-system zone; DoD per design spec §11 for every item):
 
 1. Select · Checkbox · Radio · Switch (form controls to match FormField).
 2. Popover infrastructure → Tooltip · DropdownMenu; then Citation gains its §8.3 popover.
@@ -184,7 +185,9 @@ by gaining an entity mapping in `audit_change` — which raises rather than logg
 so the mapping cannot be forgotten. Client-bearing tables wait on nothing else now that Q10–Q13
 are closed.
 
-**Core contract** (PO drafts, core owner countersigns): `packages/core-client` — typed HTTP
+**Core contract** (drafted in the PO zone, checked against the core zone — the same developer, so
+what stands in for a countersignature is that the mocks run and the schema is written down rather
+than agreed): `packages/core-client` — typed HTTP
 contract + MSW mocks; the generation trace schema (stable block IDs, trust status,
 `needs_attention`, law/questionnaire refs, tool calls) frozen **before** the generator is
 written. The language question ADR-0004 left open is closed — the core is Python (ADR-0016) — so
@@ -205,7 +208,7 @@ console happens to own.
 - `packages/i18n` (uk + en; adding a locale = one line, per ADR-0006) and dictionary adoption
   in console.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.
-- Core: LangGraph pipeline behind the countersigned contract (core owner's zone).
+- Core: LangGraph pipeline behind the frozen contract (the core zone).
 
 ## Later (deliberately deferred)
 

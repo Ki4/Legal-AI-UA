@@ -7,8 +7,24 @@ content, it links to it.
 
 ## Team and ownership zones
 
-Three roles today, held as equals: product owner, core owner, design-system owner. Ideas mostly
-start with the product owner; decisions are made together.
+Three roles: product owner, core owner, design-system owner. **They are zones, not people.** One
+developer holds all three today.
+
+That distinction is worth stating plainly, because the rest of this document was written in a voice
+that assumes otherwise, and reading it literally produces nonsense: "the core owner countersigns
+the contract" becomes a person waiting to be consulted who does not exist, and a task can look
+blocked on them. It is the same person in a different zone. Where a rule depends on a _second pair
+of eyes_ rather than a second zone — the access-control review below — the dependency is real, and
+what stands in for it is spelled out in "While the team is one developer".
+
+The zones are kept anyway, and kept accurate. They draw boundaries that are real regardless of the
+headcount — the console never reaches into the core, `packages/ui` never imports from `apps/*` — and
+they are what a second developer joins into. A split invented on the day somebody arrives is a split
+nobody has tested.
+
+Ideas mostly start with the product owner. Decisions are made together once there is more than one
+person to make them with; until then, "discussed together" means written down where the next reader
+can disagree with it, which is what the ADRs are for.
 
 | Zone                                                                                   | Owner               | Notes                                                        |
 | -------------------------------------------------------------------------------------- | ------------------- | ------------------------------------------------------------ |
@@ -49,6 +65,11 @@ This is a **default matrix**, not a hard gate — use judgment.
 
 Any of the three may push directly or self-approve when it's pragmatic — a small change, inside
 their own zone. The matrix is the default expectation, not a lock.
+
+**With one developer holding all three zones, every row of this matrix resolves to self-approval.**
+That is not a loophole to feel bad about; it is what the table says when the zones collapse onto one
+person. The one row that does not resolve that way is the hard exception below, because it asks for
+independence rather than for a zone.
 
 **The one hard exception:** migrations touching access control (RLS policies, `auth.*`, JWT
 `app_metadata`, consents) require a second reviewer, core owner preferred, and no self-merge. See

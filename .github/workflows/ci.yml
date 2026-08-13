@@ -33,5 +33,11 @@ jobs:
       - name: Docs
         run: pnpm docs:check
 
+      # Static, so it belongs here rather than in the SQL workflow: it needs no
+      # database, and a migration missing from the ledger repair script should
+      # go red on every pull request, not only on the ones that touch supabase/.
+      - name: SQL conventions
+        run: pnpm check:sql
+
       - name: Build
         run: pnpm build

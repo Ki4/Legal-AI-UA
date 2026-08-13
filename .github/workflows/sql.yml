@@ -1,0 +1,53 @@
+name: SQL
+
+# A separate workflow rather than a job in CI, because it needs a database and
+# most pull requests do not touch one. Paths keep it off the frontend's back;
+# `push: main` keeps it honest about what actually landed.
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "scripts/*sql*"
+      - ".github/workflows/sql.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - "scripts/*sql*"
+      - ".github/workflows/sql.yml"
+
+concurrency:
+  group: sql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start the local stack
+        run: pnpm exec supabase start
+
+      # Not redundant after `start`. This is the only thing in the repository
+      # that proves the migrations apply to an *empty* database — which is what
+      # every fresh environment is, and what no incremental apply ever tests.
+      # A migration written against the schema that already exists locally can
+      # pass by hand for weeks and fail the first time it meets a new project.
+      - name: Rebuild from migrations and seed
+        run: pnpm exec supabase db reset
+
+      - name: Verification scenarios
+        run: pnpm verify:sql

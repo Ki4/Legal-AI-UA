@@ -107,6 +107,11 @@ begin
   update public.services set title = 'Divorce' where id = '00000000-0000-0000-0000-0000000000b1';
   raise notice '% 5. a no-op update writes no event',
     case when (select count(*) from public.audit_events) = n then 'PASS' else 'FAIL' end;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -116,6 +121,10 @@ do $$
 declare
   n integer;
 begin
+  -- Stated rather than inherited: as the owner, so this block's assertions are
+  -- about the schema and not about anybody's rights.
+  set local role postgres;
+
   begin
     update public.audit_events set actor_role = 'rewritten';
     raise notice 'FAIL 6. an audit row was updated';
@@ -148,6 +157,11 @@ begin
     n,
     (select count(*) from public.audit_events
      where service_id = '00000000-0000-0000-0000-0000000000b1');
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -158,6 +172,10 @@ declare
   payload jsonb;
   cols text[];
 begin
+  -- Stated rather than inherited: as the owner, so this block's assertions are
+  -- about the schema and not about anybody's rights.
+  set local role postgres;
+
   ------------------------------------------- 8. named, not valued (§6.4)
   drop trigger questionnaire_fields_audit on public.questionnaire_fields;
   create trigger questionnaire_fields_audit
@@ -193,6 +211,11 @@ begin
   exception when others then
     raise notice 'PASS 9. unmapped table refused: %', sqlerrm;
   end;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -235,6 +258,11 @@ begin
   select count(*) into n from public.audit_events;
   raise notice '% 11c. a user with no role reads none of it (% rows)',
     case when n = 0 then 'PASS' else 'FAIL' end, n;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 

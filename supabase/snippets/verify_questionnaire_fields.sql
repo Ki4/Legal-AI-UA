@@ -33,6 +33,10 @@ do $$
 declare
   n integer;
 begin
+  -- Stated rather than inherited: as the owner, so this block's assertions are
+  -- about the schema and not about anybody's rights.
+  set local role postgres;
+
   ----------------------------------------------- 1. an ordinary non-PII field
   begin
     insert into public.questionnaire_fields (service_id, key, label, field_type)
@@ -168,6 +172,11 @@ begin
   exception when others then
     raise notice 'FAIL 9c. label change rejected: %', sqlerrm;
   end;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 
@@ -230,6 +239,11 @@ begin
   select count(*) into n from public.questionnaire_fields;
   raise notice '% 13. a user with no role sees nothing (% rows)',
     case when n = 0 then 'PASS' else 'FAIL' end, n;
+  -- Hand the session back. The next block has to state who it is rather than
+  -- inherit whatever this one happened to leave set.
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
 end;
 $$;
 

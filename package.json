@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "docs:check": "node scripts/check-docs.mjs",
+    "check:sql": "node scripts/check-sql.mjs",
+    "verify:sql": "node scripts/run-sql-verification.mjs",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "prepare": "husky",

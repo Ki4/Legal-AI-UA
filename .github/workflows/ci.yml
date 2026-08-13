@@ -39,5 +39,12 @@ jobs:
       - name: SQL conventions
         run: pnpm check:sql
 
+      # The mechanical half of DoD §6 (docs/specs/console-feature-dod.md): a
+      # hardcoded string or a raw Tailwind colour looks fine to whoever wrote
+      # it and to every other gate here — lint doesn't know a class name from
+      # a colour, typecheck doesn't know a string is copy. This is what looks.
+      - name: Copy conventions
+        run: pnpm check:copy
+
       - name: Build
         run: pnpm build

@@ -244,7 +244,7 @@ export function AssignmentSection({ service, onChanged }: Props) {
                           )
                         }
                       >
-                        Make accountable
+                        {t("assignment.makeAccountable")}
                       </Button>
                     )}
                   </span>

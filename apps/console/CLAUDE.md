@@ -77,6 +77,36 @@ the `Badge` tone prop or the health mapping — never hand-written in markup. Ra
 values, no raw Tailwind palette classes, no raw durations. The theme flips via
 `<html data-theme="dark">` — a component never references the theme.
 
+## Copy: dictionary keys only
+
+The companion to the rule above. A screen hardcodes neither its colours nor its words.
+
+Write for both languages from the first line — not because a translation is coming later, but
+because it is not. A screen written in one language and translated afterwards gets rewritten
+afterwards: which states exist, which sentence each one gets, and whether a phrase is counted are
+decisions the copy makes, and doing them twice is doing them differently.
+
+- Every user-visible string is `t("some.key")` from `useI18n()`, with the key added to **both**
+  dictionaries in `packages/i18n`. `uk` defines the key set and `en` is typed against it, so
+  forgetting one is a compile error rather than a blank label somebody finds in production.
+- Counted phrases use `tCount`, never `count === 1 ? a : b`. Ukrainian has three plural forms
+  where English has two.
+- Errors live in state as `TranslationKey`, not as translated sentences — otherwise switching
+  language leaves the old one on screen. Map an error **code** to a key; never render
+  `error.message`, ours or a vendor's.
+- Anything reaching `Intl` — money, dates — takes `intlLocale` from `useI18n()`.
+- Schema enums a person reads (`status`, `generation_mode`, `review_mode`) go through
+  `src/shared/vocabulary.ts`, which is `Record<Enum, TranslationKey>` — so a value added in a
+  migration fails to compile until it also has a word.
+- Reference data an admin edits at runtime (practice areas) is **not** dictionary material: no
+  build-time dictionary can name a row inserted tomorrow. Those carry a label column per language
+  and the view model carries them all.
+- `admin` and `lawyer` are never translated. They are the words an RLS policy and the JWT are
+  written in, and a reader comparing a screen to a policy needs the same word in both. Only the
+  absence of a role is our sentence.
+
+The checkable form, with the reasoning, is `docs/specs/console-feature-dod.md` §6.
+
 ## Role guards
 
 Roles come from the JWT `app_metadata` only, surfaced through `useAuth()` — never read

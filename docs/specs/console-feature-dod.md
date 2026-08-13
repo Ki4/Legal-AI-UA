@@ -94,12 +94,47 @@ Learned from reviewing the reference, all of which it got wrong first time:
 - [ ] **A stale result is cleared before a new request's outcome is shown.** Rows from a previous
       filter rendered next to a new error read as the new filter's answer.
 
-## 6. Design system
+## 6. Design system and copy
+
+The same rule twice: a screen hardcodes neither its colours nor its words.
 
 - [ ] Semantic tokens only — no hex, no raw Tailwind palette classes, no raw durations.
 - [ ] Status colour only through `Badge tone` or the health mapping, never hand-written.
 - [ ] Both themes checked. The theme flips at the CSS variable layer; a component never references
       it.
+- [ ] **No user-visible string literal in a component.** Every one goes through `t()` from
+      `useI18n()`, and the key is added to `packages/i18n` in **both** dictionaries — `uk` first,
+      because it defines the key set and `en` is typed against it. A screen written in one language
+      and translated later is a screen that has to be rewritten later: the copy is not the last ten
+      per cent of it, it is entangled with which states exist and which sentences they get.
+- [ ] **Counted phrases go through `tCount`, never a `count === 1` ternary.** That ternary is
+      correct English and wrong Ukrainian, which has three forms — 1 послуга, 3 послуги, 5 послуг,
+      round again at 21 — and it is invisible until somebody counts to five.
+- [ ] **An error is held in state as a key, not as a translated sentence.** A string translated at
+      catch time is frozen in the language that was active then, so a reader who switches while it
+      is on screen keeps reading the old one. Map `AppError.code` (or a vendor's error code) to a
+      key; never render `error.message`, which is written for whoever is reading a stack trace and
+      is always English.
+- [ ] **Actions that fail differently get different sentences.** Loading a list and mutating a row
+      do not share one generic fallback: a screen that borrows the other one's message tells the
+      reader about something they did not do.
+- [ ] **Anything reaching `Intl` is given the locale**, from `useI18n().intlLocale` — money, dates,
+      plural rules. A formatter with a default locale is right by accident while there is one
+      language.
+
+Three kinds of text, and they are not interchangeable — conflating them is what leaves a screen
+half-translated:
+
+| Kind                                                     | Where it lives                                              | Why                                                                          |
+| -------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Interface copy                                           | a dictionary key                                            | ordinary                                                                     |
+| A schema enum a person reads (status, mode)              | `shared/vocabulary.ts` — one `Record<Enum, TranslationKey>` | adding a value in a migration then fails to compile until it also has a word |
+| Reference data an admin edits at runtime (practice area) | a label column per language on the row                      | a dictionary compiled today cannot name a row inserted tomorrow              |
+
+And one thing that is **not** translated: a value the reader may need to compare against a policy.
+`admin` and `lawyer` render raw everywhere, because those are the words an RLS policy and the JWT
+are written in. Only the _absence_ of a role is our sentence.
+
 - [ ] Missing a primitive is work in the design-system zone, not a local one-off. With one developer
       that is not a handoff to anybody — it means stopping, building it in `packages/ui` to the
       design spec, and coming back. ADM-10 is what skipping this looks like: the assignment editor
@@ -235,13 +270,13 @@ green build never tells you.
 
 ## Known gaps in this document
 
-- **i18n.** The design spec says a component holds no strings, only dictionary keys.
-  `packages/i18n` exists and the console shell is adopted, so this **is** required of a new
-  feature: strings live in the dictionary, and a counted phrase goes through `tCount` rather than a
-  `count === 1` ternary — that ternary is correct English and wrong Ukrainian, and it is invisible
-  until somebody counts to five. The feature screens written before the package still hold their
-  copy in JSX, so a screen you are editing may not follow this yet. That is migration debt, not
-  licence to add more.
+- **i18n is no longer a gap; it is §6.** It was listed here while the package existed and the
+  screens did not follow it. As of 2026-08-14 every console screen holds its copy in the dictionary,
+  so there is no longer a screen to point at as an excuse, and the rules moved into the checklist
+  where they can be ticked. The one thing still missing is a **machine check**: "no user-visible
+  literal in a component" is mechanical and decidable, exactly like the token-discipline rule above
+  it, and both are checked by a person grepping today. One checker could cover both — it would be
+  the third of its kind after `docs:check` and `check:sql`, and it is not built.
 - **No component tests.** §8 covers the `api/` layer, which is where the logic is. Rendering is
   still verified by looking at the screen, because a component test needs a DOM environment and a
   testing library that the workspace does not have yet.

@@ -107,6 +107,37 @@ and needs access this one did not require.
   function is ever read and turns out to do more than switch row security on, this ADR is the record
   saying nobody had checked when the decision was taken.
 
+## Addendum, 2026-08-14 — the function has been read
+
+Point 4 was accepted on one condition: that somebody read the definition against the production
+database. That has now happened, via `supabase db dump --linked --schema public`, and the condition
+is discharged. The decision does not change. What follows is what the reading added, because a
+condition met silently is indistinguishable from one still outstanding.
+
+`public.rls_auto_enable()` is `security definer` with `search_path` set to `pg_catalog`, owned by
+`postgres`. It loops over `pg_event_trigger_ddl_commands()` for `CREATE TABLE`, `CREATE TABLE AS`
+and `SELECT INTO` on tables and partitioned tables, restricts itself to schema `public`, and runs
+`alter table if exists … enable row level security`. It does not do more than switch row security
+on — which is what the last consequence above asked to be told.
+
+Two properties it does have, neither of which the decision knew about, and both of which argue for
+the decision rather than against it:
+
+- **It swallows its own failures.** The `alter` is wrapped in `exception when others then raise
+log`. If enabling row security fails, the trigger logs a line to the Postgres log and carries on.
+  A net that can fail silently is a net whose coverage nobody can state, which is the argument for
+  point 3 — an assertion that goes red in CI and names the table — restated by the object itself.
+- **It enables row security and creates no policy**, which is correct for a net and gives the
+  divergence a direction worth knowing. Row security with no policy denies every row to `anon` and
+  `authenticated`. So a migration that grants a client role its `select` (ADR-0007) and forgets
+  `enable row level security` produces a working screen in the sandbox and an empty one in the
+  cloud. The sandbox is still where the mistake surfaces — that part of point 4 holds — but the
+  symptom it surfaces as, in the environment that has the net, is a screen with no rows rather than
+  a screen with somebody else's.
+
+The divergence stays accepted, on the same terms and now on a read definition rather than an
+unread one.
+
 See `docs/adr/0007-explicit-grants-for-client-roles.md` for the rule this extends,
 `docs/adr/0010-append-only-audit-with-pseudonymous-subjects.md` for what the one sequence sits
 behind, and `supabase/CLAUDE.md` for the verification-script requirement this migration ships

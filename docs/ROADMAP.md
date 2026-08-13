@@ -179,10 +179,11 @@ all three held by one developer today (`docs/CONTRIBUTING.md`).
 - The switcher is `Select` plus locale state rather than a new primitive, renders from
   `LOCALES.map`, and shows endonyms — no flags, because a language is not a country and here that
   mapping is politically loaded (ADR-0006).
-- Not adopted yet: every feature screen. The shell is bilingual and the catalogue underneath it is
-  not, which is a visible half-state and the reason this is one PR rather than three.
+- Not adopted at that point: every feature screen. The shell was bilingual and the catalogue
+  underneath it was not, which is a visible half-state and the reason that was one PR rather than
+  three.
 
-## Done — the catalogue and the card speak both languages (2026-08-13)
+## Done — the console speaks both languages, end to end (2026-08-14)
 
 Part of ADM-37, continuing the entry above.
 
@@ -217,6 +218,13 @@ Part of ADM-37, continuing the entry above.
   auth server, reworded between releases; `authErrors.ts` maps `AuthError.code` instead, and the
   rule it carries is that matching on the message is a translation that stops working silently on
   an upgrade — by falling back to English, which is the failure nobody reports.
+- The rule is written down where the next screen will meet it: root `CLAUDE.md` separates the two
+  language rules that had been confused with each other — the repository is English, the product is
+  Ukrainian-first and every string is written for both languages from the first line;
+  `apps/console/CLAUDE.md` holds the operational form; `console-feature-dod.md` §6 holds the
+  checkable one. §6 was **renamed** from "Design system" to "Design system and copy" rather than a
+  section being inserted, because "DoD §5/§6/§7/§8" is cited from a dozen source comments and
+  renumbering would have silently repointed every one of them.
 - What the parallel split could not see: `authErrorKey` was written twice, identically, because the
   two screens were handed out as one zone and the shared module would have been a third. Merging is
   where that becomes visible, and it is worth expecting rather than rediscovering.
@@ -267,9 +275,11 @@ console happens to own.
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
   into a claim the firm makes about a person, with a retention question attached.
-- Dictionary adoption in the console's feature screens. `packages/i18n` itself exists and the
-  shell speaks both languages; the catalogue, the service card, the team screen and the account
-  screen still hold their copy in JSX.
+- A machine check for copy discipline. Every console screen now holds its copy in the dictionary,
+  and nothing enforces that the next one will: "no user-visible literal in a component" is
+  mechanical and decidable, and so is the token-discipline rule beside it in the DoD. Both are
+  checked today by a person grepping. One checker would cover them — the third of its kind after
+  `docs:check` and `check:sql`.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.
 - Core: LangGraph pipeline behind the frozen contract (the core zone).
 

@@ -49,5 +49,21 @@ jobs:
       - name: Rebuild from migrations and seed
         run: pnpm exec supabase db reset
 
+      # `shared/vocabulary.ts` (and every hand-written row type derived from
+      # `Database`) is only as honest as the last regeneration. A migration
+      # that adds an enum value or a column breaks nothing by itself — it
+      # breaks the moment somebody forgets to run `pnpm db:types`, which is a
+      # moment CI cannot wait for. The database is freshly rebuilt from this
+      # PR's migrations above, so regenerating now and diffing catches a
+      # stale `database.types.ts` on the PR that made it stale, not on
+      # whichever one regenerates next.
+      - name: Check generated types are current
+        run: |
+          pnpm db:types
+          if ! git diff --exit-code packages/db/src/database.types.ts; then
+            echo "::error::packages/db/src/database.types.ts is out of date with the schema in this PR. Run 'pnpm db:types' locally and commit the result."
+            exit 1
+          fi
+
       - name: Verification scenarios
         run: pnpm verify:sql

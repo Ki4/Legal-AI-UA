@@ -14,6 +14,7 @@
 // Where the filtering happens is the other thing to understand, and it is
 // deliberate rather than lazy — see `browse`.
 
+import type { QueryData } from "@supabase/supabase-js";
 import { supabase } from "../../../app/supabase";
 import { AppError } from "../../../shared/api/errors";
 import { escapeSearchTerm, fromPostgrest } from "../../../shared/api/postgrest";
@@ -24,53 +25,66 @@ import type { LawyerRef, PracticeAreaRef, ServiceListItem, ServiceVersionSummary
 /** The currency the catalogue screens display (spec §8). */
 const DISPLAY_CURRENCY = "UAH";
 
-function selectFor({ innerJoinAssignments = false } = {}): string {
-  // `!inner` turns the embed from a decoration into a join condition. It is
-  // conditional because the plain form is what the list needs: a service with
-  // nobody assigned must still appear, and an inner join would silently drop it.
-  const assignments = innerJoinAssignments ? "service_assignments!inner" : "service_assignments";
+// Two literals rather than one string composed at runtime. `QueryData` (below)
+// can only infer a row shape from a `select()` argument that is a literal
+// known at compile time — the dynamically built string this replaced defeated
+// that inference entirely, which is what let `label_uk` be dropped from a
+// select and still compile (the defect this file was rewritten to close).
+//
+// `!inner` turns the `service_assignments` embed from a decoration into a join
+// condition. SELECT_INNER_JOIN_ASSIGNMENTS is used only when filtering by
+// lawyer (`browse({ lawyerId })`); SELECT_BASE is what an unfiltered list
+// needs instead — a service with nobody assigned must still appear, and an
+// inner join would silently drop it.
+const SELECT_BASE = `
+  id, slug, title, summary, practice_area, created_at, updated_at,
+  practice_areas ( code, label_uk, label_en, position ),
+  service_assignments ( lawyer_id, is_primary, profiles ( id, full_name ) ),
+  service_versions (
+    id, version, status, generation_mode, review_mode,
+    service_version_prices ( currency, amount_minor )
+  )
+` as const;
 
-  return `
-    id, slug, title, summary, practice_area, created_at, updated_at,
-    practice_areas ( code, label_uk, label_en, position ),
-    ${assignments} ( lawyer_id, is_primary, profiles ( id, full_name ) ),
-    service_versions (
-      id, version, status, generation_mode, review_mode,
-      service_version_prices ( currency, amount_minor )
-    )
-  `;
+const SELECT_INNER_JOIN_ASSIGNMENTS = `
+  id, slug, title, summary, practice_area, created_at, updated_at,
+  practice_areas ( code, label_uk, label_en, position ),
+  service_assignments!inner ( lawyer_id, is_primary, profiles ( id, full_name ) ),
+  service_versions (
+    id, version, status, generation_mode, review_mode,
+    service_version_prices ( currency, amount_minor )
+  )
+` as const;
+
+// The query `get()` and the no-lawyer branch of `browse()` actually run —
+// named so its return type can be read off with `ReturnType`, rather than
+// building a second, never-awaited query solely to have something to take
+// `typeof` of. A row from SELECT_INNER_JOIN_ASSIGNMENTS is structurally the
+// same: `!inner` changes which rows Postgres returns, not the shape of one.
+function baseQuery() {
+  return supabase.from("services").select(SELECT_BASE);
 }
 
-const SELECT = selectFor();
+type InferredServiceRow = QueryData<ReturnType<typeof baseQuery>>[number];
+type InferredAssignment = InferredServiceRow["service_assignments"][number];
 
-interface ServiceQueryRow {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string | null;
-  practice_area: string;
-  created_at: string;
-  updated_at: string;
-  practice_areas: {
-    code: string;
-    label_uk: string;
-    label_en: string;
-    position: number;
-  } | null;
-  service_assignments: {
-    lawyer_id: string;
-    is_primary: boolean;
-    profiles: { id: string; full_name: string | null } | null;
-  }[];
-  service_versions: {
-    id: string;
-    version: number;
-    status: ServiceVersionSummary["status"];
-    generation_mode: ServiceVersionSummary["generationMode"];
-    review_mode: ServiceVersionSummary["reviewMode"];
-    service_version_prices: { currency: string; amount_minor: number }[];
-  }[];
-}
+/**
+ * One field the inference above gets wrong, and the reason this type is not
+ * simply `InferredServiceRow`. `service_assignments.lawyer_id` is a NOT NULL
+ * foreign key, so the compiler infers the embedded `profiles` as always
+ * present. It is not: RLS can still hide the referenced row — a deactivated
+ * account, or a colleague this caller cannot read — and PostgREST returns
+ * `profiles: null` when it does. The compiler is checking that every column
+ * named in `SELECT_BASE` exists on `profiles`; it has no way to check whether
+ * a policy will let the row through, so that half stays hand-asserted here,
+ * derived from the inferred shape rather than restating it. `toLawyerRef` is
+ * what turns the null into "assigned, name unavailable" instead of losing it.
+ */
+type ServiceQueryRow = Omit<InferredServiceRow, "service_assignments"> & {
+  service_assignments: (Omit<InferredAssignment, "profiles"> & {
+    profiles: NonNullable<InferredAssignment["profiles"]> | null;
+  })[];
+};
 
 type AssignmentRow = ServiceQueryRow["service_assignments"][number];
 
@@ -155,18 +169,25 @@ function toListItem(row: ServiceQueryRow): ServiceListItem {
 
 export const supabaseServicesApi: ServicesApi = {
   async browse(filter) {
-    const byLawyer = filter?.lawyerId !== undefined;
+    const lawyerId = filter?.lawyerId;
 
-    let query = supabase
-      .from("services")
-      .select(selectFor({ innerJoinAssignments: byLawyer }))
-      .order("updated_at", { ascending: false });
-
-    if (filter?.lawyerId !== undefined) {
-      // Matches a lawyer in either role — accountable or cover — because the
-      // filter is on the assignment row, not on a column of the service.
-      query = query.eq("service_assignments.lawyer_id", filter.lawyerId);
-    }
+    // The two branches select different literals (SELECT_BASE vs
+    // SELECT_INNER_JOIN_ASSIGNMENTS), which is what keeps `!inner` applying
+    // only when filtering by lawyer. Each branch is built and chained in
+    // full rather than assigned to one reassignable `let`, because a select
+    // string decided at runtime is exactly what defeats `QueryData` (see the
+    // comment above the two literals).
+    let query =
+      lawyerId !== undefined
+        ? supabase
+            .from("services")
+            .select(SELECT_INNER_JOIN_ASSIGNMENTS)
+            .order("updated_at", { ascending: false })
+            // Matches a lawyer in either role — accountable or cover —
+            // because the filter is on the assignment row, not on a column
+            // of the service.
+            .eq("service_assignments.lawyer_id", lawyerId)
+        : baseQuery().order("updated_at", { ascending: false });
 
     if (filter?.query !== undefined && filter.query.trim() !== "") {
       const term = escapeSearchTerm(filter.query);
@@ -175,7 +196,7 @@ export const supabaseServicesApi: ServicesApi = {
       }
     }
 
-    const { data, error } = await query.returns<ServiceQueryRow[]>();
+    const { data, error } = await query;
     if (error) throw fromPostgrest(error, "Loading services");
 
     // Area and status are counted and applied here rather than in the WHERE
@@ -194,12 +215,7 @@ export const supabaseServicesApi: ServicesApi = {
   },
 
   async get(id) {
-    const { data, error } = await supabase
-      .from("services")
-      .select(SELECT)
-      .eq("id", id)
-      .maybeSingle()
-      .returns<ServiceQueryRow | null>();
+    const { data, error } = await baseQuery().eq("id", id).maybeSingle();
 
     if (error) throw fromPostgrest(error, "Loading service");
     if (data === null) {

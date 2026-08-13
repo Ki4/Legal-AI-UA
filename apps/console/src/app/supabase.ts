@@ -10,6 +10,15 @@ if (!url || !anonKey) {
   );
 }
 
-// Typed with the generated schema, so a query naming a column that no longer
-// exists fails to compile instead of returning undefined at runtime.
+// Typed with the generated schema — but that only checks a query naming a
+// column that no longer exists when the caller lets TypeScript infer the
+// result from the query itself (`QueryData<typeof query>` from
+// `@supabase/supabase-js`, applied to a `select()` string that is a literal
+// known at compile time). `.returns<T>()` is not that: it is an assertion
+// that discards what this client inferred and substitutes whatever type you
+// hand it, so a query naming a column that no longer exists still returns
+// undefined at runtime and compiles anyway. Every `api/*.supabase.ts` file is
+// responsible for deriving its row type from its query, not asserting one
+// over it — see `apps/console/src/features/services/api/services.supabase.ts`
+// for the pattern.
 export const supabase = createClient<Database>(url, anonKey);

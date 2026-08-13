@@ -10,6 +10,7 @@
 // query is one PostgREST call and needs a running stack to mean anything; the
 // row → view model translation is where the decisions live, and it is pure.
 
+import type { QueryData } from "@supabase/supabase-js";
 import { supabase } from "../../../app/supabase";
 import { AppError, expectOne } from "../../../shared/api/errors";
 import { fromPostgrest } from "../../../shared/api/postgrest";
@@ -19,6 +20,9 @@ import type { AssignableLawyer, LawyerRef, ServiceDetail } from "./types";
 /** The currency the catalogue screens display (spec §8). */
 const DISPLAY_CURRENCY = "UAH";
 
+// `as const` is what lets `QueryData` below infer a row shape from this
+// string: inference only works when the argument to `select()` is a literal
+// known at compile time.
 const SELECT = `
   id, slug, title, summary, created_at, updated_at,
   service_assignments ( lawyer_id, is_primary, profiles ( id, full_name ) ),
@@ -26,30 +30,39 @@ const SELECT = `
     id, version, status, generation_mode, review_mode, published_at,
     service_version_prices ( currency, amount_minor )
   )
-`;
+` as const;
 
-export interface ServiceDetailQueryRow {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string | null;
-  created_at: string;
-  updated_at: string;
-  service_assignments: {
-    lawyer_id: string;
-    is_primary: boolean;
-    profiles: { id: string; full_name: string | null } | null;
-  }[];
-  service_versions: {
-    id: string;
-    version: number;
-    status: NonNullable<ServiceDetail["currentVersion"]>["status"];
-    generation_mode: NonNullable<ServiceDetail["currentVersion"]>["generationMode"];
-    review_mode: NonNullable<ServiceDetail["currentVersion"]>["reviewMode"];
-    published_at: string | null;
-    service_version_prices: { currency: string; amount_minor: number }[];
-  }[];
+// The query `get()` actually runs — named so its return type can be read off
+// with `ReturnType`, rather than building a second, never-awaited query
+// solely to have something to take `typeof` of. `status`, `generation_mode`
+// and `review_mode` come back typed as the generated Postgres enums
+// (`Database["public"]["Enums"]`), which is exactly the union
+// `ServiceDetail["currentVersion"]` needs — so there is nothing for a
+// hand-written override to narrow there.
+function detailQuery() {
+  return supabase.from("services").select(SELECT);
 }
+
+type InferredServiceDetailRow = QueryData<ReturnType<typeof detailQuery>>[number];
+type InferredAssignment = InferredServiceDetailRow["service_assignments"][number];
+
+/**
+ * One field the inference above gets wrong, and the reason this type is not
+ * simply `InferredServiceDetailRow`. `service_assignments.lawyer_id` is a NOT
+ * NULL foreign key, so the compiler infers the embedded `profiles` as always
+ * present. It is not: RLS can still hide the referenced row — a deactivated
+ * account, or a colleague this caller cannot read — and PostgREST returns
+ * `profiles: null` when it does. The compiler is checking that every column
+ * named in SELECT exists on `profiles`; it has no way to check whether a
+ * policy will let the row through, so that half stays hand-asserted here,
+ * derived from the inferred shape rather than restating it. `toLawyerRef` is
+ * what turns the null into "assigned, name unavailable" instead of losing it.
+ */
+export type ServiceDetailQueryRow = Omit<InferredServiceDetailRow, "service_assignments"> & {
+  service_assignments: (Omit<InferredAssignment, "profiles"> & {
+    profiles: NonNullable<InferredAssignment["profiles"]> | null;
+  })[];
+};
 
 type VersionRow = ServiceDetailQueryRow["service_versions"][number];
 type AssignmentRow = ServiceDetailQueryRow["service_assignments"][number];
@@ -135,12 +148,7 @@ export function toServiceDetail(row: ServiceDetailQueryRow): ServiceDetail {
 
 export const supabaseServiceDetailApi: ServiceDetailApi = {
   async get(id) {
-    const { data, error } = await supabase
-      .from("services")
-      .select(SELECT)
-      .eq("id", id)
-      .maybeSingle()
-      .returns<ServiceDetailQueryRow | null>();
+    const { data, error } = await detailQuery().eq("id", id).maybeSingle();
 
     if (error) throw fromPostgrest(error, "Loading service");
     if (data === null) {

@@ -205,9 +205,21 @@ Part of ADM-37, continuing the entry above.
   ("expected one record, got 2"), in English, shown to a lawyer.
 - `formatMoney` and `formatDate` now require a locale instead of defaulting to `uk-UA`. The default
   was right by accident while there was one language and silently wrong the moment there were two.
-- Not adopted yet: `team` and `account`. `design-kit` and `anatomy` are deliberately out — the
-  gallery documents components for developers, and the anatomy screen renders a hardcoded trace
-  whose text is fixture content, not copy.
+- `team` and `account` followed in the same PR, and so did the screens before sign-in. `design-kit`
+  and `anatomy` are deliberately out — the gallery documents components for developers, and the
+  anatomy screen renders a hardcoded trace whose text is fixture content, not copy.
+- **The switcher was unreachable by the people most likely to need it.** It has existed since the
+  shell was adopted, and it lives in `AppShell` — which renders only for a signed-in user who
+  already has a role. A lawyer landing on the login page in the wrong language had no way to change
+  it. It is now on `/login`, `/register` and the pending-approval screen, in the same position on
+  all three.
+- Supabase's auth errors stopped being shown raw. `signInError.message` is English prose from the
+  auth server, reworded between releases; `authErrors.ts` maps `AuthError.code` instead, and the
+  rule it carries is that matching on the message is a translation that stops working silently on
+  an upgrade — by falling back to English, which is the failure nobody reports.
+- What the parallel split could not see: `authErrorKey` was written twice, identically, because the
+  two screens were handed out as one zone and the shared module would have been a third. Merging is
+  where that becomes visible, and it is worth expecting rather than rediscovering.
 
 ## Now — wave 1 (parallel, no file overlap)
 

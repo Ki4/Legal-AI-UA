@@ -16,7 +16,20 @@ Gather, then propose:
    was answered, a blocker that was cleared, a "Now" item that shipped. This is the failure this
    command exists for — a stale map misinforms the next session rather than merely aging.
 4. Check whether `docs/CONTRIBUTING.md` requires a journal entry: it does when the session produced
-   **no PR**. A session that opened one documents itself in the PR description.
+   **no PR**. A session that opened one documents itself in the PR description. It also does,
+   regardless of how many PRs there were, when a lesson of the session fits in none of them —
+   anything about _how_ the work went rather than _what_ changed has no PR to live in, and is lost
+   by default.
+5. **What was verified by hand?** List every check this session performed manually: a migration
+   applied with `psql`, a script run from a terminal, a screen looked at, a query pasted into a
+   dashboard. For each, say which of two things it became — a check something else now runs, or a
+   gap recorded where the next person will meet it. A verification that lives only in a transcript
+   has already expired.
+6. **What did this session make stale?** A new column, a newly required argument, a new migration
+   makes something elsewhere out of date: fixtures, hand-maintained lists, seed data, snapshots,
+   the ledger repair script. Name the files that have to move together with what changed, and say
+   whether anything now enforces that they do. This catches the failure the previous two steps
+   cannot: a gate that is green because nothing executes the thing that would have gone red.
 
 Then reply with, in the language the user speaks to you:
 
@@ -25,6 +38,8 @@ Then reply with, in the language the user speaks to you:
   reason. Nothing vague: quote the sentence that is now wrong.
 - **Journal** — either a drafted entry for `docs/journal/<name>-<date>.md` (what was tried, what
   was learned, what was abandoned and why), or why the rule does not require one.
+- **Verified by hand** — the list from step 5, each item ending in a mechanism or in a recorded
+  gap. "Checked and it was fine" is not an outcome; it is the state that expires overnight.
 - **Left open** — anything a future session would waste time rediscovering: a half-finished branch,
   a decision awaiting an answer, a known gap you chose not to close.
 

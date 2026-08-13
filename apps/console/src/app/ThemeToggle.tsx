@@ -1,3 +1,4 @@
+import { useI18n } from "@legal-ai/i18n";
 import { Button } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
 
@@ -17,6 +18,7 @@ export function initTheme() {
 
 export function ThemeToggle() {
   const [dark, setDark] = useState(() => getStoredTheme() === "dark");
+  const { t } = useI18n();
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
@@ -25,7 +27,7 @@ export function ThemeToggle() {
 
   return (
     <Button variant="secondary" className="w-full" onClick={() => setDark((current) => !current)}>
-      {dark ? "Light theme" : "Dark theme"}
+      {dark ? t("theme.toLight") : t("theme.toDark")}
     </Button>
   );
 }

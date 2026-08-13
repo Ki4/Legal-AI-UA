@@ -50,6 +50,9 @@ importers:
       '@legal-ai/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@legal-ai/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@legal-ai/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -101,6 +104,22 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
+
+  packages/i18n:
+    dependencies:
+      react:
+        specifier: ^19.1.0
+        version: 19.2.8
+    devDependencies:
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.2.17
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@26.1.2)(vite@7.3.6(@types/node@26.1.2)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
 
   packages/ui:
     dependencies:

@@ -1,3 +1,4 @@
+import { useI18n } from "@legal-ai/i18n";
 import { Button, FormField, Input } from "@legal-ai/ui";
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -10,6 +11,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -31,8 +33,8 @@ export function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 rounded-card border border-line bg-paper p-8 shadow-card"
       >
-        <h1 className="text-xl font-semibold text-ink">Legal-AI-UA console</h1>
-        <FormField htmlFor="login-email" label="Email">
+        <h1 className="text-xl font-semibold text-ink">{t("app.console")}</h1>
+        <FormField htmlFor="login-email" label={t("auth.email")}>
           <Input
             id="login-email"
             type="email"
@@ -42,7 +44,7 @@ export function LoginPage() {
             onChange={(event) => setEmail(event.target.value)}
           />
         </FormField>
-        <FormField htmlFor="login-password" label="Password" error={error ?? undefined}>
+        <FormField htmlFor="login-password" label={t("auth.password")} error={error ?? undefined}>
           <Input
             id="login-password"
             type="password"
@@ -54,12 +56,12 @@ export function LoginPage() {
           />
         </FormField>
         <Button type="submit" variant="primary" loading={submitting} className="w-full">
-          {submitting ? "Signing in…" : "Sign in"}
+          {submitting ? t("auth.signingIn") : t("auth.signIn")}
         </Button>
         <p className="text-center text-sm text-inkSoft">
-          No account?{" "}
+          {t("auth.noAccount")}{" "}
           <Link to="/register" className="text-ink hover:underline">
-            Register
+            {t("auth.register")}
           </Link>
         </p>
       </form>

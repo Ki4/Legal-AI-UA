@@ -10,6 +10,9 @@ Read this before any change. Zone files add detail; this file is the map.
 - `apps/web` — client platform (not built yet).
 - `apps/core` (future) — AI generation pipeline, owned by the core owner, called only
   through a Supabase Edge Function gateway. See `docs/adr/0004-ai-core-separate-service.md`.
+  Written in **Python** (`docs/adr/0016-core-in-python.md`) — the one package in this repository
+  that is not TypeScript, and therefore the one that carries its own lint, format and test lane
+  rather than the root `pnpm` scripts.
 - `packages/core-client` (planned, not yet created) — typed HTTP contract + mocks for the core, so
   frontend work proceeds before the core exists.
 - `packages/ui` — the design system (owned by the design-system owner). Console features consume

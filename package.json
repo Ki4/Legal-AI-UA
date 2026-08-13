@@ -39,6 +39,10 @@
     ],
     "*.{json,md,yml,yaml,css}": [
       "prettier --write"
+    ],
+    "*.py": [
+      "ruff format",
+      "ruff check --fix"
     ]
   },
   "pnpm": {

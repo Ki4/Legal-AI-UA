@@ -235,9 +235,13 @@ green build never tells you.
 
 ## Known gaps in this document
 
-- **i18n.** The design spec says a component holds no strings, only dictionary keys. `packages/i18n`
-  does not exist yet (ADM-37), so this cannot be required. Until it lands, keep user-facing strings
-  inside components rather than scattered through `api/`, so extraction is one mechanical pass.
+- **i18n.** The design spec says a component holds no strings, only dictionary keys.
+  `packages/i18n` exists and the console shell is adopted, so this **is** required of a new
+  feature: strings live in the dictionary, and a counted phrase goes through `tCount` rather than a
+  `count === 1` ternary — that ternary is correct English and wrong Ukrainian, and it is invisible
+  until somebody counts to five. The feature screens written before the package still hold their
+  copy in JSX, so a screen you are editing may not follow this yet. That is migration debt, not
+  licence to add more.
 - **No component tests.** §8 covers the `api/` layer, which is where the logic is. Rendering is
   still verified by looking at the screen, because a component test needs a DOM environment and a
   testing library that the workspace does not have yet.

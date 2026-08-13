@@ -1,0 +1,54 @@
+-- Finish "explicit grants only" for sequences, and stop a cloud-only fix from
+-- being the only place this is true.
+--
+-- ADR-0007 made the rule real for tables: it revoked the privileges the platform
+-- hands to `anon` and `authenticated` by default, and re-granted the one SELECT
+-- the console actually needs. It did not cover sequences, and at that point
+-- there were none in `public` to cover.
+--
+-- There is one now, and it is the worst one to leave inherited:
+--
+--   audit_events_id_seq  anon=w  authenticated=w  service_role=w
+--
+-- `w` on a sequence is UPDATE, which is exactly the privilege `setval()` needs.
+-- `audit_events.id` is `bigint generated always as identity primary key`, so a
+-- sequence wound back to 1 makes the next insert collide with a row that is
+-- already there. The audit trigger is SECURITY DEFINER and fires on domain
+-- tables, so that failing insert takes the domain write down with it: one
+-- `setval` and the catalogue stops accepting changes at all. ADR-0010 built the
+-- log so that what happened cannot be edited away; a privilege nobody granted
+-- on purpose is a way to stop it recording instead.
+--
+-- Severity, stated as plainly as ADR-0007 stated its own: not reachable through
+-- the Data API today. `setval()` lives in `pg_catalog`, PostgREST exposes RPC
+-- only from the exposed schema, and there is no path from a browser to either.
+-- This is defense in depth. The point is the same one ADR-0007 made — the gap
+-- between the rule in `supabase/CLAUDE.md` and the database is itself the
+-- problem, because the rule is what future reviews are measured against.
+--
+-- `service_role` is included here, where ADR-0007 deliberately left it out.
+-- Two reasons, both stated so this reads as a decision rather than an
+-- inconsistency. It is what the cloud project already had, applied by hand
+-- through the dashboard and captured by no migration — so revoking from the
+-- same three roles is what makes the two environments agree rather than
+-- half-agree. And `service_role` already holds no DML on public tables (noted
+-- in the 2026-08-11 journal), so the gateway will have to be granted what it
+-- needs explicitly when it lands (ADM-5). Sequences join that list instead of
+-- becoming a second exception with a different shape.
+--
+-- Nothing today depends on those privileges: an identity column advances its
+-- own sequence under the table owner's rights, not the caller's, so writing to
+-- an audited table needs no sequence privilege at all. Scenario 5 of
+-- `snippets/verify_grants.sql` is what makes that a checked claim rather than a
+-- confident sentence.
+
+-- The one sequence that exists, and any that a later migration in this file's
+-- past may have left behind.
+revoke all on all sequences in schema public from anon, authenticated, service_role;
+
+-- The half that matters more, because it governs sequences that do not exist
+-- yet. Migrations run as `postgres`, so this covers everything this repository
+-- creates from here on. The platform's own `supabase_admin` default ACL is
+-- untouched and does not apply to objects owned by `postgres`.
+alter default privileges for role postgres in schema public
+  revoke all on sequences from anon, authenticated, service_role;

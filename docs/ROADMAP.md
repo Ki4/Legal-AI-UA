@@ -152,6 +152,17 @@ order and why. Roles: product owner (PO), core owner, design-system owner.
   not. The second looks like ADR-0007 applied through the dashboard and never captured, which
   `supabase/CLAUDE.md` forbids. Both need a decision: written into a migration, or recorded as
   accepted divergence.
+- **Both decided, differently** (ADR-0017). The sequence revoke was a gap in ADR-0007 and is now a
+  migration: `public` holds exactly one sequence, `audit_events_id_seq`, and `w` on it is the
+  privilege `setval()` needs — a sequence wound back to 1 collides with an existing id, the
+  `SECURITY DEFINER` audit trigger raises, and the domain write dies with it. Not reachable through
+  PostgREST today, and fixed for the reason ADR-0007 gave: the rule is what reviews are measured
+  against. The `ensure_rls` trigger is **not** copied. A trigger that switches RLS on by itself
+  removes the mistake and the evidence together, and leaves the sandbox — where mistakes are
+  supposed to surface — as the environment without the net. Its place is taken by an assertion that
+  goes red in CI and names the table. The trigger stays in the cloud as an accepted divergence,
+  recorded rather than remembered, because nobody has read its body and replacing a production
+  safety object with a guess is the thing this repository keeps learning not to do.
 
 ## Now — wave 1 (parallel, no file overlap)
 

@@ -32,7 +32,7 @@ function selectFor({ innerJoinAssignments = false } = {}): string {
 
   return `
     id, slug, title, summary, practice_area, created_at, updated_at,
-    practice_areas ( code, label_en, position ),
+    practice_areas ( code, label_uk, label_en, position ),
     ${assignments} ( lawyer_id, is_primary, profiles ( id, full_name ) ),
     service_versions (
       id, version, status, generation_mode, review_mode,
@@ -51,7 +51,12 @@ interface ServiceQueryRow {
   practice_area: string;
   created_at: string;
   updated_at: string;
-  practice_areas: { code: string; label_en: string; position: number } | null;
+  practice_areas: {
+    code: string;
+    label_uk: string;
+    label_en: string;
+    position: number;
+  } | null;
   service_assignments: {
     lawyer_id: string;
     is_primary: boolean;
@@ -83,9 +88,20 @@ function toLawyerRef(assignment: AssignmentRow): LawyerRef {
 function toPracticeAreaRef(row: ServiceQueryRow): PracticeAreaRef {
   const area = row.practice_areas;
   if (area === null) {
-    return { code: row.practice_area, label: row.practice_area, position: Number.MAX_SAFE_INTEGER };
+    // The code in every language: it is not a label in any of them, and
+    // pretending otherwise would hide the unresolved embed in whichever
+    // language the reader happens to be using.
+    return {
+      code: row.practice_area,
+      labels: { uk: row.practice_area, en: row.practice_area },
+      position: Number.MAX_SAFE_INTEGER,
+    };
   }
-  return { code: area.code, label: area.label_en, position: area.position };
+  return {
+    code: area.code,
+    labels: { uk: area.label_uk, en: area.label_en },
+    position: area.position,
+  };
 }
 
 /**

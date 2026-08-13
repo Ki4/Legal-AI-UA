@@ -1,15 +1,17 @@
-import { useI18n } from "@legal-ai/i18n";
+import { useI18n, type TranslationKey } from "@legal-ai/i18n";
 import { Button, FormField, Input } from "@legal-ai/ui";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
+import { authErrorKey } from "./authErrors";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { supabase } from "./supabase";
 
 export function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [error, setError] = useState<TranslationKey | null>(null);
+  const [confirmEmailSent, setConfirmEmailSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -18,7 +20,7 @@ export function RegisterPage() {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
-    setInfo(null);
+    setConfirmEmailSent(false);
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -26,18 +28,21 @@ export function RegisterPage() {
     });
     setSubmitting(false);
     if (signUpError) {
-      setError(signUpError.message);
+      setError(authErrorKey(signUpError.code, "auth.error.registerFailed"));
       return;
     }
     if (data.session) {
       navigate("/", { replace: true });
       return;
     }
-    setInfo(t("auth.confirmEmail"));
+    setConfirmEmailSent(true);
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas">
+      <div className="fixed right-4 top-4 w-36">
+        <LanguageSwitcher />
+      </div>
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 rounded-card border border-line bg-paper p-8 shadow-card"
@@ -66,7 +71,7 @@ export function RegisterPage() {
         <FormField
           htmlFor="register-password"
           label={t("auth.password")}
-          error={error ?? undefined}
+          error={error ? t(error) : undefined}
         >
           <Input
             id="register-password"
@@ -78,7 +83,7 @@ export function RegisterPage() {
             invalid={Boolean(error)}
           />
         </FormField>
-        {info && <p className="text-sm text-inkSoft">{info}</p>}
+        {confirmEmailSent && <p className="text-sm text-inkSoft">{t("auth.confirmEmail")}</p>}
         <Button type="submit" variant="primary" loading={submitting} className="w-full">
           {submitting ? t("auth.creatingAccount") : t("auth.register")}
         </Button>

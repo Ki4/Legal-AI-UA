@@ -9,7 +9,9 @@
 // exist. A chip that leads nowhere is therefore not something this component
 // has to guard against: it cannot be rendered.
 
+import { useI18n } from "@legal-ai/i18n";
 import { Badge, Button, Input } from "@legal-ai/ui";
+import { serviceStatusKey } from "../../../shared/vocabulary";
 import type { AreaFacet, StatusFacet } from "../api";
 import type { Catalogue } from "../hooks/useCatalogue";
 
@@ -44,6 +46,8 @@ interface Props {
 }
 
 export function CatalogueFilters({ catalogue, areas, statuses }: Props) {
+  const { t, locale } = useI18n();
+
   return (
     <div className="space-y-3 rounded-card border border-line bg-paper p-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -51,37 +55,39 @@ export function CatalogueFilters({ catalogue, areas, statuses }: Props) {
           <Input
             type="search"
             value={catalogue.query}
-            placeholder="Search title, slug or summary"
-            aria-label="Search services"
+            placeholder={t("catalogue.search.placeholder")}
+            aria-label={t("catalogue.search.label")}
             onChange={(event) => catalogue.setQuery(event.target.value)}
           />
         </div>
 
-        <div className="flex gap-1" role="group" aria-label="How the catalogue is shown">
+        <div className="flex gap-1" role="group" aria-label={t("catalogue.display.label")}>
           <Button
             variant={catalogue.display === "cards" ? "secondary" : "ghost"}
             aria-pressed={catalogue.display === "cards"}
             onClick={() => catalogue.setDisplay("cards")}
           >
-            Cards
+            {t("catalogue.display.cards")}
           </Button>
           <Button
             variant={catalogue.display === "table" ? "secondary" : "ghost"}
             aria-pressed={catalogue.display === "table"}
             onClick={() => catalogue.setDisplay("table")}
           >
-            Table
+            {t("catalogue.display.table")}
           </Button>
         </div>
       </div>
 
       {areas.length > 0 && (
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-sm text-inkSoft">Practice area</span>
+          <span className="text-sm text-inkSoft">{t("catalogue.filter.area")}</span>
           {areas.map((facet) => (
             <Chip
               key={facet.area.code}
-              label={facet.area.label}
+              // Reference data, not a dictionary key: an area an admin adds
+              // tomorrow has no key in a dictionary shipped today.
+              label={facet.area.labels[locale]}
               count={facet.count}
               active={catalogue.areas.includes(facet.area.code)}
               onToggle={() => catalogue.toggleArea(facet.area.code)}
@@ -92,11 +98,15 @@ export function CatalogueFilters({ catalogue, areas, statuses }: Props) {
 
       {statuses.length > 0 && (
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-sm text-inkSoft">Status</span>
+          <span className="text-sm text-inkSoft">{t("catalogue.filter.status")}</span>
           {statuses.map((facet) => (
             <Chip
               key={facet.status}
-              label={facet.status}
+              // The chip reads as a word and toggles `?status=published`. The
+              // URL keeps the schema's value on purpose: a filtered catalogue
+              // is a link, and a link that changes meaning with the reader's
+              // language is not one.
+              label={t(serviceStatusKey[facet.status])}
               count={facet.count}
               active={catalogue.statuses.includes(facet.status)}
               onToggle={() => catalogue.toggleStatus(facet.status)}
@@ -116,14 +126,14 @@ export function CatalogueFilters({ catalogue, areas, statuses }: Props) {
             onChange={(event) => catalogue.setMineOnly(event.target.checked)}
             className="size-4 rounded-btn border-line accent-brand"
           />
-          Only services I am attached to
+          {t("catalogue.filter.mineOnly")}
         </label>
 
         {catalogue.filtered && (
           <>
-            <Badge tone="brand">filtered</Badge>
+            <Badge tone="brand">{t("catalogue.filter.on")}</Badge>
             <Button variant="ghost" onClick={catalogue.clearFilters}>
-              Clear filters
+              {t("catalogue.filter.clear")}
             </Button>
           </>
         )}

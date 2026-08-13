@@ -47,6 +47,15 @@ commit messages, PR/issue text, ADRs, journal entries. The only exceptions are t
 locale dictionaries and client-facing legal text, which are content, not repo
 artifacts. Talking to your AI assistant in another language is fine — what you commit is not.
 
+**There are two rules here and they have been confused before, so they are stated apart.** The one
+above is about repository artifacts. The other one is about the product: it speaks Ukrainian first
+and English second (ADR-0006), and every user-visible string is written for **both languages from
+the first line** — a key in `packages/i18n`, never a literal in a component. That is not a rule
+about translation arriving later; it is the reason it does not have to. A screen written in one
+language gets rewritten when the second arrives, because which states exist and which sentence each
+one gets are decisions the copy makes. The operational form is `apps/console/CLAUDE.md` ("Copy:
+dictionary keys only"); the checkable form is `docs/specs/console-feature-dod.md` §6.
+
 ## Feature isolation (apps/console)
 
 Each feature lives in `src/features/<name>/` with `components/`, `api/`, `hooks/`, `index.tsx`.

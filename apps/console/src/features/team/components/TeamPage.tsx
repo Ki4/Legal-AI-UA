@@ -1,3 +1,4 @@
+import { useI18n, type TranslationKey } from "@legal-ai/i18n";
 import { Badge, Button } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
 import { AppError } from "../../../shared/api/errors";
@@ -5,9 +6,10 @@ import { teamApi } from "../api";
 import type { GrantableRole, TeamMember } from "../api";
 
 export function TeamPage() {
+  const { t } = useI18n();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<TranslationKey | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
   async function load() {
@@ -16,7 +18,7 @@ export function TeamPage() {
     try {
       setMembers(await teamApi.list());
     } catch (caught) {
-      setError(messageOf(caught));
+      setError(messageKeyFor(caught, "team.error.load"));
     } finally {
       setLoading(false);
     }
@@ -39,7 +41,7 @@ export function TeamPage() {
         current.map((member) => (member.id === updated.id ? updated : member)),
       );
     } catch (caught) {
-      setError(messageOf(caught));
+      setError(messageKeyFor(caught, "team.error.approve"));
     } finally {
       setApprovingId(null);
     }
@@ -47,9 +49,9 @@ export function TeamPage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Team</h1>
-      {loading && <p className="text-sm text-inkSoft">Loading…</p>}
-      {error !== null && <p className="text-sm text-danger-ink">{error}</p>}
+      <h1 className="text-2xl font-semibold">{t("team.title")}</h1>
+      {loading && <p className="text-sm text-inkSoft">{t("common.loading")}</p>}
+      {error !== null && <p className="text-sm text-danger-ink">{t(error)}</p>}
       <ul className="grid max-w-3xl gap-3">
         {members.map((member) => (
           <li key={member.id} className="rounded-card border border-line bg-paper p-4">
@@ -58,7 +60,11 @@ export function TeamPage() {
                 <div className="font-medium">{member.fullName ?? member.email}</div>
                 <div className="text-sm text-inkSoft">{member.email}</div>
               </div>
-              <Badge tone="neutral">{member.role ?? "pending"}</Badge>
+              {/* The role name itself stays as the system holds it: `admin` and
+                  `lawyer` are values in the database and in the JWT, and a reader
+                  comparing the screen to a policy needs the same word in both.
+                  Only its absence — nobody approved yet — is a sentence. */}
+              <Badge tone="neutral">{member.role ?? t("team.pending")}</Badge>
             </div>
             {member.awaitingApproval && (
               <div className="mt-3 flex gap-2">
@@ -67,14 +73,14 @@ export function TeamPage() {
                   onClick={() => void approve(member.id, "lawyer")}
                   loading={approvingId === member.id}
                 >
-                  Approve as lawyer
+                  {t("team.approveAsLawyer")}
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={() => void approve(member.id, "admin")}
                   loading={approvingId === member.id}
                 >
-                  Approve as admin
+                  {t("team.approveAsAdmin")}
                 </Button>
               </div>
             )}
@@ -86,11 +92,29 @@ export function TeamPage() {
 }
 
 /**
- * The component knows `AppError` and nothing narrower. No `PostgrestError`
- * reaches here any more, which is convention 4 — and the reason this screen no
- * longer imports the Supabase client at all.
+ * Which sentence a failure gets. A key, so the language is decided where it is
+ * rendered rather than where it is caught — a reader who switches language
+ * while an error is on screen keeps reading the current one, not the one that
+ * was translated at catch time.
+ *
+ * Loading the list and approving someone are two different actions and must
+ * not share one generic sentence, so the caller passes its own fallback key;
+ * only the mapping from `AppError.code` to a specific key is shared.
  */
-function messageOf(caught: unknown): string {
-  if (caught instanceof AppError) return caught.message;
-  return "Something went wrong. Please try again.";
+function messageKeyFor(caught: unknown, fallback: TranslationKey): TranslationKey {
+  if (caught instanceof AppError) {
+    switch (caught.code) {
+      case "forbidden":
+        return "team.error.forbidden";
+      case "not_found":
+        return "team.error.notFound";
+      case "conflict":
+        return "team.error.conflict";
+      case "network":
+        return "team.error.network";
+      default:
+        return fallback;
+    }
+  }
+  return fallback;
 }

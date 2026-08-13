@@ -10,6 +10,7 @@
 // `supabase/snippets/verify_service_assignments.sql`; the buttons only avoid
 // offering an action that would be refused.
 
+import { useI18n, type TranslationKey } from "@legal-ai/i18n";
 import { Badge, Button } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../../app/auth";
@@ -27,32 +28,42 @@ interface Props {
   onChanged: (next: ServiceDetail) => void;
 }
 
-function nameOf(lawyer: LawyerRef | AssignableLawyer): string {
-  // A total formatter (DoD §5): a profile with no name is odd data, not a
-  // reason to render a blank button.
-  if ("email" in lawyer) return lawyer.fullName ?? lawyer.email;
-  return lawyer.fullName ?? "name unavailable";
-}
-
-function messageFor(cause: unknown): string {
+/**
+ * Which sentence a failure gets. A key, so the language is decided where it is
+ * rendered rather than where it is caught.
+ *
+ * `conflict` and the default used to fall through to `cause.message`, which is
+ * developer text ("expected one record, got 2") in whatever language the source
+ * file was written in. `useCatalogue` already refused that fall-through; this
+ * screen was the place it survived.
+ */
+function messageKeyFor(cause: unknown): TranslationKey {
   if (cause instanceof AppError) {
     switch (cause.code) {
       case "forbidden":
-        return "You may not make that change. Only an admin moves accountability, and only the accountable lawyer arranges cover.";
+        return "assignment.error.forbidden";
       case "conflict":
-        return cause.message;
+        return "assignment.error.conflict";
       case "not_found":
-        return "This service no longer exists.";
+        return "assignment.error.notFound";
       default:
-        return cause.message;
+        return "assignment.error.failed";
     }
   }
-  return "The change did not go through.";
+  return "assignment.error.failed";
 }
 
 export function AssignmentSection({ service, onChanged }: Props) {
   const { role, session } = useAuth();
+  const { t } = useI18n();
   const currentUserId = session?.user.id ?? null;
+
+  function nameOf(lawyer: LawyerRef | AssignableLawyer): string {
+    // A total formatter (DoD §5): a profile with no name is odd data, not a
+    // reason to render a blank button.
+    if ("email" in lawyer) return lawyer.fullName ?? lawyer.email;
+    return lawyer.fullName ?? t("service.nameUnavailable");
+  }
 
   const isAdmin = role === "admin";
   // The case the table exists for: the accountable lawyer arranges their own
@@ -62,15 +73,15 @@ export function AssignmentSection({ service, onChanged }: Props) {
   const canEditAnything = isAdmin || canManageCover;
 
   const [lawyers, setLawyers] = useState<AssignableLawyer[] | null>(null);
-  const [lawyersError, setLawyersError] = useState<string | null>(null);
+  const [lawyersFailed, setLawyersFailed] = useState(false);
   const [busyLawyerId, setBusyLawyerId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionErrorKey, setActionErrorKey] = useState<TranslationKey | null>(null);
 
   useEffect(() => {
     if (!canEditAnything) return;
 
     let cancelled = false;
-    setLawyersError(null);
+    setLawyersFailed(false);
 
     serviceDetailApi
       .listAssignableLawyers()
@@ -82,7 +93,7 @@ export function AssignmentSection({ service, onChanged }: Props) {
         // Cleared first, so an empty list from a previous load is never shown
         // next to this error as though it were the answer (DoD §5).
         setLawyers(null);
-        setLawyersError("Could not load the list of lawyers.");
+        setLawyersFailed(true);
       });
 
     return () => {
@@ -92,11 +103,11 @@ export function AssignmentSection({ service, onChanged }: Props) {
 
   async function run(lawyerId: string, action: () => Promise<ServiceDetail>) {
     setBusyLawyerId(lawyerId);
-    setActionError(null);
+    setActionErrorKey(null);
     try {
       onChanged(await action());
     } catch (cause: unknown) {
-      setActionError(messageFor(cause));
+      setActionErrorKey(messageKeyFor(cause));
     } finally {
       setBusyLawyerId(null);
     }
@@ -111,24 +122,22 @@ export function AssignmentSection({ service, onChanged }: Props) {
   return (
     <section className="space-y-4 rounded-card border border-line bg-paper p-4">
       <div>
-        <h2 className="text-lg font-medium">Who answers for this service</h2>
-        <p className="mt-1 text-sm text-inkSoft">
-          One lawyer is accountable. Cover carries the same rights and none of the obligation.
-        </p>
+        <h2 className="text-lg font-medium">{t("assignment.title")}</h2>
+        <p className="mt-1 text-sm text-inkSoft">{t("assignment.subtitle")}</p>
       </div>
 
-      {actionError !== null && (
+      {actionErrorKey !== null && (
         <p role="alert" className="text-sm text-danger-ink">
-          {actionError}
+          {t(actionErrorKey)}
         </p>
       )}
 
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-inkSoft">Accountable</h3>
+        <h3 className="text-sm font-medium text-inkSoft">{t("assignment.accountable")}</h3>
         {service.primaryLawyer === null ? (
           <div className="flex items-center gap-2 text-sm">
-            <Badge tone="warn">Nobody accountable</Badge>
-            <span className="text-inkMute">This service cannot be published in this state.</span>
+            <Badge tone="warn">{t("assignment.nobodyAccountable")}</Badge>
+            <span className="text-inkMute">{t("assignment.nobodyAccountableHint")}</span>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3 text-sm">
@@ -144,7 +153,7 @@ export function AssignmentSection({ service, onChanged }: Props) {
                   }
                 }}
               >
-                Leave nobody accountable
+                {t("assignment.leaveNobody")}
               </Button>
             )}
           </div>
@@ -152,9 +161,9 @@ export function AssignmentSection({ service, onChanged }: Props) {
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-inkSoft">Cover</h3>
+        <h3 className="text-sm font-medium text-inkSoft">{t("assignment.cover")}</h3>
         {service.coverLawyers.length === 0 ? (
-          <p className="text-sm text-inkMute">Nobody is covering this service.</p>
+          <p className="text-sm text-inkMute">{t("assignment.noCover")}</p>
         ) : (
           <ul className="space-y-1">
             {service.coverLawyers.map((lawyer) => (
@@ -171,7 +180,7 @@ export function AssignmentSection({ service, onChanged }: Props) {
                         )
                       }
                     >
-                      Make accountable
+                      {t("assignment.makeAccountable")}
                     </Button>
                   )}
                   {canManageCover && (
@@ -184,7 +193,7 @@ export function AssignmentSection({ service, onChanged }: Props) {
                         )
                       }
                     >
-                      Remove
+                      {t("assignment.remove")}
                     </Button>
                   )}
                 </span>
@@ -196,17 +205,15 @@ export function AssignmentSection({ service, onChanged }: Props) {
 
       {canEditAnything && (
         <div className="space-y-2 border-t border-line pt-4">
-          <h3 className="text-sm font-medium text-inkSoft">Attach a lawyer</h3>
+          <h3 className="text-sm font-medium text-inkSoft">{t("assignment.attach")}</h3>
 
-          {lawyersError !== null ? (
-            <p className="text-sm text-danger-ink">{lawyersError}</p>
+          {lawyersFailed ? (
+            <p className="text-sm text-danger-ink">{t("assignment.lawyersFailed")}</p>
           ) : lawyers === null ? (
-            <p className="text-sm text-inkMute">Loading lawyers…</p>
+            <p className="text-sm text-inkMute">{t("assignment.loadingLawyers")}</p>
           ) : unattached.length === 0 ? (
             <p className="text-sm text-inkMute">
-              {lawyers.length === 0
-                ? "No approved lawyers yet."
-                : "Every lawyer is already attached to this service."}
+              {lawyers.length === 0 ? t("assignment.noLawyers") : t("assignment.allAttached")}
             </p>
           ) : (
             <ul className="space-y-1">
@@ -224,7 +231,7 @@ export function AssignmentSection({ service, onChanged }: Props) {
                           )
                         }
                       >
-                        Add as cover
+                        {t("assignment.addAsCover")}
                       </Button>
                     )}
                     {isAdmin && (

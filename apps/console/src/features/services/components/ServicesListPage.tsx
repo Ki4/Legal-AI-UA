@@ -1,3 +1,4 @@
+import { useI18n } from "@legal-ai/i18n";
 import { Button, EmptyState, Spinner } from "@legal-ai/ui";
 import { useCatalogue } from "../hooks/useCatalogue";
 import { CatalogueFilters } from "./CatalogueFilters";
@@ -5,6 +6,7 @@ import { ServiceCards } from "./ServiceCards";
 import { ServicesTable } from "./ServicesTable";
 
 export function ServicesListPage() {
+  const { t, tCount } = useI18n();
   const catalogue = useCatalogue();
   const { view, loading, error } = catalogue;
 
@@ -22,10 +24,8 @@ export function ServicesListPage() {
   return (
     <section className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold">Services</h1>
-        <p className="mt-1 text-sm text-inkSoft">
-          Filter and search live in the address bar, so a narrowed catalogue is a link.
-        </p>
+        <h1 className="text-2xl font-semibold">{t("catalogue.title")}</h1>
+        <p className="mt-1 text-sm text-inkSoft">{t("catalogue.subtitle")}</p>
       </div>
 
       {view !== null && (
@@ -38,7 +38,7 @@ export function ServicesListPage() {
           {/* The message says to try again, so there is something to try it
               with. `reload` existed and went unwired in the first version. */}
           <Button variant="secondary" onClick={catalogue.reload}>
-            Try again
+            {t("common.tryAgain")}
           </Button>
         </div>
       )}
@@ -48,26 +48,29 @@ export function ServicesListPage() {
         // announcement — otherwise a screen reader hears nothing at all.
         <div className="flex justify-center py-12" role="status" aria-live="polite">
           <Spinner />
-          <span className="sr-only">Loading services</span>
+          <span className="sr-only">{t("catalogue.loading")}</span>
         </div>
       ) : error !== null ? (
         // An empty list after a failed load is not an empty catalogue. Telling
         // an admin to create their first service when the fetch simply broke is
         // worse than saying nothing.
-        <EmptyState title="Could not load the catalogue" hint="Try again in a moment" />
+        <EmptyState title={t("catalogue.failed.title")} hint={t("catalogue.failed.hint")} />
       ) : view === null || view.matchedBeforeFacets === 0 ? (
         catalogue.filtered ? (
           <EmptyState
-            title="Nothing matches"
-            hint="No service matches this search. Clear the filters to see the whole catalogue."
+            title={t("catalogue.empty.search.title")}
+            hint={t("catalogue.empty.search.hint")}
             action={
               <Button variant="secondary" onClick={catalogue.clearFilters}>
-                Clear filters
+                {t("catalogue.filter.clear")}
               </Button>
             }
           />
         ) : (
-          <EmptyState title="No services yet" hint="Create the first one — it takes minutes" />
+          <EmptyState
+            title={t("catalogue.empty.none.title")}
+            hint={t("catalogue.empty.none.hint")}
+          />
         )
       ) : view.items.length === 0 ? (
         // The catalogue has services; these filters exclude all of them. The
@@ -76,17 +79,22 @@ export function ServicesListPage() {
         // result, it says the firm has no such service, and the next thing they
         // do is build a second copy of one that already exists.
         <EmptyState
-          title="Nothing matches these filters"
+          title={t("catalogue.empty.filters.title")}
           hint={
             matchesElsewhere > 0
-              ? `Nothing in the chosen area. ${matchesElsewhere} ${
-                  matchesElsewhere === 1 ? "service matches" : "services match"
-                } in other areas.`
-              : "Clear the filters to see the whole catalogue."
+              ? // Two sentences rather than one with a number inside it: only
+                // the second one counts, and only it needs the plural forms
+                // Ukrainian has three of. A single template would drag the
+                // first sentence through `tCount` for no reason.
+                `${t("catalogue.empty.filters.elsewhere")} ${tCount(
+                  "catalogue.matchesElsewhere",
+                  matchesElsewhere,
+                )}`
+              : t("catalogue.empty.filters.hint")
           }
           action={
             <Button variant="secondary" onClick={catalogue.clearFilters}>
-              Clear filters
+              {t("catalogue.filter.clear")}
             </Button>
           }
         />

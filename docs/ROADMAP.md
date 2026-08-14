@@ -272,6 +272,34 @@ against a probe file, and the type gate against a dropped column in two features
 evidence, and is not the same thing as a gate that stays honest without somebody remembering to
 check it. It is the same shape as the entries above, one level up, and it is not closed.
 
+## Done — the first screen that is checked by something other than a reader (2026-08-14)
+
+- **A DOM environment, and one screen tested in it.** `vitest.config.ts` became two projects split
+  by extension: `*.test.ts` under `node`, `*.test.tsx` under `jsdom` with React Testing Library.
+  `.tsx` is exactly the set of files carrying JSX, which is exactly the set that renders, so the
+  rule needs nothing anybody has to remember — and a unit test does not silently acquire a
+  `document` the code under test will not have. `environmentMatchGlobs` said this in one line and
+  was removed in Vitest 4.
+- The catalogue's §4.1 rule is now an assertion: "nothing exists", "nothing matches your filter"
+  and "the request failed" are three screens. All three branches return an `EmptyState`, all three
+  compile, and until now the only thing deciding which sentence a lawyer reads on a blank screen
+  was a reader. Seven tests over the loading state, the rendered list, the three emptinesses, the
+  "2 matches elsewhere" count and the retry button.
+- The test mocks `../api` — the feature's own contract, the boundary ADR-0012 put there. Expected
+  text comes from `translate(DEFAULT_LOCALE, key)`, not from the Ukrainian sentence: the claim
+  under test is which key a branch picked, and rewording a dictionary is not a regression.
+- One assertion is the i18n rule rather than a behaviour: an `AppError`'s `message` — developer
+  text, always English — must not be on screen. `check:copy` can see a literal in a component;
+  only this can see one arriving through state.
+- **Watched going red, seven ways**, because this session's whole subject is that a green test
+  proves nothing until it has been seen failing. Collapsing two emptinesses into one, forcing the
+  elsewhere-count to zero, unwiring the retry button, letting developer text through to the render
+  and removing the loading branch each turned exactly one test red. Removing the cleanup setup file
+  turned five red, and removing the Supabase env block stopped the file from loading at all — so
+  both halves of the new config are load-bearing rather than ceremony.
+- DoD §8 now requires it: the §4 states covered by a `*.test.tsx` beside the component. It binds
+  new work; the screens already shipped are not retrofitted, and §"Known gaps" says so.
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):
@@ -316,9 +344,8 @@ console happens to own.
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
   into a claim the firm makes about a person, with a retention question attached.
-- A component test, and the DOM environment one needs. `check:copy` decides whether a screen's
-  copy _could_ be right; nothing decides whether the screen renders. Every rendering claim in the
-  last two sessions rests on reading the code or evaluating script in a live page.
+- Component tests for the screens that do not have one. The environment exists and the catalogue is
+  covered (see below); every other screen's rendering is still a claim somebody made by looking.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.
 - Core: LangGraph pipeline behind the frozen contract (the core zone).
 

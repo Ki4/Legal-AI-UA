@@ -180,7 +180,16 @@ For a console feature that means:
       the empty result, the denied write and the malformed row.
 - [ ] Any fixture state a test mutates is restored afterwards. Vitest isolates files from each
       other; within a file it is the author's job.
-- [ ] The screen seen rendering, in both themes, with the browser console clean.
+- [ ] **The §4 states covered by a component test** — `*.test.tsx` beside the component, mocking
+      the feature's own `api/` and asserting which dictionary key each state renders. Every branch
+      in §4 returns a valid element and compiles, so nothing before this decides whether the screen
+      a lawyer meets when the request fails is the one that says the catalogue is empty.
+      `apps/console/src/features/services/components/ServicesListPage.test.tsx` is the reference.
+      Assert the key through `translate(DEFAULT_LOCALE, key)` rather than the Ukrainian sentence:
+      the claim is which key the branch picked, and a reworded dictionary is not a regression.
+- [ ] The screen seen rendering, in both themes, with the browser console clean. A component test
+      does not replace this — jsdom applies no stylesheet, so it can tell you a token was used and
+      never that the screen is legible in the other theme.
 - [ ] Anything touching RLS ships a verification scenario: which role, which rows expected, what
       actually happened (`supabase/CLAUDE.md`).
 
@@ -298,8 +307,10 @@ green build never tells you.
   `pnpm check:copy` (`scripts/check-copy.mjs`), the third of its kind after `docs:check` and
   `check:sql`, wired into CI as of 2026-08-14. What it covers and what it still leaves to a reader
   is stated in §6 itself, next to the rules it checks.
-- **No component tests.** §8 covers the `api/` layer, which is where the logic is. Rendering is
-  still verified by looking at the screen, because a component test needs a DOM environment and a
-  testing library that the workspace does not have yet.
+- **Component tests exist, and one screen has one.** The gap this line used to describe — no DOM
+  environment, no testing library — closed on 2026-08-14: `*.test.tsx` runs under jsdom with React
+  Testing Library, and §8 now requires the §4 states to be covered. What remains is that the
+  catalogue is the only screen with such a test, so every other screen's rendering is still a claim
+  somebody made by looking. The requirement binds new work; retrofitting the rest is not scheduled.
 - **No `ErrorBoundary`.** §5 requires total formatters because a throw currently takes down a whole
   screen. An app-level boundary would make that requirement softer; it is not built.

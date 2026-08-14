@@ -73,6 +73,11 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
 - Tests are Vitest, live beside what they test as `*.test.ts`, and import `describe`/`it`/`expect`
   explicitly rather than relying on globals. Green gates mean the code compiles and conforms — a
   test is how it gets to mean the code behaves.
+- One runner, two environments, split by extension: `*.test.ts` runs under `node`, `*.test.tsx`
+  under `jsdom` with React Testing Library. `.tsx` is exactly the set of files carrying JSX, which
+  is exactly the set that renders, so nothing has to be remembered — and a test that needs no DOM
+  does not quietly acquire one. `apps/console/src/test/setup.ts` unmounts between tests; a package
+  that grows component tests brings its own setup file into `vitest.config.ts`.
 - `pnpm docs:check` runs on every push (git pre-push) and in CI: broken relative links, section
   cross-references pointing at sections that no longer exist, backlog ids cited without a defining
   row. It reports orphaned ADRs as notes without failing. It checks only what is decidable without

@@ -408,10 +408,21 @@ console happens to own.
   (ADR-0013), and the chat primitives are specified in design spec §16 but not built. Positioning
   is answered too: one-off purchase and platform subscription, priced in UAH
   (`docs/specs/admin-console.md` §8, §8.6). The amounts themselves are still open (Q9).
+- **Client accounts and orders — ADM-62…68**, scoped on 2026-08-14 rather than left as the word
+  "deferred": client identity and its pseudonym mapping, `orders` as the first table carrying client
+  data, the answers with their provenance, the issued document and its passport, the order card, and
+  the per-order review queue. **Q21 comes first** — whether a client account is a person or a tenant
+  with members, which is what a ФОП with employees turns it into. It decides whether every
+  client-bearing table carries an account id, and retrofitting that means a migration plus a rewrite
+  of every policy standing on those tables.
 - Payments, funnel dashboards, pricing — no longer blocked on positioning; they now wait on
   `apps/web` and on real orders.
 - Legislative-change monitoring (ADR-0011, spec §9) — the article watcher, the signal triage
-  queue and the effective-date calendar. Sequenced after the authoring loop; the publication
-  feed is deliberately neither built nor bought.
+  queue and the effective-date calendar; the task list is ADM-41…53, and the register those tasks
+  watch is ADM-21…24. Sequenced after the authoring loop; the publication feed is deliberately
+  neither built nor bought. One ordering constraint that is easy to get backwards: **citation entry
+  and link normalisation (ADM-41, ADM-42) land before the scheduler (ADM-44)**, because watching a
+  register of un-normalised links reproduces the pinned-revision trap at scale and its symptom is
+  silence.
 - GDPR P1: data export, account deletion as anonymization, retention cron, subprocessor list.
 - Notifications, payouts, SLA tracking, audit-log UI.

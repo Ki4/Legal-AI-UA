@@ -164,6 +164,50 @@ export const uk = {
   "card.error.notFound": "Послугу не знайдено.",
   "card.error.load": "Не вдалося завантажити цю послугу.",
   "card.anatomy": "Анатомія документа →",
+  "card.history": "Історія змін →",
+
+  // The history screen (§4.8) -----------------------------------------------
+  // Deliberately plain words. This screen is read when somebody is trying to
+  // find out what happened, often because something went wrong, and a reader in
+  // that state does not want to decode a phrase.
+  "history.title": "Історія змін",
+  "history.loading": "Завантажуємо історію",
+  "history.field.when": "Коли",
+  "history.field.who": "Хто",
+  "history.field.what": "Що",
+  "history.field.action": "Дія",
+  "history.field.changed": "Змінені поля",
+  "history.action.insert": "Створено",
+  "history.action.update": "Змінено",
+  "history.action.delete": "Видалено",
+  "history.entity.services": "Послуга",
+  "history.entity.service_versions": "Версія послуги",
+  "history.entity.service_version_prices": "Ціна версії",
+  "history.entity.questionnaire_fields": "Поле анкети",
+  "history.entity.service_assignments": "Призначення юриста",
+  // Somebody acted and we have no name for them — not nobody, and not the
+  // system. The sentence has to leave the reader knowing a person was involved.
+  "history.actor.unnamed": "невідомий користувач",
+  "history.actor.system": "система",
+  "history.showMore": "Показати більше",
+  "history.loadingMore": "Завантажуємо…",
+  "history.empty.title": "Записів ще немає",
+  "history.empty.hint":
+    "Журнал фіксує зміни з моменту, коли його додали. Послуга, створена раніше, могла не залишити слідів.",
+  // Nothing failed here, and the sentence must not sound as if it did.
+  "history.restricted.title": "Ця історія вам не видна",
+  "history.restricted.hint":
+    "Юрист бачить історію послуг, до яких його залучено. Якщо вам потрібна ця — попросіть адміністратора залучити вас.",
+  // For a failure that trying again cannot fix. The sentence must not end in
+  // an invitation to retry, because there is no button beside it.
+  "history.gone.hint": "Перевірте адресу — можливо, послугу видалено або посилання неточне.",
+  "history.failed.title": "Історію не завантажено",
+  "history.failed.hint": "Це не означає, що змін не було. Спробуйте ще раз.",
+  "history.error.noneSelected": "Послугу не вибрано.",
+  "history.error.notFound": "Послугу не знайдено.",
+  "history.error.forbidden": "У вас немає доступу до історії цієї послуги.",
+  "history.error.network": "Не вдалося зв’язатися із сервером. Перевірте з’єднання.",
+  "history.error.load": "Не вдалося завантажити історію.",
 
   // Who answers for a service (ADM-10) --------------------------------------
   "assignment.title": "Хто відповідає за цю послугу",
@@ -221,6 +265,14 @@ export const uk = {
  * language is special-cased anywhere.
  */
 export const ukPlurals = {
+  // How much of the log is on screen. Counted, and therefore not a ternary:
+  // 1 запис, 3 записи, 5 записів, and round again at 21.
+  "history.shown": {
+    one: "Показано {count} запис",
+    few: "Показано {count} записи",
+    many: "Показано {count} записів",
+    other: "Показано {count} записів",
+  },
   "catalogue.matchesElsewhere": {
     one: "{count} послуга відповідає пошуку в інших галузях.",
     few: "{count} послуги відповідають пошуку в інших галузях.",

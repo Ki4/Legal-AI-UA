@@ -81,6 +81,38 @@ export type ServiceAssignmentRow = Tables["service_assignments"]["Row"];
 export type AuditEventRow = Tables["audit_events"]["Row"];
 
 /**
+ * The tables a per-service history can show a change to (spec §4.8).
+ *
+ * `audit_events.entity_table` is `text`, not an enum — the log records the
+ * table a trigger fired on, and a table is not a value the database can
+ * enumerate. So the exhaustiveness the other vocabulary here relies on is not
+ * available: nothing makes a migration that adds a trigger fail to compile
+ * until the new table also has a word. `satisfies readonly (keyof Tables)[]`
+ * buys back the half that is checkable — a table renamed or dropped in a
+ * migration breaks this list on the next `pnpm db:types` — and `asAuditedTable`
+ * covers the other half at runtime, so an unmapped table renders as itself
+ * rather than as nothing.
+ *
+ * Client tables are absent deliberately, not by oversight. `clients` and
+ * `client_identities` log with a null `service_id` (they belong to no service),
+ * so they cannot appear on a screen filtered to one.
+ */
+export const AUDITED_TABLES = [
+  "services",
+  "service_versions",
+  "service_version_prices",
+  "questionnaire_fields",
+  "service_assignments",
+] as const satisfies readonly (keyof Tables)[];
+
+export type AuditedTable = (typeof AUDITED_TABLES)[number];
+
+/** Narrows a logged table name, the way `asRole` narrows a `text` role. */
+export function asAuditedTable(value: string): AuditedTable | null {
+  return (AUDITED_TABLES as readonly string[]).includes(value) ? (value as AuditedTable) : null;
+}
+
+/**
  * `full_name` is nullable because the column is: it comes from the registration
  * form's metadata and a row can exist without one. A view model that claimed
  * otherwise would compile and then meet its first nameless lawyer in

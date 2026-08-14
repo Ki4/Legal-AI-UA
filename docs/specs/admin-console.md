@@ -266,6 +266,14 @@ Publications, reassignments, template edits — a projection of the audit log fi
 service.
 
 - As an admin, I see who changed what and when, without asking anyone.
+- As a lawyer, a service I am not attached to tells me its history is not mine to read, rather than
+  telling me nothing has ever happened to it.
+
+Built (ADM-40). One row per event: when, who, what was changed, which action, and — for an update —
+which columns. Not the values: `before` and `after` are not even selected, because rendering them
+is a diff view with its own decisions about what a reader may see, and `changed_columns` already
+answers the question this screen asks. The two RLS policies on `audit_events` do the filtering, so
+the screen has no notion of who may see what.
 
 ### 4.9 Service law dependencies — `/services/:id/law`
 
@@ -1235,6 +1243,17 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   depend on something that does not exist — assignment runs through `orders` (Q21), and break-glass
   owes the access log (ADM-69). A grant table without the log would be the failure that ADR calls
   out by name: control that is visible and not real.
+- An empty result under RLS is two different answers, and a screen has to ask which one it got. Any
+  member of staff may read any service, but only an admin or an attached lawyer may read its
+  events — so a lawyer opening a colleague's service gets the same empty array a service with no
+  history gives. The history screen asks `is_assigned_to()`, the policy's own predicate, and only
+  when the result is empty and the reader is a lawyer (§4.8). Every screen that lands on a table
+  with a per-row policy will meet this.
+- Column names in the audit log render raw — `published_at`, not a translated phrase. A dictionary
+  would have to be extended by every migration that adds a column and would fall back to nothing in
+  between, and the reader of an audit log is someone who can be trusted with the schema's own word:
+  it is what they will find in the database if they go looking. The same argument as `admin` and
+  `lawyer` rendering raw, one layer down (§4.8, DoD §6).
 - The access log is its own backlog row (ADM-69, §10) and not part of ADM-6. §6.2 requires the two
   logs to be separate tables, and a requirement carried only by prose is one that gets built as a
   column on the nearest existing table. It was found by reading ADM-56's dependency list: the row

@@ -13,6 +13,7 @@
 // a `*.mock.ts` may import it.
 
 import {
+  mockAuditEvents,
   mockPracticeAreas,
   mockProfiles,
   mockServiceAssignments,
@@ -21,6 +22,7 @@ import {
   mockServiceVersions,
 } from "@legal-ai/db";
 import type {
+  AuditEventRow,
   PracticeAreaRow,
   ProfileRow,
   ServiceAssignmentRow,
@@ -54,6 +56,7 @@ export const serviceAssignmentRows: ServiceAssignmentRow[] = mockServiceAssignme
 }));
 export const profileRows: ProfileRow[] = mockProfiles.map((row) => ({ ...row }));
 export const practiceAreaRows: PracticeAreaRow[] = mockPracticeAreas.map((row) => ({ ...row }));
+export const auditEventRows: AuditEventRow[] = mockAuditEvents.map((row) => ({ ...row }));
 
 /**
  * The reference row a service points at. Null when the code resolves to

@@ -131,6 +131,43 @@ export const en: Dictionary = {
   "card.error.notFound": "Service not found.",
   "card.error.load": "Could not load this service.",
   "card.anatomy": "Document anatomy →",
+  "card.history": "Change history →",
+
+  // The history screen (§4.8) -----------------------------------------------
+  "history.title": "Change history",
+  "history.loading": "Loading the history",
+  "history.field.when": "When",
+  "history.field.who": "Who",
+  "history.field.what": "What",
+  "history.field.action": "Action",
+  "history.field.changed": "Fields changed",
+  "history.action.insert": "Created",
+  "history.action.update": "Changed",
+  "history.action.delete": "Deleted",
+  "history.entity.services": "Service",
+  "history.entity.service_versions": "Service version",
+  "history.entity.service_version_prices": "Version price",
+  "history.entity.questionnaire_fields": "Questionnaire field",
+  "history.entity.service_assignments": "Lawyer assignment",
+  "history.actor.unnamed": "unknown user",
+  "history.actor.system": "system",
+  "history.showMore": "Show more",
+  "history.loadingMore": "Loading…",
+  "history.empty.title": "Nothing recorded yet",
+  "history.empty.hint":
+    "The log records changes from the day it was added. A service created before that may have left no trace.",
+  "history.restricted.title": "This history is not visible to you",
+  "history.restricted.hint":
+    "A lawyer sees the history of the services they are attached to. If you need this one, ask an admin to attach you.",
+  "history.gone.hint":
+    "Check the address — the service may have been deleted, or the link is wrong.",
+  "history.failed.title": "The history did not load",
+  "history.failed.hint": "That does not mean nothing happened. Try again.",
+  "history.error.noneSelected": "No service selected.",
+  "history.error.notFound": "Service not found.",
+  "history.error.forbidden": "You do not have access to this service's history.",
+  "history.error.network": "Could not reach the server. Check your connection.",
+  "history.error.load": "Could not load the history.",
 
   // Who answers for a service (ADM-10) --------------------------------------
   "assignment.title": "Who answers for this service",
@@ -181,6 +218,10 @@ export const en: Dictionary = {
  * is the form `Intl.PluralRules` guarantees for every locale.
  */
 export const enPlurals: PluralDictionary = {
+  "history.shown": {
+    one: "Showing {count} entry",
+    other: "Showing {count} entries",
+  },
   "catalogue.matchesElsewhere": {
     one: "{count} service matches your search in other areas.",
     other: "{count} services match your search in other areas.",

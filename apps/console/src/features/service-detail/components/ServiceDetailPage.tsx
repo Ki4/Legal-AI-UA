@@ -104,12 +104,16 @@ export function ServiceDetailPage() {
           more than one of them: an accountable lawyer and any number of cover. */}
       <AssignmentSection service={service} onChanged={setService} />
 
-      <Link
-        to={`/services/${service.id}/anatomy`}
-        className="inline-block text-brand hover:underline"
-      >
-        {t("card.anatomy")}
-      </Link>
+      {/* Links, not imports: the two screens behind them are separate features
+          and stay that way (DoD §1). What crosses here is a URL. */}
+      <div className="flex gap-4">
+        <Link to={`/services/${service.id}/anatomy`} className="text-brand hover:underline">
+          {t("card.anatomy")}
+        </Link>
+        <Link to={`/services/${service.id}/history`} className="text-brand hover:underline">
+          {t("card.history")}
+        </Link>
+      </div>
     </section>
   );
 }

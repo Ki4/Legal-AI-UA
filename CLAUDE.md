@@ -28,7 +28,8 @@ Read this before any change. Zone files add detail; this file is the map.
   ternary is correct English and wrong Ukrainian. The console shell is adopted; the feature screens
   are not yet.
 - `supabase/` — migrations, edge functions, seed. See `supabase/CLAUDE.md`.
-- `docs/` — vision, ADRs, specs (`docs/specs/`), `docs/CONTRIBUTING.md`, session journals.
+- `docs/` — vision, ADRs, specs (`docs/specs/`), `docs/CONTRIBUTING.md`, session journals. **Sorted
+  by when they are read, not by what they are about** — see "Documents have tiers" below.
 - `.claude/` — `/session-start` and `/session-end`, and a SessionStart hook that puts branch
   state, recent commits and the docs-check result into a fresh session's context.
 
@@ -86,6 +87,28 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
   cross-references pointing at sections that no longer exist, backlog ids cited without a defining
   row. It reports orphaned ADRs as notes without failing. It checks only what is decidable without
   judgement — whether prose is still _true_ is nobody's job but a reader's.
+
+## Documents have tiers
+
+Sorted by **when they are read**, because that is what they cost. A document read on every cold
+start is paid for on every cold start, whether or not it says anything the session will act on.
+
+- **Tier 1 — `docs/STATE.md`.** The only document read on arrival: the wave, what is in flight, the
+  questions that block something and what they block, the debts with the date each was first
+  recorded, and two or three next candidates. Rewritten from scratch by `/session-end`, never
+  appended to. Budget 60 lines, enforced by `pnpm docs:check`.
+- **Tier 2 — read once a task is chosen.** `docs/ROADMAP.md` (the map: Now / Next / Later, plus the
+  last three sessions), the specs, the ADRs, `docs/CONTRIBUTING.md`.
+- **Tier 3 — read on request only.** `docs/history/` and `docs/journal/`. They answer "why is this
+  like it is", never "what should I do now".
+
+The failure this replaced is worth keeping in view, because it was nobody's mistake: `ROADMAP.md`
+called itself the map and had become 435 lines of which 350 were a changelog, one appended section
+per session. Every individual append was correct. The cost landed on every reader afterwards.
+`docs:check` now holds the sizes, and `/session-end` holds the judgement — when a section ages out
+of the ROADMAP, each lesson in it is asked whether a gate, a rule here, or the DoD now carries it.
+A lesson carried by nothing was never protecting anything, and archiving is where that stops being
+invisible.
 
 ## Where to look next
 

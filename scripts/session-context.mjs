@@ -53,8 +53,11 @@ try {
 if (docsSummary) lines.push(docsSummary);
 
 lines.push(
-  "Orientation: docs/ROADMAP.md is the map, docs/specs/admin-console.md the console plan, " +
-    "docs/specs/console-feature-dod.md what “done” means. Run /session-start for a full briefing.",
+  "Orientation: docs/STATE.md is the one file to read on arrival — wave, in flight, blocking " +
+    "questions, debts with their age. Everything else is read once a task is chosen: " +
+    "docs/ROADMAP.md is the map, docs/specs/admin-console.md the console plan, " +
+    "docs/specs/console-feature-dod.md what “done” means, docs/history/ and docs/journal/ how it " +
+    "got here — those two on request only. Run /session-start for a full briefing.",
 );
 
 const output = {

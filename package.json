@@ -12,6 +12,7 @@
     "test": "vitest run",
     "docs:check": "node scripts/check-docs.mjs",
     "check:sql": "node scripts/check-sql.mjs",
+    "check:copy": "node scripts/check-copy.mjs",
     "verify:sql": "node scripts/run-sql-verification.mjs",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
@@ -41,8 +42,7 @@
       "prettier --write"
     ],
     "*.py": [
-      "ruff format",
-      "ruff check --fix"
+      "node scripts/py-lane.mjs"
     ]
   },
   "pnpm": {

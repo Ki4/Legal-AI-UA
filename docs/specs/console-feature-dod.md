@@ -98,6 +98,26 @@ Learned from reviewing the reference, all of which it got wrong first time:
 
 The same rule twice: a screen hardcodes neither its colours nor its words.
 
+`pnpm check:copy` (`scripts/check-copy.mjs`, CI step "Copy conventions") checks the mechanical
+half of this section on every PR: raw JSX text, a literal in `placeholder`/`title`/`alt`/
+`aria-label`/`aria-description`/`label`, a `count === 1` ternary, `error.message` reaching a
+render, `Intl`/`toLocale*` called with no locale, and a hex colour, raw Tailwind palette class or
+raw duration in a `className`. A line can be exempted with `// check-copy-ignore: <reason>` (or,
+inside JSX children where `//` is not a comment, `{/* check-copy-ignore: <reason> */}`) — the
+reason is required and printed in the check's summary line, so a growing count of exemptions is
+visible rather than silent.
+
+What it does **not** check, because no script can: whether the string chosen is the _right_
+sentence, not merely a `t()` call around some sentence — "Could not load the catalogue" reading
+correctly is a person's judgement, not a syntax fact. Whether a screen state that should exist
+(§4) does — the checker has no notion of "empty and error must not share a rendering", only of
+whether the JSX in front of it holds a literal. And whether `admin`/`lawyer` were correctly left
+untranslated, versus a status or mode that should have gone through `t()` — the checker cannot
+tell a deliberately-raw domain word from a missed one; the rule that any other bare identifier
+running through JSX text is presumably copy is a heuristic, not a proof. A green `check:copy` is
+evidence the mechanical half holds, not that §6 is satisfied — the checklist above still needs a
+reader.
+
 - [ ] Semantic tokens only — no hex, no raw Tailwind palette classes, no raw durations.
 - [ ] Status colour only through `Badge tone` or the health mapping, never hand-written.
 - [ ] Both themes checked. The theme flips at the CSS variable layer; a component never references
@@ -273,10 +293,11 @@ green build never tells you.
 - **i18n is no longer a gap; it is §6.** It was listed here while the package existed and the
   screens did not follow it. As of 2026-08-14 every console screen holds its copy in the dictionary,
   so there is no longer a screen to point at as an excuse, and the rules moved into the checklist
-  where they can be ticked. The one thing still missing is a **machine check**: "no user-visible
-  literal in a component" is mechanical and decidable, exactly like the token-discipline rule above
-  it, and both are checked by a person grepping today. One checker could cover both — it would be
-  the third of its kind after `docs:check` and `check:sql`, and it is not built.
+  where they can be ticked. The machine check that used to be missing — "no user-visible literal
+  in a component" and the token-discipline rule above it, both mechanical and decidable — is
+  `pnpm check:copy` (`scripts/check-copy.mjs`), the third of its kind after `docs:check` and
+  `check:sql`, wired into CI as of 2026-08-14. What it covers and what it still leaves to a reader
+  is stated in §6 itself, next to the rules it checks.
 - **No component tests.** §8 covers the `api/` layer, which is where the logic is. Rendering is
   still verified by looking at the screen, because a component test needs a DOM environment and a
   testing library that the workspace does not have yet.

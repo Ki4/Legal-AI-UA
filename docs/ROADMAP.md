@@ -329,6 +329,30 @@ somebody remembering to check it. That was the same shape as the entries above, 
   They were not touched here because a refactor of a gate is only safe next to the evidence that its
   output did not move, and doing three at once buys that evidence for none of them.
 
+## Done — approve_user stops being two operations (2026-08-14)
+
+- **ADR-0018.** `approve_user` has written a role into `app_metadata` for whatever id it was handed
+  since the first migration, so it was always both the approval the team screen calls and the role
+  change ADM-33 has not built. A stale list turned "approve as lawyer" into a demotion of a
+  colleague; an admin could demote the last admin, themselves included, with the SQL editor as the
+  only recovery; and approving a user id that does not exist reported success. It now grants a first
+  role, refuses a target that holds one, no-ops on a repeat of the same role, raises on a target
+  that does not exist, and reads the authority rather than the display mirror — repairing the mirror
+  when the two have drifted apart.
+- **Run against the July function, six of the thirteen scenarios fail**, including the self-demotion
+  and the silent success on a nonexistent user; against the migration, all thirteen pass. That
+  comparison is the point of the script. A verification only ever run against the fixed code proves
+  that today's code agrees with today's assertions.
+- The console's fixture moved with the schema. `team.mock.ts` had refused nothing on the recorded
+  grounds that a mock stricter than the database teaches a rule Postgres will not honour; the same
+  reasoning now points the other way, and the test that asserted the old behaviour asserts the new
+  one.
+- Left out deliberately and written into the ADR: the role-change RPC itself, which needs a rule
+  about the last admin and belongs with its screen; and an audit row for a role grant, which needs
+  `profiles` to gain an entity mapping in `audit_change()` and would start logging every
+  registration.
+- Access control, merged under the one-developer suspension clause. It joins the list owed a review.
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):

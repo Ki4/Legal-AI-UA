@@ -45,7 +45,8 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260811150000', 'audit_event_log'),
   ('20260811160000', 'service_assignments'),
   ('20260812120000', 'practice_areas'),
-  ('20260813120000', 'explicit_sequence_grants')
+  ('20260813120000', 'explicit_sequence_grants'),
+  ('20260814120000', 'approve_user_grants_only')
 on conflict (version) do nothing;
 
 -- Confirm. One row per file in supabase/migrations/, and no more.

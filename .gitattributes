@@ -1,0 +1,29 @@
+# Line endings are LF in the repository and LF in the working tree, on every
+# platform.
+#
+# Not a style preference. Without this, `core.autocrlf=true` — the default a
+# Windows Git install sets up — checks every text file out with CRLF, and
+# `scripts/*.test.mjs` then fails to parse: Vitest reports
+# `SyntaxError: Invalid or unexpected token` and collects zero tests from the
+# file. `node --check` on the same file passes, which is what makes it worth a
+# comment rather than a line.
+#
+# The shape of the failure is the reason it went unnoticed: CI runs on
+# ubuntu-latest, where the checkout is LF and everything is green, while the
+# developer who wrote the tests sees two red files the moment they check out a
+# branch instead of writing it. A gate that is green for the machine and red for
+# the person is the same defect as one that is green for the wrong reason.
+#
+# `text=auto` still lets Git decide what is text and what is binary; `eol=lf`
+# fixes what happens to the ones it decides are text.
+* text=auto eol=lf
+
+# Binary, so Git does not go looking for lines in them at all.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary

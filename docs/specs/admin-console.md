@@ -446,8 +446,12 @@ personal data**, and reads belong in it. A lawyer who opened a client's document
 personal data, even having changed nothing.
 
 Practical consequence: keep the action log and the access log separate. Read volume exceeds write
-volume by an order of magnitude and their retention differs; one table serving both becomes
-awkward for both within a year.
+volume by an order of magnitude and their retention differs (§7.2: seven years against one); one
+table serving both becomes awkward for both within a year.
+
+They are two backlog rows accordingly. The action log is ADM-6 and shipped as `audit_events`; the
+access log is ADM-69 and does not exist yet, which is why nothing may read `client_identities`
+today (§7.1).
 
 ### 6.3 Who writes it
 
@@ -871,17 +875,35 @@ splitting before they become issues.
 
 ### Foundation — blocks everything
 
-| ID    | Task                                   | Depends | Size |
-| ----- | -------------------------------------- | ------- | ---- |
-| ADM-1 | Document metadata schema               | —       | L    |
-| ADM-2 | Authoring-loop schema (fixtures, runs) | ADM-1   | M    |
-| ADM-3 | Core contract + trace schema           | —       | M    |
-| ADM-4 | File storage and its access rules      | ADM-1   | S    |
-| ADM-5 | Gateway skeleton                       | ADM-3   | M    |
-| ADM-6 | Event log + change triggers            | ADM-1   | M    |
+| ID     | Task                                    | Depends       | Size |
+| ------ | --------------------------------------- | ------------- | ---- |
+| ADM-1  | Document metadata schema                | —             | L    |
+| ADM-2  | Authoring-loop schema (fixtures, runs)  | ADM-1         | M    |
+| ADM-3  | Core contract + trace schema            | —             | M    |
+| ADM-4  | File storage and its access rules       | ADM-1         | S    |
+| ADM-5  | Gateway skeleton                        | ADM-3         | M    |
+| ADM-6  | Event log + change triggers             | ADM-1         | M    |
+| ADM-69 | Access log: reads of client data (§6.2) | ADM-5, ADM-62 | M    |
 
 ADM-6 is in the foundation and not in a later wave for one reason: a log cannot be backfilled.
 Whatever is not recorded when it happens is gone.
+
+ADM-69 is here for the same reason and was missing for a subtler one. §6.2 names three cuts and
+says in as many words to keep the action log and the access log **separate**; §6.3 says the gateway
+writes the second, because a plain read cannot be caught by a trigger; §7.2 gives it a retention of
+its own. Three sections legislating a table that no row here scheduled. ADM-6 shipped as the action
+log, which is what `audit_events` is, and the access log inherited its id by association without
+ever being given one.
+
+That had a consequence, not just an untidiness: ADM-56 named ADM-6 as its only dependency, while
+ADR-0014 requires a break-glass grant to be **written to the access log** and notified to the
+client. As written, ADM-56 was buildable and would have produced exactly the failure that ADR names
+— an access grant nobody notices, which looks like control and provides none. The dependency below
+is corrected.
+
+Its own dependencies read oddly for a foundation row and are honest: the writer is the gateway
+(ADM-5), and the subject of an access event is a client pseudonym (ADM-62, shipped). Nothing about
+the table waits on `orders` — who read whose data is answerable before there is a matter to read.
 
 ### Catalogue
 
@@ -927,15 +949,17 @@ worth being able to name in a backlog.
 
 ### Intake, access and entitlements
 
-| ID     | Task                                                         | Depends      | Size |
-| ------ | ------------------------------------------------------------ | ------------ | ---- |
-| ADM-54 | Transcript store, extraction to answers, confirmation (§5.5) | ADM-18       | L    |
-| ADM-55 | Retention jobs and the two erasure paths (§7.2)              | ADM-1, ADM-6 | M    |
-| ADM-56 | Break-glass grants, expiry and client notification (§7.3)    | ADM-6        | M    |
-| ADM-57 | Entitlements: one-off sets and platform plans (§8.6)         | ADM-1        | M    |
+| ID     | Task                                                         | Depends       | Size |
+| ------ | ------------------------------------------------------------ | ------------- | ---- |
+| ADM-54 | Transcript store, extraction to answers, confirmation (§5.5) | ADM-18        | L    |
+| ADM-55 | Retention jobs and the two erasure paths (§7.2)              | ADM-1, ADM-6  | M    |
+| ADM-56 | Break-glass grants, expiry and client notification (§7.3)    | ADM-6, ADM-69 | M    |
+| ADM-57 | Entitlements: one-off sets and platform plans (§8.6)         | ADM-1         | M    |
 
 ADM-55 sits next to ADM-6 for the same reason: a clock that starts late is not a retention policy,
-and the data it should have covered is already held.
+and the data it should have covered is already held. It covers every row of §7.2 that has a table
+behind it; the access log's own one-year clock lands with ADM-69, since a retention job cannot be
+written against a table that does not exist.
 
 ### Law references
 
@@ -1209,8 +1233,13 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   clients the firm has (§7.3).
 - `client_identities` ships with no grant and no read policy. The two paths ADR-0014 names both
   depend on something that does not exist — assignment runs through `orders` (Q21), and break-glass
-  owes the access log that arrives with the gateway. A grant table without the log would be the
-  failure that ADR calls out by name: control that is visible and not real.
+  owes the access log (ADM-69). A grant table without the log would be the failure that ADR calls
+  out by name: control that is visible and not real.
+- The access log is its own backlog row (ADM-69, §10) and not part of ADM-6. §6.2 requires the two
+  logs to be separate tables, and a requirement carried only by prose is one that gets built as a
+  column on the nearest existing table. It was found by reading ADM-56's dependency list: the row
+  claimed to be buildable on the action log alone, which would have shipped break-glass without the
+  record that makes it accountable.
 
 ## 14. Open questions
 

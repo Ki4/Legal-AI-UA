@@ -57,9 +57,17 @@ jobs:
       # PR's migrations above, so regenerating now and diffing catches a
       # stale `database.types.ts` on the PR that made it stale, not on
       # whichever one regenerates next.
+      #
+      # Prettier runs before the diff, and is not optional. `supabase gen types`
+      # emits unformatted output; the committed file went through `lint-staged`
+      # on its way in, so comparing the generator's raw output against it is 378
+      # lines of moved semicolons every time, whatever the schema says. The
+      # first run of this step failed exactly that way. Normalising both sides
+      # the way a commit would is what makes the diff mean "the schema moved".
       - name: Check generated types are current
         run: |
           pnpm db:types
+          pnpm exec prettier --write packages/db/src/database.types.ts
           if ! git diff --exit-code packages/db/src/database.types.ts; then
             echo "::error::packages/db/src/database.types.ts is out of date with the schema in this PR. Run 'pnpm db:types' locally and commit the result."
             exit 1

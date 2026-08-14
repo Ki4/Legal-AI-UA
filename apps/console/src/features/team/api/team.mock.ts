@@ -44,14 +44,22 @@ export const mockTeamApi: TeamApi = {
       throw new AppError("not_found", "Approving the registration: no such member.");
     }
 
-    // No guard against re-roling somebody who already holds a role, because
-    // `approve_user` has none either: it updates `profiles.role` and
-    // `app_metadata` unconditionally for any target. So the RPC is already the
-    // role-change operation ADM-33 has not built a screen for, without saying
-    // so anywhere. Noted rather than fixed here — changing it is a migration,
-    // which is Tier 2 and access control both. What a fixture must not do is
-    // refuse what the database accepts: a mock stricter than the schema teaches
-    // the screen a rule that will not survive contact with Postgres.
+    // The same refusal `approve_user` makes since ADR-0018: this operation
+    // grants a first role and does not change one. Re-approving with the role
+    // the member already holds stays silent, because a double-click is not an
+    // attempt to change anything.
+    //
+    // A fixture must match the database in both directions. Softer than the
+    // schema teaches the screen a rule Postgres will not honour; stricter
+    // teaches it one Postgres does not have. This used to be the first case and
+    // would now be the second.
+    if (target.role !== null && target.role !== role) {
+      throw new AppError(
+        "conflict",
+        `Approving the registration: ${target.email} already holds a role. Changing one is a separate operation (ADM-33).`,
+      );
+    }
+
     target.role = role;
 
     return toTeamMember(target);

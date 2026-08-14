@@ -25,10 +25,15 @@ export interface TeamApi {
   /**
    * Grant a role to a member.
    *
-   * Named for what the screen does — approve a pending registration — but the
-   * underlying RPC does not check that the target has no role, so this also
-   * *changes* one. Only pending members are offered it today; the day ADM-33
-   * builds role changes, it will find the operation already here.
+   * Grants a **first** role. A member who already holds one is refused with
+   * `conflict`, because changing a role is a different operation with a
+   * different rule about the last admin, and it does not exist yet (ADM-33,
+   * ADR-0018). Re-approving with the role already held is a silent no-op: a
+   * double-click is not an attempt to change anything.
+   *
+   * This used to be the opposite: the RPC re-roled any target, so the approval
+   * screen was the role-change operation without saying so, and a click on a
+   * stale row demoted a colleague.
    *
    * Returns the updated member (convention 5), so the caller re-renders one row
    * instead of reloading the screen.

@@ -77,13 +77,21 @@ describe("approve", () => {
     });
   });
 
-  it("changes an existing role, because approve_user does not refuse to", async () => {
-    // Not an endorsement — a record. The RPC updates any target's role
-    // unconditionally, so the fixture does too. A mock stricter than the schema
-    // teaches the screen a rule Postgres will not honour, which is the fixture
-    // divergence ADR-0012 warns about.
-    const updated = await mockTeamApi.approve("usr-olena", "admin");
+  it("refuses to change a role somebody already holds", async () => {
+    // The behaviour ADR-0018 gave the RPC, mirrored here. It used to be the
+    // opposite assertion, recording that `approve_user` would re-role anybody —
+    // which made this operation the role change ADM-33 has not built, reachable
+    // from the approval screen by clicking a stale row.
+    await expect(mockTeamApi.approve("usr-olena", "admin")).rejects.toMatchObject({
+      code: "conflict",
+    });
+  });
 
-    expect(updated.role).toBe("admin");
+  it("stays silent when the role asked for is the one already held", async () => {
+    // A double-click is not an attempt to change anything, and an error here
+    // would be the only one this screen ever shows.
+    const updated = await mockTeamApi.approve("usr-olena", "lawyer");
+
+    expect(updated.role).toBe("lawyer");
   });
 });

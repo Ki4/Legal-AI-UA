@@ -21,10 +21,15 @@
 //
 // The rule itself is `apps/console/CLAUDE.md`, "Copy: dictionary keys only" and "Tailwind:
 // semantic tokens only". This file is what makes it something other than a thing to remember.
+//
+// `checkSource` is exported and `scripts/check-copy.test.mjs` runs every rule through it. The
+// script was previously verified by watching each rule go red against a probe file by hand,
+// which is evidence that expires the moment nobody repeats it — the same shape as the defects
+// this checker was written to catch, one level up.
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -35,9 +40,6 @@ const EXCLUDED_FEATURES = {
   "design-kit": "the gallery documents design-system components for developers, not lawyers.",
   anatomy: "renders a hardcoded fixture trace; the text on screen is fixture content, not copy.",
 };
-
-const problems = [];
-let suppressionCount = 0;
 
 // --- File discovery ----------------------------------------------------------
 
@@ -54,17 +56,22 @@ function walk(dir) {
   return out;
 }
 
-const featuresDir = resolve(consoleSrc, "features");
-const appDir = resolve(consoleSrc, "app");
+/** Every `.tsx` file the rules apply to, under the given `src` root. */
+export function discoverFiles(srcRoot = consoleSrc) {
+  const featuresDir = resolve(srcRoot, "features");
+  const appDir = resolve(srcRoot, "app");
 
-const featureFiles = readdirSync(featuresDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .filter((entry) => !(entry.name in EXCLUDED_FEATURES))
-  .flatMap((entry) => walk(join(featuresDir, entry.name)));
+  const featureFiles = statSync(featuresDir, { throwIfNoEntry: false })?.isDirectory()
+    ? readdirSync(featuresDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .filter((entry) => !(entry.name in EXCLUDED_FEATURES))
+        .flatMap((entry) => walk(join(featuresDir, entry.name)))
+    : [];
 
-const appFiles = statSync(appDir, { throwIfNoEntry: false })?.isDirectory() ? walk(appDir) : [];
+  const appFiles = statSync(appDir, { throwIfNoEntry: false })?.isDirectory() ? walk(appDir) : [];
 
-const files = [...featureFiles, ...appFiles];
+  return [...featureFiles, ...appFiles];
+}
 
 // --- Suppression: `// check-copy-ignore: <reason>`, on the line above or on the line ----------
 //
@@ -79,8 +86,9 @@ const files = [...featureFiles, ...appFiles];
 const IGNORE_RE_LINE = /\/\/\s*check-copy-ignore:\s*(.*)\s*$/;
 const IGNORE_RE_JSX = /\{\s*\/\*\s*check-copy-ignore:\s*(.*?)\s*\*\/\s*\}/;
 
-function collectSuppressions(text, relPath) {
+function collectSuppressions(text, relPath, problems) {
   const suppressed = new Set();
+  let suppressionCount = 0;
   const lines = text.split(/\r?\n/);
   lines.forEach((lineText, idx) => {
     const match = IGNORE_RE_LINE.exec(lineText) ?? IGNORE_RE_JSX.exec(lineText);
@@ -97,7 +105,7 @@ function collectSuppressions(text, relPath) {
     suppressed.add(lineNo + 1); // ...or on the line right below it
     suppressionCount += 1;
   });
-  return suppressed;
+  return { suppressed, suppressionCount };
 }
 
 // --- Helpers shared across checks --------------------------------------------
@@ -226,7 +234,7 @@ const RAW_DURATION_RE = /\bduration-\d+\b|\[\d+m?s\]/g;
 // tomorrow is covered without anyone having to remember to extend this list.
 const CLASS_BUILDER_CALLS = new Set(["clsx", "cn", "classNames", "cva"]);
 
-// `push` is the caller's file-scoped, suppression-aware sink — see the main walk below.
+// `push` is the caller's file-scoped, suppression-aware sink — see the walk below.
 function scanClassString(text, relPath, sourceFile, node, push) {
   const line = lineOf(sourceFile, node);
   const hexMatches = text.match(HEX_COLOR_RE) ?? [];
@@ -263,21 +271,35 @@ function literalFragmentsOf(node) {
   return [];
 }
 
-// --- Main walk -----------------------------------------------------------------
+// --- The checks, over one file's source --------------------------------------
 
-let jsxTextNodes = 0;
-let attrNodes = 0;
-let ternaryNodes = 0;
-let errorMessageNodes = 0;
-let intlNodes = 0;
-let classNodes = 0;
+/**
+ * Every rule, applied to one file's text.
+ *
+ * Takes the source rather than a path so the tests can hand it a probe without writing one to
+ * disk, and so the counts below mean the same thing in a test as they do in a run.
+ *
+ * @returns {{ problems: string[], counts: Record<string, number> }}
+ */
+export function checkSource(relPath, text) {
+  const problems = [];
+  const { suppressed, suppressionCount } = collectSuppressions(text, relPath, problems);
 
-for (const file of files) {
-  const relPath = relative(root, file).split("\\").join("/");
-  const text = readFileSync(file, "utf8");
-  const suppressed = collectSuppressions(text, relPath);
+  // Counted is every node *considered*, not just the ones that turn out to be a violation — a
+  // success summary that only ever says "0" proves nothing was found, not that anything was
+  // looked at.
+  const counts = {
+    jsxText: 0,
+    attrs: 0,
+    ternaries: 0,
+    errorMessages: 0,
+    intl: 0,
+    classNames: 0,
+    suppressions: suppressionCount,
+  };
+
   const sourceFile = ts.createSourceFile(
-    file,
+    relPath,
     text,
     ts.ScriptTarget.Latest,
     true,
@@ -291,11 +313,8 @@ for (const file of files) {
 
   function visit(node) {
     // 1. JSX text -----------------------------------------------------------
-    // Counted (jsxTextNodes) is every non-blank JsxText node considered, not just the ones
-    // that turn out to be a violation — a success summary that only ever says "0" proves
-    // nothing was found, not that anything was looked at.
     if (ts.isJsxText(node) && node.text.trim().length > 0) {
-      jsxTextNodes += 1;
+      counts.jsxText += 1;
       if (isTranslatableText(node.text)) {
         const { line, text: msg } = report(
           relPath,
@@ -311,7 +330,7 @@ for (const file of files) {
     if (ts.isJsxAttribute(node)) {
       const attrName = node.name.getText(sourceFile);
       if (USER_VISIBLE_ATTRS.has(attrName) && node.initializer !== undefined) {
-        attrNodes += 1;
+        counts.attrs += 1;
         let literalText = null;
         if (ts.isStringLiteral(node.initializer)) {
           literalText = node.initializer.text;
@@ -336,7 +355,7 @@ for (const file of files) {
 
     // 3. Counted phrases decided by a ===1 ternary ---------------------------
     if (ts.isConditionalExpression(node) && comparesToOne(node.condition)) {
-      ternaryNodes += 1;
+      counts.ternaries += 1;
       if (branchHasLiteralText(node.whenTrue) || branchHasLiteralText(node.whenFalse)) {
         const { line, text: msg } = report(
           relPath,
@@ -355,7 +374,7 @@ for (const file of files) {
       ts.isIdentifier(node.expression) &&
       ERROR_NAME_RE.test(node.expression.text)
     ) {
-      errorMessageNodes += 1;
+      counts.errorMessages += 1;
       if (reachesRender(node)) {
         const { line, text: msg } = report(
           relPath,
@@ -374,7 +393,7 @@ for (const file of files) {
       ts.isIdentifier(node.expression.expression) &&
       node.expression.expression.text === "Intl"
     ) {
-      intlNodes += 1;
+      counts.intl += 1;
       if (node.arguments === undefined || node.arguments.length === 0) {
         const { line, text: msg } = report(
           relPath,
@@ -390,7 +409,7 @@ for (const file of files) {
       ts.isPropertyAccessExpression(node.expression) &&
       LOCALE_METHODS.has(node.expression.name.text)
     ) {
-      intlNodes += 1;
+      counts.intl += 1;
       if (node.arguments.length === 0) {
         const { line, text: msg } = report(
           relPath,
@@ -418,7 +437,7 @@ for (const file of files) {
         fragments = literalFragmentsOf(node.initializer.expression);
       }
       if (fragments.length > 0) {
-        classNodes += 1;
+        counts.classNames += 1;
         scanClassString(fragments.join(" "), relPath, sourceFile, node, push);
       }
     }
@@ -430,7 +449,7 @@ for (const file of files) {
       for (const arg of node.arguments) {
         const fragments = literalFragmentsOf(arg);
         if (fragments.length > 0) {
-          classNodes += 1;
+          counts.classNames += 1;
           scanClassString(fragments.join(" "), relPath, sourceFile, arg, push);
         }
         if (ts.isObjectLiteralExpression(arg)) {
@@ -443,7 +462,7 @@ for (const file of files) {
                   ? key.text
                   : null;
               if (keyText !== null) {
-                classNodes += 1;
+                counts.classNames += 1;
                 scanClassString(keyText, relPath, sourceFile, prop, push);
               }
             }
@@ -456,19 +475,49 @@ for (const file of files) {
   }
 
   visit(sourceFile);
+
+  return { problems, counts };
 }
 
-for (const problem of problems) console.error(`ERROR  ${problem}`);
+// --- CLI ----------------------------------------------------------------------
 
-if (problems.length > 0) {
-  console.error(`\n${problems.length} problem(s) in apps/console copy or tokens.`);
-  process.exit(1);
+function main() {
+  const files = discoverFiles();
+  const problems = [];
+  const totals = {
+    jsxText: 0,
+    attrs: 0,
+    ternaries: 0,
+    errorMessages: 0,
+    intl: 0,
+    classNames: 0,
+    suppressions: 0,
+  };
+
+  for (const file of files) {
+    const relPath = relative(root, file).split("\\").join("/");
+    const result = checkSource(relPath, readFileSync(file, "utf8"));
+    problems.push(...result.problems);
+    for (const key of Object.keys(totals)) totals[key] += result.counts[key];
+  }
+
+  for (const problem of problems) console.error(`ERROR  ${problem}`);
+
+  if (problems.length > 0) {
+    console.error(`\n${problems.length} problem(s) in apps/console copy or tokens.`);
+    process.exit(1);
+  }
+
+  console.log(
+    `copy: ${files.length} file(s) scanned — ` +
+      `${totals.jsxText} JSX text node(s), ${totals.attrs} user-visible attribute(s), ` +
+      `${totals.ternaries} count-vs-1 ternary(ies), ${totals.errorMessages} error.message access(es), ` +
+      `${totals.intl} Intl/toLocale* call(s), ${totals.classNames} className string(s) checked, ` +
+      `${totals.suppressions} suppression(s) in effect.`,
+  );
 }
 
-console.log(
-  `copy: ${files.length} file(s) scanned — ` +
-    `${jsxTextNodes} JSX text node(s), ${attrNodes} user-visible attribute(s), ` +
-    `${ternaryNodes} count-vs-1 ternary(ies), ${errorMessageNodes} error.message access(es), ` +
-    `${intlNodes} Intl/toLocale* call(s), ${classNodes} className string(s) checked, ` +
-    `${suppressionCount} suppression(s) in effect.`,
-);
+// Run only when invoked as a script: importing this from a test must not walk the repository.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

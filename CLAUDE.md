@@ -78,6 +78,10 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
   is exactly the set that renders, so nothing has to be remembered — and a test that needs no DOM
   does not quietly acquire one. `apps/console/src/test/setup.ts` unmounts between tests; a package
   that grows component tests brings its own setup file into `vitest.config.ts`.
+- The checkers under `scripts/` are collected too, as `scripts/**/*.test.mjs`. A gate nothing runs
+  is the exact defect they were written to catch. Each one exports its core and runs its CLI only
+  when invoked as one, so a test can call it without walking the repository or exiting the runner.
+  `check-copy.mjs` and `py-lane.mjs` are covered; `check-docs.mjs` and `check-sql.mjs` are not yet.
 - `pnpm docs:check` runs on every push (git pre-push) and in CI: broken relative links, section
   cross-references pointing at sections that no longer exist, backlog ids cited without a defining
   row. It reports orphaned ADRs as notes without failing. It checks only what is decidable without

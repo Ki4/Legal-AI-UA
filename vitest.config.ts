@@ -25,7 +25,11 @@ export default defineConfig({
       {
         test: {
           name: "unit",
-          include: ["{apps,packages}/*/src/**/*.test.ts"],
+          // `scripts/` is in here because the checkers are gates, and a gate
+          // nothing runs is the exact shape of defect they were written to
+          // catch. They are `.mjs`, so their tests are too — beside what they
+          // test, like every other test in the workspace.
+          include: ["{apps,packages}/*/src/**/*.test.ts", "scripts/**/*.test.mjs"],
           environment: "node",
         },
       },

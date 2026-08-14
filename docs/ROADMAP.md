@@ -267,10 +267,11 @@ A session with no new feature in it. Four debts, each one an instance of the sam
   `select` and forgets `enable row level security` gives a working screen in the sandbox and an
   empty one in the cloud. That direction was written nowhere.
 
-Neither new script has a test. Both were watched going red by hand — every rule of `check:copy`
-against a probe file, and the type gate against a dropped column in two features — which is
-evidence, and is not the same thing as a gate that stays honest without somebody remembering to
-check it. It is the same shape as the entries above, one level up, and it is not closed.
+Neither new script had a test when this section was written. Both were watched going red by hand —
+every rule of `check:copy` against a probe file, and the type gate against a dropped column in two
+features — which is evidence, and is not the same thing as a gate that stays honest without
+somebody remembering to check it. That was the same shape as the entries above, one level up.
+**Closed below**, on the same day, in the two sections that follow.
 
 ## Done — the first screen that is checked by something other than a reader (2026-08-14)
 
@@ -299,6 +300,34 @@ check it. It is the same shape as the entries above, one level up, and it is not
   both halves of the new config are load-bearing rather than ceremony.
 - DoD §8 now requires it: the §4 states covered by a `*.test.tsx` beside the component. It binds
   new work; the screens already shipped are not retrofitted, and §"Known gaps" says so.
+
+## Done — the checkers are checked (2026-08-14)
+
+- **`check:copy` and `py-lane` have tests**, 41 of them, and the vitest runner collects
+  `scripts/**/*.test.mjs` so a gate can no longer be the one thing nothing runs. Both scripts kept
+  their behaviour and gained a seam: `check-copy.mjs` exports `checkSource(relPath, text)` and runs
+  the CLI only when invoked as one, `py-lane.mjs` exports the four functions that decide how a
+  command line is built. The summary line `check:copy` prints on the real tree is byte-identical
+  before and after the refactor, which is the only evidence that matters for a refactor of a gate.
+- Every rule gets both halves: a source that must trip it and the source one line away that must
+  not. A checker that flags everything and a checker that flags nothing are equally useless, and
+  only the pair tells them apart. The probe file that used to be driven by hand is now fixtures.
+- **The injection test runs the real shell.** `py-lane`'s quoting is not asserted as a string
+  shape; the built command line is handed to an actual `cmd.exe` with a staged filename of
+  `apps/core/x & echo INJECTED`, and the test checks the second half did not run. Its companion
+  feeds the unquoted form — the shape `shell: true` builds — and asserts that one _does_ run it, so
+  the first test cannot pass against a shell that executes nothing. Windows-only and skipped on
+  ubuntu CI, which is stated in the file rather than left to be discovered.
+- Reverting `buildCmdLine` to the vulnerable form turns three tests red, one of them the live
+  `cmd.exe` one; dropping `aria-label` from the user-visible attribute set turns exactly one red.
+  Both were run.
+- Two of the new tests failed on their first run and both were the test being wrong, which is worth
+  recording: one probe carried a stray letter that tripped the JSX-text rule, and one assumed a
+  reason-less `check-copy-ignore` still suppressed the line below it. It does not — a malformed
+  directive is not a half-working one — and that behaviour is now asserted rather than incidental.
+- **Still open: `check-docs.mjs` and `check-sql.mjs` have no tests** and have had none for longer.
+  They were not touched here because a refactor of a gate is only safe next to the evidence that its
+  output did not move, and doing three at once buys that evidence for none of them.
 
 ## Now — wave 1 (parallel, no file overlap)
 

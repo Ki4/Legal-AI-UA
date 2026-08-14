@@ -42,8 +42,7 @@
       "prettier --write"
     ],
     "*.py": [
-      "ruff format",
-      "ruff check --fix"
+      "node scripts/py-lane.mjs"
     ]
   },
   "pnpm": {

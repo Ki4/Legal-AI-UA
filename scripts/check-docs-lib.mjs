@@ -90,5 +90,90 @@ export function checkDocs(root) {
     if (!cited) notes.push(`docs/adr/${entry}: nothing else in the docs mentions ADR-${number}`);
   }
 
+  // 5. The tier-1 documents stay small enough to be read on every cold start.
+  //
+  //    This is a size budget, which is an unusual thing for a docs check to hold, and the reason it
+  //    is here rather than in somebody's habit is the file it was written for. `ROADMAP.md` calls
+  //    itself the map — "what exists, what's next" — and by 2026-08-14 it was 435 lines of which 350
+  //    were a changelog of finished sessions, because appending a section is easier than moving one.
+  //    Nothing was wrong with any individual append. The cost is paid somewhere else entirely: every
+  //    session reads the map to orient, and 80% of what it reads is history it will not act on.
+  //
+  //    A budget makes the pressure land at the moment the section is written instead of on every
+  //    reader afterwards. It does not say the history is worthless — it says the history belongs in
+  //    `docs/history/`, which is read on request.
+  const BUDGETS = [
+    {
+      file: "docs/STATE.md",
+      maxLines: 60,
+      hint:
+        "STATE is the one document every session reads before anything else. Past 60 lines it stops " +
+        "being an orientation and becomes a second roadmap. Close a debt, or move an item to the " +
+        "backlog in specs/admin-console.md §10.",
+    },
+    {
+      file: "docs/ROADMAP.md",
+      maxLines: 200,
+      maxDoneSections: 3,
+      hint:
+        "Move the oldest `## Done` section to docs/history/. Archive it audited rather than moved: " +
+        "for each lesson in it, say whether a gate, a CLAUDE.md rule or the DoD now carries it — a " +
+        "lesson carried by nothing was never protecting anything.",
+    },
+  ];
+
+  for (const budget of BUDGETS) {
+    // `contents` is keyed by absolute path. Looking it up by the repo-relative name returned
+    // `undefined` on the first run of this check, and `undefined` was being skipped silently — so
+    // the budget reported a clean pass while measuring nothing at all. The lookup is resolved now,
+    // and a missing file is a failure rather than a skip, which is the half that would have caught
+    // it: these two documents are load-bearing for how a session starts, and their absence is not a
+    // reason for this check to have no opinion.
+    const text = contents.get(resolve(root, budget.file));
+
+    if (text === undefined) {
+      problems.push(
+        `${budget.file}: missing. A session orients from it; nothing else carries that.`,
+      );
+      continue;
+    }
+
+    const lineCount = text.split(/\r?\n/).length;
+    if (lineCount > budget.maxLines) {
+      problems.push(
+        `${budget.file}: ${lineCount} lines, budget is ${budget.maxLines}. ${budget.hint}`,
+      );
+    }
+
+    if (budget.maxDoneSections !== undefined) {
+      const doneSections = (text.match(/^## Done\b/gm) ?? []).length;
+      if (doneSections > budget.maxDoneSections) {
+        problems.push(
+          `${budget.file}: ${doneSections} \`## Done\` sections, budget is ${budget.maxDoneSections}. ${budget.hint}`,
+        );
+      }
+    }
+  }
+
+  // 6. A debt nobody closed for long enough is a decision nobody stated.
+  //
+  //    A note, never a failure: carrying a debt on purpose is legitimate, and a check that failed on
+  //    one would be answered by deleting the line rather than by closing the debt. What it removes is
+  //    the invisibility. `TeamPage` had no empty state for three sessions and nobody noticed, because
+  //    the list was retyped from scratch into each journal and age was never written down.
+  const state = contents.get(resolve(root, "docs/STATE.md"));
+  if (state !== undefined) {
+    const STALE_DAYS = 21;
+    const today = new Date();
+    for (const [, iso] of state.matchAll(/^- `(\d{4}-\d{2}-\d{2})`/gm)) {
+      const age = Math.floor((today - new Date(iso)) / 86_400_000);
+      if (age > STALE_DAYS) {
+        notes.push(
+          `docs/STATE.md: a debt has been carried since ${iso} (${age} days) — close it or say it is deliberate`,
+        );
+      }
+    }
+  }
+
   return { problems, notes, fileCount: files.length };
 }

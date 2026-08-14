@@ -487,6 +487,12 @@ stays intact and stops being identifying.
 This is what makes §6.4 load-bearing: a single name accidentally written into a payload breaks the
 scheme.
 
+Built as `public.clients` — the anchor, carrying the pseudonym and no personal data — and
+`public.client_identities`, the one place a name exists. `erase_client()` destroys the mapping and
+leaves the anchor standing with the date and the basis, because orders and issued documents point
+at it. Erasure is not finished there: §7.2 needs transcripts hard-deleted too (ADR-0013), and that
+statement joins the same function when a transcript table exists.
+
 ### 7.2 Retention schedule
 
 Retention has to be set before the first upload and the first conversation, not after — a clock
@@ -1193,6 +1199,18 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   admin decides what is on sale, at what price, and when it is published; the assigned lawyer owns
   the draft of their own service, `review_mode` included, because they are the only person who can
   judge whether a document needs a lawyer in the loop (ADR-0005, §4.3).
+- A client is two tables, not one: `clients` is a pseudonymous anchor holding no personal data, and
+  `client_identities` is the mapping ADR-0010 requires to live in exactly one place. Everything
+  client-bearing keys on the anchor, so it can be read, joined and counted without touching a
+  person, and erasure is a delete rather than a list of columns somebody has to keep correct
+  (§7.1).
+- The pseudonym is a short readable label (`client-4f2a91`), generated on insert and immutable. A
+  uuid is not something a person can hold in their head, and a counter would publish how many
+  clients the firm has (§7.3).
+- `client_identities` ships with no grant and no read policy. The two paths ADR-0014 names both
+  depend on something that does not exist — assignment runs through `orders` (Q21), and break-glass
+  owes the access log that arrives with the gateway. A grant table without the log would be the
+  failure that ADR calls out by name: control that is visible and not real.
 
 ## 14. Open questions
 

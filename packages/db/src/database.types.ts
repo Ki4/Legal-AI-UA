@@ -70,6 +70,65 @@ export type Database = {
         };
         Relationships: [];
       };
+      client_identities: {
+        Row: {
+          client_id: string;
+          created_at: string;
+          email: string | null;
+          full_name: string;
+          phone: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          client_id: string;
+          created_at?: string;
+          email?: string | null;
+          full_name: string;
+          phone?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          client_id?: string;
+          created_at?: string;
+          email?: string | null;
+          full_name?: string;
+          phone?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "client_identities_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: true;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      clients: {
+        Row: {
+          created_at: string;
+          erased_at: string | null;
+          erasure_basis: string | null;
+          id: string;
+          pseudonym: string;
+        };
+        Insert: {
+          created_at?: string;
+          erased_at?: string | null;
+          erasure_basis?: string | null;
+          id?: string;
+          pseudonym?: string;
+        };
+        Update: {
+          created_at?: string;
+          erased_at?: string | null;
+          erasure_basis?: string | null;
+          id?: string;
+          pseudonym?: string;
+        };
+        Relationships: [];
+      };
       practice_areas: {
         Row: {
           code: string;
@@ -347,6 +406,10 @@ export type Database = {
     Functions: {
       approve_user: {
         Args: { new_role: string; target_user: string };
+        Returns: undefined;
+      };
+      erase_client: {
+        Args: { basis: string; target_client: string };
         Returns: undefined;
       };
       is_assigned_to: { Args: { target_service: string }; Returns: boolean };

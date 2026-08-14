@@ -28,11 +28,22 @@
 // A resolved `.cmd`/`.bat` path is not directly executable by `CreateProcess`
 // either: Windows needs `cmd.exe` to run one, so `spawnSync` of the bare path
 // throws `EINVAL` rather than running it — under `stdio: "inherit"` that is
-// silent too. `shell: true` is scoped to exactly that case below, and nowhere
-// else: it is a platform requirement for `.cmd`/`.bat`, not a stylistic
-// choice, so an ordinary `.exe` — what a Python-toolchain `ruff` install
-// (ADR-0016) actually produces — never has a staged file's own path run
-// through a shell parser for no reason.
+// silent too.
+//
+// `shell: true` is the one-line answer to that and it is not safe here. Node
+// then builds a single command string out of the command and its arguments,
+// and the arguments are staged file *paths* — data this script does not
+// choose. `x & calc.py` is a legal Windows filename and is two commands to
+// `cmd.exe`. A git hook is precisely where a filename somebody else picked
+// arrives: a branch is fetched, its files are staged, and the hook runs before
+// anybody has read them. So the command line is built below with every token
+// quoted, rather than handed to a shell as a string.
+//
+// Quoting neutralises `&`, `|`, `^`, `<`, `>`, `(`, `)` and spaces. It does not
+// neutralise `%`, which `cmd.exe` expands inside quotes too and for which a
+// `/c` string has no dependable escape — so a path containing `%` or `"` is
+// refused with a message rather than run on a guess. Neither is a shape a
+// Python module in this repository would have.
 
 import { spawnSync } from "node:child_process";
 
@@ -79,10 +90,42 @@ if (ruff === null) {
   process.exit(1);
 }
 
-const needsShell = process.platform === "win32" && /\.(cmd|bat)$/i.test(ruff);
+const needsCmd = process.platform === "win32" && /\.(cmd|bat)$/i.test(ruff);
+
+/** Characters a quoted `cmd.exe` token still does not make inert — see the header. */
+const UNQUOTABLE_FOR_CMD = /["%]/;
+
+function spawnRuff(args) {
+  if (!needsCmd) {
+    return spawnSync(ruff, args, { stdio: "inherit" });
+  }
+
+  const unsafe = args.filter((arg) => UNQUOTABLE_FOR_CMD.test(arg));
+  if (unsafe.length > 0) {
+    console.error(
+      `py-lane: refusing to run ruff through cmd.exe on a path containing \`"\` or \`%\`: ` +
+        `${unsafe.join(", ")}\n` +
+        "Those survive quoting in a cmd /c command line, so running them would mean guessing at " +
+        "what the shell does with a filename this script did not choose. Rename the file, or " +
+        "install ruff as a native executable so no shell is involved.",
+    );
+    process.exit(1);
+  }
+
+  // `/s` makes cmd.exe strip the outermost pair of quotes and take the rest
+  // verbatim, which is why the whole line is wrapped in one more pair — the
+  // same shape Node's own `shell: true` builds, with the quoting of each token
+  // done here instead of by a shell that would parse the paths first.
+  const line = `"${[ruff, ...args].map((token) => `"${token}"`).join(" ")}"`;
+
+  return spawnSync("cmd.exe", ["/d", "/s", "/c", line], {
+    stdio: "inherit",
+    windowsVerbatimArguments: true,
+  });
+}
 
 function runRuff(args) {
-  const result = spawnSync(ruff, args, { stdio: "inherit", shell: needsShell });
+  const result = spawnRuff(args);
   if (result.error !== undefined) {
     // spawnSync failing to launch the process at all — a stale resolution, a
     // permissions problem — is exactly the silent case this file exists to

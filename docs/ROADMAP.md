@@ -372,11 +372,17 @@ somebody remembering to check it. That was the same shape as the entries above, 
 
 **Data layer** (PO): the catalogue half shipped — see the section above. What remains is
 `document_blocks`, which waits on the trace schema below because the two constrain each other's
-shape; `orders`, the first table to carry client data; and the law-reference register. Orders do
-not need an event table of their own: `audit_events` is the log, and a new domain table joins it
-by gaining an entity mapping in `audit_change` — which raises rather than logging a null service,
-so the mapping cannot be forgotten. Client-bearing tables wait on nothing else now that Q10–Q13
-are closed.
+shape; `orders` (ADM-63), the first table to carry client data; and the law-reference register
+(ADM-21). Orders do not need an event table of their own: `audit_events` is the log, and a new
+domain table joins it by gaining an entity mapping in `audit_change` — which raises rather than
+logging a null service, so the mapping cannot be forgotten.
+
+**`orders` no longer waits on nothing.** This line used to end "client-bearing tables wait on
+nothing else now that Q10–Q13 are closed", and that stopped being true on 2026-08-14. Q10–Q13 are
+closed and **Q21** is not: whether a client account is a person or a tenant with members decides
+whether this table carries an account id at all, and adding one afterwards is a migration on every
+client-bearing table plus a rewrite of every policy standing on them. ADM-62 can start either way;
+ADM-63 cannot.
 
 **Core contract** (drafted in the PO zone, checked against the core zone — the same developer, so
 what stands in for a countersignature is that the mocks run and the schema is written down rather
@@ -391,7 +397,8 @@ console happens to own.
 
 - Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
   service card (ADM-58) and the assignment editor on it (ADM-10) are there. Still on fixtures or
-  unbuilt — the versions tab with pause/resume, and the orders table with its event timeline.
+  unbuilt — the versions tab with pause/resume, and the orders table with its event timeline
+  (ADM-63, ADM-66).
   Every feature now reaches its data through its own `api/` layer, `anatomy` included.
 - Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
@@ -408,10 +415,21 @@ console happens to own.
   (ADR-0013), and the chat primitives are specified in design spec §16 but not built. Positioning
   is answered too: one-off purchase and platform subscription, priced in UAH
   (`docs/specs/admin-console.md` §8, §8.6). The amounts themselves are still open (Q9).
+- **Client accounts and orders — ADM-62…68**, scoped on 2026-08-14 rather than left as the word
+  "deferred": client identity and its pseudonym mapping, `orders` as the first table carrying client
+  data, the answers with their provenance, the issued document and its passport, the order card, and
+  the per-order review queue. **Q21 comes first** — whether a client account is a person or a tenant
+  with members, which is what a ФОП with employees turns it into. It decides whether every
+  client-bearing table carries an account id, and retrofitting that means a migration plus a rewrite
+  of every policy standing on those tables.
 - Payments, funnel dashboards, pricing — no longer blocked on positioning; they now wait on
   `apps/web` and on real orders.
 - Legislative-change monitoring (ADR-0011, spec §9) — the article watcher, the signal triage
-  queue and the effective-date calendar. Sequenced after the authoring loop; the publication
-  feed is deliberately neither built nor bought.
+  queue and the effective-date calendar; the task list is ADM-41…53, and the register those tasks
+  watch is ADM-21…24. Sequenced after the authoring loop; the publication feed is deliberately
+  neither built nor bought. One ordering constraint that is easy to get backwards: **citation entry
+  and link normalisation (ADM-41, ADM-42) land before the scheduler (ADM-44)**, because watching a
+  register of un-normalised links reproduces the pinned-revision trap at scale and its symptom is
+  silence.
 - GDPR P1: data export, account deletion as anonymization, retention cron, subprocessor list.
 - Notifications, payouts, SLA tracking, audit-log UI.

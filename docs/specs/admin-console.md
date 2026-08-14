@@ -967,6 +967,40 @@ with ADM-43, not after it.
 
 Publication-feed ingestion is deliberately not in this table (§9.14).
 
+### Client accounts and orders
+
+Written on the assumption that generation already works. What an order needs is not the generator —
+it is everything around one: who asked, what they were entitled to, what they answered, which frozen
+version produced the file, and what happens to that file when the law under it moves.
+
+| ID     | Task                                                           | Depends        | Size |
+| ------ | -------------------------------------------------------------- | -------------- | ---- |
+| ADM-62 | Client identity and the pseudonym mapping (ADR-0014, §7.2)     | ADM-1          | M    |
+| ADM-63 | `orders`: the first table carrying client data                 | ADM-62, ADM-57 | M    |
+| ADM-64 | Order answers: value, provenance and confirmation state (§5.5) | ADM-63, ADM-54 | M    |
+| ADM-65 | Issued document and its passport, pinned to a version (§5.3)   | ADM-63, ADM-30 | M    |
+| ADM-66 | Order card: state, answers, runs, documents, timeline          | ADM-63, ADM-6  | M    |
+| ADM-67 | Per-order review queue for the two non-auto modes (ADR-0005)   | ADM-66         | M    |
+| ADM-68 | Client account as a tenant: members and their roles (Q21)      | ADM-62         | L    |
+
+Four things worth stating before any of these becomes an issue, because each one is cheap now and
+expensive after `orders` exists:
+
+- **The order pins a version, not a service.** §5.3 and ADR-0009 already require it; the consequence
+  for this table is that the foreign key points at `service_versions`, never at `services`. A
+  document issued in March must still be explainable in October, after the service has been
+  republished twice.
+- **An order has no event table of its own.** `audit_events` is the log (ADR-0010); a new
+  domain table joins it by gaining an entity mapping in `audit_change()`, which raises rather than
+  logging a null service — so the mapping cannot be forgotten. ADM-66's timeline is a read of that
+  log, not a second history.
+- **Staleness is a projection, not a column.** "This document rests on an article that has since
+  changed" is derived from the norm register (§9.3) through the pinned version, exactly the reverse
+  index ADM-24 builds. A boolean on the order would be a copy of the truth that drifts from it.
+- **ADM-68 is the one that cannot be retrofitted cheaply.** See Q21: it decides whether every
+  client-bearing table carries a tenant column and every policy scopes by it. Deciding it after
+  ADM-63 ships means changing the schema and every RLS policy written against it.
+
 ### Authoring sandbox
 
 | ID     | Task                       | Depends       | Size |
@@ -1006,10 +1040,13 @@ Publication-feed ingestion is deliberately not in this table (§9.14).
 
 ### Deferred but now unblocked by §8
 
-Orders and the order card; the per-order review queue; the client card, consents and GDPR
-operations; entitlements; bulk re-issue after a confirmed impact; notifications; payments and
-payouts. These wait on `apps/web` and on real orders, not on an unanswered product question any
-more.
+Orders, the order card, the per-order review queue and the client identity now have ids — ADM-62…68
+above — because "deferred" was doing two jobs: not scheduled, and not thought about. They are the
+first, not the second.
+
+Still without ids and still deferred: consents and the GDPR operations screen; bulk re-issue after a
+confirmed impact; notifications; payments and payouts. These wait on `apps/web` and on real orders,
+not on an unanswered product question any more.
 
 **Consultation booking.** Human-in-the-loop today means a lawyer reviewing one document. The next
 step is a client booking time with a lawyer directly — a scheduled consultation rather than a
@@ -1191,6 +1228,34 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   the amounts are not. The euro figures discussed in §8 are a recorded conversion so the order of
   magnitude survives, not a decision.
 - **Q14. Delivery format to the client — .docx, .pdf, or both?** Part of the passport (§5.3).
+- **Q21. Is a client account a person, or a tenant with members?** ADR-0014 settled that clients do
+  not live in `profiles`, and that is unchanged — it gets stronger, not weaker, once a client is a
+  ФОП. What it did not settle is whether the thing that owns an order is **one person** or an
+  **account other people belong to**: a sole proprietor with an accountant and two employees, all
+  needing to see the firm's documents, none of them the person who signed up.
+
+  The two answers produce different schemas. A person means `orders.client_id` points at a client
+  identity and access is "you own it". A tenant means a `client_accounts` table, a membership table
+  with its own roles (owner / employee / read-only — words that are **not** `admin | lawyer`, which
+  are the law firm's roles and the words RLS policies are written in), and every client-bearing
+  table carrying the account id with every policy scoped by it.
+
+  Three reasons it cannot wait until somebody asks for it:
+
+  1. **Retrofitting is the expensive kind.** Adding a tenant column later means a migration on every
+     table holding client data plus a rewrite of every policy written against them — and each
+     rewrite is an access-control change under the review rule in `supabase/CLAUDE.md`.
+  2. **Putting client staff in `profiles` would be the cheap wrong answer**, and the policy that
+     makes it wrong already exists: staff read staff names. A client's accountant would see the law
+     firm's colleagues, and a lawyer would see the client's employees, because both are "staff" to a
+     table that only knows one organisation.
+  3. **GDPR retention differs by whose data it is** (§7.2). Firm staff and client personnel have
+     different bases and different schedules, and one table cannot carry two clocks honestly.
+
+  ADR-0014's rule generalises cleanly if the answer is "tenant": role governs platform capability,
+  **membership** governs data — the same sentence with assignment replaced. That is the shape to
+  beat, not a decision taken. Blocks ADM-63; ADM-62 can start either way.
+
 - **Q19. Does a questionnaire field carry a group, or is grouping read off the key prefix?** The
   map in §4.4 shows fields grouped the way a client meets them, and the dictionary has only
   `position`. The prefix convention (`respondent_*`) already exists in practice and costs nothing

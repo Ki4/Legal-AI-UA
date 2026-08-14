@@ -44,16 +44,56 @@
 // `/c` string has no dependable escape — so a path containing `%` or `"` is
 // refused with a message rather than run on a guess. Neither is a shape a
 // Python module in this repository would have.
+//
+// The four functions below are exported and `scripts/py-lane.test.mjs` covers
+// them, including a test that hands the built command line to a real `cmd.exe`
+// on Windows and checks the injected half does not run. That demonstration was
+// done by hand when the injection was found; a test is what keeps it done.
 
 import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
-const files = process.argv.slice(2);
+/**
+ * The first path in `where`/`which` output, or null when it found nothing.
+ *
+ * `where` can list several matches, one per line, when more than one ruff is
+ * on PATH; the first is the one an ordinary invocation of `ruff` would run, so
+ * it is the one this script must run too.
+ */
+export function firstResolvedPath(stdout) {
+  const [first] = (stdout ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
 
-if (files.length === 0) {
-  process.exit(0);
+  return first ?? null;
 }
 
-/** The first line of `where`/`which`'s output, or null if it found nothing. */
+/** True when the resolved path can only be run through `cmd.exe` — see the header. */
+export function needsCmdWrapper(platform, ruffPath) {
+  return platform === "win32" && /\.(cmd|bat)$/i.test(ruffPath);
+}
+
+/** Characters a quoted `cmd.exe` token still does not make inert — see the header. */
+const UNQUOTABLE_FOR_CMD = /["%]/;
+
+/** The arguments that cannot be made safe by quoting, so the run is refused instead. */
+export function unsafeCmdArgs(args) {
+  return args.filter((arg) => UNQUOTABLE_FOR_CMD.test(arg));
+}
+
+/**
+ * The `cmd /c` command line, with every token quoted here rather than by a
+ * shell that would parse the paths first.
+ *
+ * `/s` makes cmd.exe strip the outermost pair of quotes and take the rest
+ * verbatim, which is why the whole line is wrapped in one more pair — the same
+ * shape Node's own `shell: true` builds.
+ */
+export function buildCmdLine(ruffPath, args) {
+  return `"${[ruffPath, ...args].map((token) => `"${token}"`).join(" ")}"`;
+}
+
 function resolveRuff() {
   const probe =
     process.platform === "win32"
@@ -62,85 +102,80 @@ function resolveRuff() {
 
   if (probe.error !== undefined || probe.status !== 0) return null;
 
-  // `where` can list several matches, one per line, when more than one ruff
-  // is on PATH; the first is the one an ordinary invocation of `ruff` would
-  // run, so it is the one this script must run too.
-  const [first] = (probe.stdout ?? "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line !== "");
-
-  return first ?? null;
+  return firstResolvedPath(probe.stdout);
 }
 
-const ruff = resolveRuff();
-
-if (ruff === null) {
-  console.error(
-    `py-lane: \`ruff\` is not on PATH — ${files.length} staged Python file(s) were not formatted ` +
-      "or linted.\n\n" +
-      "ADR-0016 (docs/adr/0016-core-in-python.md) made apps/core Python, and root CLAUDE.md records " +
-      "that apps/core carries its own lint, format and test lane rather than the root pnpm scripts " +
-      "— ruff is that lane's formatter and linter. apps/core does not exist yet, which is why ruff " +
-      "was never installed: this is the first Python file staged in the repository, not a broken " +
-      "setup.\n\n" +
-      "Install ruff (https://docs.astral.sh/ruff/installation/, e.g. `pipx install ruff` or " +
-      "`pip install ruff`) so it resolves on PATH, then stage the file again.",
-  );
-  process.exit(1);
-}
-
-const needsCmd = process.platform === "win32" && /\.(cmd|bat)$/i.test(ruff);
-
-/** Characters a quoted `cmd.exe` token still does not make inert — see the header. */
-const UNQUOTABLE_FOR_CMD = /["%]/;
-
-function spawnRuff(args) {
-  if (!needsCmd) {
-    return spawnSync(ruff, args, { stdio: "inherit" });
+function main(files) {
+  if (files.length === 0) {
+    process.exit(0);
   }
 
-  const unsafe = args.filter((arg) => UNQUOTABLE_FOR_CMD.test(arg));
-  if (unsafe.length > 0) {
+  const ruff = resolveRuff();
+
+  if (ruff === null) {
     console.error(
-      `py-lane: refusing to run ruff through cmd.exe on a path containing \`"\` or \`%\`: ` +
-        `${unsafe.join(", ")}\n` +
-        "Those survive quoting in a cmd /c command line, so running them would mean guessing at " +
-        "what the shell does with a filename this script did not choose. Rename the file, or " +
-        "install ruff as a native executable so no shell is involved.",
+      `py-lane: \`ruff\` is not on PATH — ${files.length} staged Python file(s) were not formatted ` +
+        "or linted.\n\n" +
+        "ADR-0016 (docs/adr/0016-core-in-python.md) made apps/core Python, and root CLAUDE.md records " +
+        "that apps/core carries its own lint, format and test lane rather than the root pnpm scripts " +
+        "— ruff is that lane's formatter and linter. apps/core does not exist yet, which is why ruff " +
+        "was never installed: this is the first Python file staged in the repository, not a broken " +
+        "setup.\n\n" +
+        "Install ruff (https://docs.astral.sh/ruff/installation/, e.g. `pipx install ruff` or " +
+        "`pip install ruff`) so it resolves on PATH, then stage the file again.",
     );
     process.exit(1);
   }
 
-  // `/s` makes cmd.exe strip the outermost pair of quotes and take the rest
-  // verbatim, which is why the whole line is wrapped in one more pair — the
-  // same shape Node's own `shell: true` builds, with the quoting of each token
-  // done here instead of by a shell that would parse the paths first.
-  const line = `"${[ruff, ...args].map((token) => `"${token}"`).join(" ")}"`;
+  const needsCmd = needsCmdWrapper(process.platform, ruff);
 
-  return spawnSync("cmd.exe", ["/d", "/s", "/c", line], {
-    stdio: "inherit",
-    windowsVerbatimArguments: true,
-  });
-}
+  function spawnRuff(args) {
+    if (!needsCmd) {
+      return spawnSync(ruff, args, { stdio: "inherit" });
+    }
 
-function runRuff(args) {
-  const result = spawnRuff(args);
-  if (result.error !== undefined) {
-    // spawnSync failing to launch the process at all — a stale resolution, a
-    // permissions problem — is exactly the silent case this file exists to
-    // rule out, so it gets a line even though `stdio: "inherit"` did not.
-    console.error(`py-lane: failed to run ${ruff}: ${result.error.message}`);
+    const unsafe = unsafeCmdArgs(args);
+    if (unsafe.length > 0) {
+      console.error(
+        `py-lane: refusing to run ruff through cmd.exe on a path containing \`"\` or \`%\`: ` +
+          `${unsafe.join(", ")}\n` +
+          "Those survive quoting in a cmd /c command line, so running them would mean guessing at " +
+          "what the shell does with a filename this script did not choose. Rename the file, or " +
+          "install ruff as a native executable so no shell is involved.",
+      );
+      process.exit(1);
+    }
+
+    return spawnSync("cmd.exe", ["/d", "/s", "/c", buildCmdLine(ruff, args)], {
+      stdio: "inherit",
+      windowsVerbatimArguments: true,
+    });
   }
-  return result;
+
+  function runRuff(args) {
+    const result = spawnRuff(args);
+    if (result.error !== undefined) {
+      // spawnSync failing to launch the process at all — a stale resolution, a
+      // permissions problem — is exactly the silent case this file exists to
+      // rule out, so it gets a line even though `stdio: "inherit"` did not.
+      console.error(`py-lane: failed to run ${ruff}: ${result.error.message}`);
+    }
+    return result;
+  }
+
+  const format = runRuff(["format", ...files]);
+  if (format.status !== 0) {
+    // A process killed by a signal reports a null status, not a zero one —
+    // treating that as success would let a crashed `ruff` pass the hook.
+    process.exit(format.status ?? 1);
+  }
+
+  const check = runRuff(["check", "--fix", ...files]);
+  process.exit(check.status ?? 1);
 }
 
-const format = runRuff(["format", ...files]);
-if (format.status !== 0) {
-  // A process killed by a signal reports a null status, not a zero one —
-  // treating that as success would let a crashed `ruff` pass the hook.
-  process.exit(format.status ?? 1);
+// Run only when invoked as a script: importing this from a test must not spawn
+// anything or exit the runner.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main(process.argv.slice(2));
 }
-
-const check = runRuff(["check", "--fix", ...files]);
-process.exit(check.status ?? 1);

@@ -1,7 +1,8 @@
 # State — 2026-08-14, after the docs-tiering session
 
-Written against `main`. If `git log` shows commits after the one this was committed in, this file is
-behind and the git history wins — say so rather than briefing from it.
+Written at `6e047cc` on `main`. If `git log` shows commits after it, this file is behind: say so in
+one line and let the git history win. A briefing from a stale state file is worse than none, because
+it reads as current.
 
 Tier 1: **the only document a session reads to orient.** ROADMAP, the specs and the DoD are read
 when a task has been chosen and needs them, not on arrival. `pnpm docs:check` fails if this file

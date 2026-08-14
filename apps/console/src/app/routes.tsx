@@ -3,6 +3,7 @@ import { accountRoutes } from "../features/account";
 import { anatomyRoutes } from "../features/anatomy";
 import { designKitRoutes } from "../features/design-kit";
 import { serviceDetailRoutes } from "../features/service-detail";
+import { serviceHistoryRoutes } from "../features/service-history";
 import { servicesRoutes } from "../features/services";
 import { teamRoutes } from "../features/team";
 import { AppShell } from "./AppShell";
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/services" replace /> },
       ...servicesRoutes,
       ...serviceDetailRoutes,
+      ...serviceHistoryRoutes,
       ...anatomyRoutes,
       ...accountRoutes,
       ...teamRoutes,

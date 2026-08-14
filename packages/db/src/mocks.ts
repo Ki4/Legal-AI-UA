@@ -7,6 +7,7 @@
 // Invented data only: never a real client name, email or case detail.
 
 import type {
+  AuditEventRow,
   GenerationTrace,
   PracticeAreaRow,
   ProfileRow,
@@ -200,6 +201,141 @@ export const mockServiceVersionPrices: ServiceVersionPriceRow[] = [
   { service_version_id: "sv-divorce-1", currency: "UAH", amount_minor: 480000 },
   { service_version_id: "sv-divorce-2", currency: "UAH", amount_minor: 520000 },
   { service_version_id: "sv-poa-1", currency: "UAH", amount_minor: 120000 },
+];
+
+// The action log behind the history screen (spec §4.8). Ordered oldest first
+// here because that is the order the events happened in and a fixture is easier
+// to read that way; the screen sorts, and a test that depended on this order
+// would be testing the fixture (DoD §5).
+//
+// Shaped as the trigger writes them, which is what makes them worth having:
+// `before`/`after` carry whole rows, `changed_columns` is recorded before
+// redaction, and the ids are a monotonic bigint rather than a uuid. Every one
+// of the actor states the screen has to tell apart appears at least once —
+// a person, an actor whose profile cannot be read, and no actor at all.
+export const mockAuditEvents: AuditEventRow[] = [
+  {
+    id: 1,
+    occurred_at: "2026-05-12T09:20:00.000Z",
+    actor_id: "usr-admin",
+    actor_role: "admin",
+    service_id: "svc-divorce",
+    action: "insert",
+    entity_table: "services",
+    entity_id: "svc-divorce",
+    changed_columns: null,
+    before: null,
+    after: { id: "svc-divorce", slug: "divorce-application", title: "Divorce application" },
+  },
+  // Same instant as the row above, and deliberately: the service and its first
+  // assignment are written in one transaction, and `occurred_at` defaults to
+  // `now()`, which is transaction time. Two events therefore share a timestamp
+  // exactly, and sorting by it alone leaves their order to the planner.
+  {
+    id: 2,
+    occurred_at: "2026-05-12T09:20:00.000Z",
+    actor_id: "usr-admin",
+    actor_role: "admin",
+    service_id: "svc-divorce",
+    action: "insert",
+    entity_table: "service_assignments",
+    entity_id: "svc-divorce",
+    changed_columns: null,
+    before: null,
+    after: { service_id: "svc-divorce", lawyer_id: "usr-olena", is_primary: true },
+  },
+  {
+    id: 3,
+    occurred_at: "2026-07-20T10:00:00.000Z",
+    actor_id: "usr-olena",
+    actor_role: "lawyer",
+    service_id: "svc-divorce",
+    action: "insert",
+    entity_table: "service_versions",
+    entity_id: "sv-divorce-2",
+    changed_columns: null,
+    before: null,
+    after: { id: "sv-divorce-2", version: 2, status: "draft" },
+  },
+  {
+    id: 4,
+    occurred_at: "2026-07-30T14:05:00.000Z",
+    actor_id: "usr-admin",
+    actor_role: "admin",
+    service_id: "svc-divorce",
+    action: "update",
+    entity_table: "service_versions",
+    entity_id: "sv-divorce-2",
+    changed_columns: ["published_at", "published_by", "status"],
+    before: { id: "sv-divorce-2", status: "in_review", published_at: null },
+    after: { id: "sv-divorce-2", status: "published", published_at: "2026-07-30T14:05:00.000Z" },
+  },
+  // An actor with no profile this caller can read: a deactivated account, or a
+  // colleague RLS hides. Distinct from the row below, where nobody acted at
+  // all — collapsing the two would put "system" against something a person did.
+  {
+    id: 5,
+    occurred_at: "2026-07-31T08:00:00.000Z",
+    actor_id: "usr-departed",
+    actor_role: "lawyer",
+    service_id: "svc-divorce",
+    action: "delete",
+    entity_table: "questionnaire_fields",
+    entity_id: "fld-old-address",
+    changed_columns: null,
+    before: { id: "fld-old-address", service_id: "svc-divorce" },
+    after: null,
+  },
+  // No actor: a migration, a seed, or a definer function running outside a
+  // request. `auth.uid()` is null there, and the log records that honestly
+  // rather than attributing the change to whoever ran the deploy.
+  {
+    id: 6,
+    occurred_at: "2026-08-01T03:00:00.000Z",
+    actor_id: null,
+    actor_role: null,
+    service_id: "svc-divorce",
+    action: "update",
+    entity_table: "service_version_prices",
+    entity_id: "sv-divorce-2",
+    changed_columns: ["amount_minor"],
+    before: { amount_minor: 500000 },
+    after: { amount_minor: 520000 },
+  },
+  // A table with no word for it yet. Not hypothetical: any migration that adds
+  // an audit trigger to a new service-bearing table produces exactly this row
+  // before anybody adds it to `AUDITED_TABLES`, and the screen has to render
+  // something honest in the meantime.
+  {
+    id: 7,
+    occurred_at: "2026-08-02T12:00:00.000Z",
+    actor_id: "usr-olena",
+    actor_role: "lawyer",
+    service_id: "svc-divorce",
+    action: "insert",
+    entity_table: "service_law_references",
+    entity_id: "ref-ck-105",
+    changed_columns: null,
+    before: null,
+    after: null,
+  },
+  // svc-alimony has a history of its own, so filtering by service is something
+  // a test can actually observe. svc-poa has none at all: a service older than
+  // the log is the empty state, and it is not a hypothetical either — four
+  // domain tables shipped before ADR-0010's table did.
+  {
+    id: 8,
+    occurred_at: "2026-06-02T11:00:00.000Z",
+    actor_id: "usr-admin",
+    actor_role: "admin",
+    service_id: "svc-alimony",
+    action: "insert",
+    entity_table: "services",
+    entity_id: "svc-alimony",
+    changed_columns: null,
+    before: null,
+    after: { id: "svc-alimony", slug: "alimony-claim", title: "Alimony claim" },
+  },
 ];
 
 export const mockTrace: GenerationTrace = {

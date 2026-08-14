@@ -40,3 +40,20 @@ export function formatDate(iso: string, locale: string): string {
   if (Number.isNaN(parsed.getTime())) return iso;
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(parsed);
 }
+
+/**
+ * The same, with the time of day. The audit log needs it and a catalogue does
+ * not: two changes to one service on one afternoon are a sequence, and a date
+ * alone renders them as an unordered pair.
+ *
+ * `short` rather than `medium` on the time deliberately — seconds would suggest
+ * a precision the reader can act on, and the ordering that actually settles
+ * ties is the event id, not a second hand.
+ */
+export function formatDateTime(iso: string, locale: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
+    parsed,
+  );
+}

@@ -12,7 +12,13 @@
 // that the new state also needs a word. A `??` fallback here would render the
 // raw value instead and nobody would ever find out.
 
-import type { GenerationMode, ReviewMode, ServiceStatus } from "@legal-ai/db";
+import type {
+  AuditAction,
+  AuditedTable,
+  GenerationMode,
+  ReviewMode,
+  ServiceStatus,
+} from "@legal-ai/db";
 import type { TranslationKey } from "@legal-ai/i18n";
 
 export const serviceStatusKey: Record<ServiceStatus, TranslationKey> = {
@@ -32,4 +38,31 @@ export const generationModeKey: Record<GenerationMode, TranslationKey> = {
 export const reviewModeKey: Record<ReviewMode, TranslationKey> = {
   auto: "service.reviewMode.auto",
   lawyer_required: "service.reviewMode.lawyer_required",
+};
+
+/**
+ * What the log recorded as having happened. A real enum, so this map has the
+ * same property as the three above: a value added to `audit_action` in a
+ * migration fails to compile here until it also has a word.
+ */
+export const auditActionKey: Record<AuditAction, TranslationKey> = {
+  insert: "history.action.insert",
+  update: "history.action.update",
+  delete: "history.action.delete",
+};
+
+/**
+ * What was changed. Weaker than the maps above, and the difference is worth
+ * knowing rather than papering over: `entity_table` is `text`, so the compiler
+ * cannot tell anyone that a migration added an audit trigger to a table with no
+ * word for it. `AuditedTable` is a hand-kept list checked only for being real
+ * tables; the screen renders the raw name for anything outside it (DoD §5 —
+ * bad data renders as visibly odd text rather than as nothing).
+ */
+export const auditedTableKey: Record<AuditedTable, TranslationKey> = {
+  services: "history.entity.services",
+  service_versions: "history.entity.service_versions",
+  service_version_prices: "history.entity.service_version_prices",
+  questionnaire_fields: "history.entity.questionnaire_fields",
+  service_assignments: "history.entity.service_assignments",
 };

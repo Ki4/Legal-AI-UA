@@ -229,6 +229,49 @@ Part of ADM-37, continuing the entry above.
   two screens were handed out as one zone and the shared module would have been a third. Merging is
   where that becomes visible, and it is worth expecting rather than rediscovering.
 
+## Done — the gates that can go red (2026-08-14)
+
+A session with no new feature in it. Four debts, each one an instance of the same shape the
+2026-08-14 journal named: the gate is green because the thing that would have gone red never ran.
+
+- **Copy and token discipline is checked** (`pnpm check:copy`, the third checker after `docs:check`
+  and `check:sql`). It reads the AST through the TypeScript compiler API rather than grepping,
+  because a regex cannot tell a `JsxText` node from a `className`, and a check that cries wolf is
+  disabled within a week. Its summary counts nodes _considered_ — 131 `className` strings, 15
+  attributes — since "found nothing" and "looked at nothing" are the two states this repository
+  keeps confusing. It found one violation, a hardcoded `Make accountable` beside a dictionary key
+  of that name that already existed. DoD §6 now also records what no script can decide, so a green
+  run is not read as a satisfied section.
+- **Row types are derived from the query instead of asserted over it.** `supabase.ts` claimed the
+  generated schema caught a query naming a dropped column; `.returns<T>()` is an assertion and
+  discarded exactly that. `QueryData<ReturnType<typeof query>>` replaces the hand-written rows in
+  all three `api/` files, which forced the runtime-composed select string into two literals —
+  inference needs a literal. Diverging them is caught. One field stays hand-asserted, because a
+  NOT NULL foreign key makes the compiler infer an embedded profile as always present and RLS can
+  still hide the row; it derives from the inferred shape and says which half is checked.
+- **Generated types can no longer go quietly stale.** `sql.yml` regenerates against the database it
+  just rebuilt from the PR's own migrations and diffs, so a stale `database.types.ts` fails on the
+  PR that staled it rather than on whoever regenerates next. That is what stands behind
+  `shared/vocabulary.ts` being exhaustive.
+- **`anatomy` reaches its data through `api/`**, so the rule in `apps/console/CLAUDE.md` holds
+  everywhere rather than everywhere except the file a reader meets first. The migration introduced
+  a state the screen never had — it could not previously wait or fail — and the first version
+  handled neither, which is worth remembering about cheap refactors.
+- **Staged Python meets an actionable hook.** `lint-staged` has routed `*.py` at a `ruff` that is
+  installed nowhere since ADR-0016. The guard resolves the path and spawns that path rather than
+  answering yes/no and spawning a bare name — on Windows those disagree for a `.cmd` shim, which
+  would have reproduced the same fault one line below its own fix.
+- **ADR-0017's open condition is discharged.** The `ensure_rls` function in the cloud had never
+  been read; it has been now, and the decision not to copy it stands. It swallows its own failures
+  into the Postgres log, and it creates no policy — so a migration that grants a client role its
+  `select` and forgets `enable row level security` gives a working screen in the sandbox and an
+  empty one in the cloud. That direction was written nowhere.
+
+Neither new script has a test. Both were watched going red by hand — every rule of `check:copy`
+against a probe file, and the type gate against a dropped column in two features — which is
+evidence, and is not the same thing as a gate that stays honest without somebody remembering to
+check it. It is the same shape as the entries above, one level up, and it is not closed.
+
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):
@@ -268,18 +311,14 @@ console happens to own.
 - Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
   service card (ADM-58) and the assignment editor on it (ADM-10) are there. Still on fixtures or
   unbuilt — the versions tab with pause/resume, and the orders table with its event timeline.
-  `team` has joined the api/ layer and no feature queries Supabase outside it any more; `anatomy`
-  is still outside, and is the cheap half — it renders a hardcoded trace and has no queries to
-  move.
+  Every feature now reaches its data through its own `api/` layer, `anatomy` included.
 - Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
   into a claim the firm makes about a person, with a retention question attached.
-- A machine check for copy discipline. Every console screen now holds its copy in the dictionary,
-  and nothing enforces that the next one will: "no user-visible literal in a component" is
-  mechanical and decidable, and so is the token-discipline rule beside it in the DoD. Both are
-  checked today by a person grepping. One checker would cover them — the third of its kind after
-  `docs:check` and `check:sql`.
+- A component test, and the DOM environment one needs. `check:copy` decides whether a screen's
+  copy _could_ be right; nothing decides whether the screen renders. Every rendering claim in the
+  last two sessions rests on reading the code or evaluating script in a live page.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.
 - Core: LangGraph pipeline behind the frozen contract (the core zone).
 

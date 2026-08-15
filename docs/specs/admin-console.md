@@ -1111,8 +1111,8 @@ to retrofit it into. Three things it settled that the bullets did not reach:
   says who may be _offered_ the work; `orders.reviewer_id` says who took it. Which is why the read
   policy has two arms and not one — a reviewer assigned to nothing still reads their own matters,
   and removing that arm turns exactly one scenario red as well.
-- **The rules are triggers, not policies, because the only writer bypasses RLS.** Orders arrive
-  through the gateway (ADM-5), which will hold `service_role`. A lifecycle enforced by a policy
+- **The rules are triggers, not policies, because the only writer bypasses RLS** (ADR-0019). Orders
+  arrive through the gateway (ADM-5), which will hold `service_role`. A lifecycle enforced by a policy
   would be a lifecycle the one writer is not subject to. The guards are also `security definer`, and
   that is load-bearing rather than convenient: they read `entitlements`, which a lawyer may not read
   at all, so a caller-rights guard would refuse a correct delivery — and a narrowed policy on

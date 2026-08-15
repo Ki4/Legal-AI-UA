@@ -217,6 +217,80 @@ export type Database = {
           },
         ];
       };
+      orders: {
+        Row: {
+          client_id: string;
+          closed_at: string | null;
+          delivered_at: string | null;
+          entitlement_id: string | null;
+          human_review_requested: boolean;
+          id: string;
+          placed_at: string;
+          reviewer_id: string | null;
+          service_version_id: string;
+          status: Database["public"]["Enums"]["order_status"];
+          submitted_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          client_id: string;
+          closed_at?: string | null;
+          delivered_at?: string | null;
+          entitlement_id?: string | null;
+          human_review_requested?: boolean;
+          id?: string;
+          placed_at?: string;
+          reviewer_id?: string | null;
+          service_version_id: string;
+          status?: Database["public"]["Enums"]["order_status"];
+          submitted_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          client_id?: string;
+          closed_at?: string | null;
+          delivered_at?: string | null;
+          entitlement_id?: string | null;
+          human_review_requested?: boolean;
+          id?: string;
+          placed_at?: string;
+          reviewer_id?: string | null;
+          service_version_id?: string;
+          status?: Database["public"]["Enums"]["order_status"];
+          submitted_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "orders_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orders_entitlement_id_fkey";
+            columns: ["entitlement_id"];
+            isOneToOne: false;
+            referencedRelation: "entitlements";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orders_reviewer_id_fkey";
+            columns: ["reviewer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orders_service_version_id_fkey";
+            columns: ["service_version_id"];
+            isOneToOne: false;
+            referencedRelation: "service_versions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       plan_services: {
         Row: {
           added_at: string;
@@ -572,11 +646,20 @@ export type Database = {
         Args: { new_lawyer: string; target_service: string };
         Returns: undefined;
       };
+      version_service: { Args: { target_version: string }; Returns: string };
     };
     Enums: {
       audit_action: "insert" | "update" | "delete";
       entitlement_kind: "one_off" | "subscription";
       generation_mode: "template" | "block_assembly" | "full_generation";
+      order_status:
+        | "intake"
+        | "submitted"
+        | "generating"
+        | "in_review"
+        | "delivered"
+        | "cancelled"
+        | "abandoned";
       personal_data_basis:
         | "consent"
         | "contract"
@@ -726,6 +809,15 @@ export const Constants = {
       audit_action: ["insert", "update", "delete"],
       entitlement_kind: ["one_off", "subscription"],
       generation_mode: ["template", "block_assembly", "full_generation"],
+      order_status: [
+        "intake",
+        "submitted",
+        "generating",
+        "in_review",
+        "delivered",
+        "cancelled",
+        "abandoned",
+      ],
       personal_data_basis: [
         "consent",
         "contract",

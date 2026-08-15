@@ -10,6 +10,45 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the first screens over client data (2026-08-15)
+
+ADM-66 in two PRs (#52, #53). `/orders` and `/orders/:id`, reading `orders`, `entitlements` and
+`audit_events` through the policies rather than through fixtures.
+
+- **The spec gained the route before the code did.** §3's map predated orders entirely; it now has
+  two entries and §4.15/§4.16 say what each screen is for. Orders are top level rather than a tab on
+  the service card: an order belongs to a client and pins a version, and filing it under the service
+  would file a client's matter under the product they bought. The new sections sit at the end of §4
+  because renumbering §4.13/§4.14 would break references to answer a question about reading order.
+- **Three states share an empty array and none share a sentence:** there are no orders, none of
+  these are yours, the request broke. The middle one is what `hasAnyAssignment` exists for. The
+  first is the _expected_ answer today, since nothing writes orders until the gateway does — which
+  is what makes the mix-up likely rather than hypothetical.
+- **A purchase that is recorded and not readable is its own state.** ADR-0019's silent refusal,
+  arriving on a screen: a lawyer reads `entitlement_id` and cannot read the row it points at, and
+  PostgREST answers both with null. Verified as both readers on one URL — an admin sees "One-off
+  purchase, valid until the law changes", the attached lawyer sees "recorded, an admin can read it".
+  No mock could have produced that assertion.
+- **The timeline is a read of the log, not a second history.** §6.1's projection made literal: an
+  event that moved the order names the state it moved it to, so the badge on the timeline and the
+  badge on the card are one fact from two ends. It selects `after->>status` and never the payload.
+- **The actor resolution moved to `shared/`,** because two features now read the same log. Split in
+  two — pure rules in `shared/audit.ts`, the `profiles` query in `shared/api/actor-names.ts` —
+  because a fixture implementation imports the rules and `app/supabase` throws at import time
+  without env vars. One import took every `*.mock.ts` test down before the split.
+- **Four things were already stale and nobody had noticed.** `AUDITED_TABLES` did not know
+  `plan_services` or `orders`, so the history screen rendered raw table names; `seed.sql` had no
+  orders and no way to sign in at all; and three verification scripts counted whole tables, so they
+  went red the moment the seed held rows of their kind. They count their own fixtures now.
+- **Hand-inserted `auth.users` rows fail in two opaque ways**, and both cost a debugging pass:
+  `Database error querying schema` for null token columns — and equally for null
+  `raw_user_meta_data`, `created_at` or `updated_at` — and `wrong email or password` for a null
+  `instance_id`. All are scans into non-nullable Go values; none says so.
+- **The generated types are optimistic about RLS.** `db:types` writes to-one embeds as non-nullable
+  because the foreign keys are — everything referential integrity knows, nothing about policies. So
+  the fallbacks guard a state the type system cannot express.
+- Seven probes across the two PRs, each reddening exactly the test written for it.
+
 ## Done — the client half (2026-08-14 night → 2026-08-15)
 
 Two sittings, six PRs, and one shape: the tables that carry a client were built before any screen
@@ -83,30 +122,6 @@ reads them, and each one holds the pseudonym rather than the person.
   They were not touched here because a refactor of a gate is only safe next to the evidence that its
   output did not move, and doing three at once buys that evidence for none of them.
 
-## Done — approve_user stops being two operations (2026-08-14)
-
-- **ADR-0018.** `approve_user` has written a role into `app_metadata` for whatever id it was handed
-  since the first migration, so it was always both the approval the team screen calls and the role
-  change ADM-33 has not built. A stale list turned "approve as lawyer" into a demotion of a
-  colleague; an admin could demote the last admin, themselves included, with the SQL editor as the
-  only recovery; and approving a user id that does not exist reported success. It now grants a first
-  role, refuses a target that holds one, no-ops on a repeat of the same role, raises on a target
-  that does not exist, and reads the authority rather than the display mirror — repairing the mirror
-  when the two have drifted apart.
-- **Run against the July function, six of the thirteen scenarios fail**, including the self-demotion
-  and the silent success on a nonexistent user; against the migration, all thirteen pass. That
-  comparison is the point of the script. A verification only ever run against the fixed code proves
-  that today's code agrees with today's assertions.
-- The console's fixture moved with the schema. `team.mock.ts` had refused nothing on the recorded
-  grounds that a mock stricter than the database teaches a rule Postgres will not honour; the same
-  reasoning now points the other way, and the test that asserted the old behaviour asserts the new
-  one.
-- Left out deliberately and written into the ADR: the role-change RPC itself, which needs a rule
-  about the last admin and belongs with its screen; and an audit row for a role grant, which needs
-  `profiles` to gain an entity mapping in `audit_change()` and would start logging every
-  registration.
-- Access control, merged under the one-developer suspension clause. It joins the list owed a review.
-
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):
@@ -143,10 +158,10 @@ console happens to own.
 ## Next — wave 2
 
 - Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
-  service card (ADM-58) and the assignment editor on it (ADM-10) are there. Still on fixtures or
-  unbuilt — the versions tab with pause/resume, and the order card with its event timeline
-  (ADM-66), which the table under it no longer waits for.
-  Every feature now reaches its data through its own `api/` layer, `anatomy` included.
+  service card (ADM-58) and the assignment editor on it (ADM-10), and now the orders list and card
+  (ADM-66) are there. Still unbuilt — the versions tab with pause/resume (ADM-32), and the per-order
+  review queue (ADM-67), which ADM-66 has unblocked and Q15 decides the urgency of.
+  Every feature reaches its data through its own `api/` layer, `anatomy` included.
 - Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion

@@ -10,6 +10,51 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the client half (2026-08-14 night → 2026-08-15)
+
+Two sittings, six PRs, and one shape: the tables that carry a client were built before any screen
+reads them, and each one holds the pseudonym rather than the person.
+
+- **ADM-62 split the anchor from the mapping.** `clients` carries a readable pseudonym and no
+  personal data at all; `client_identities` is the one place a name exists, so erasure is a delete
+  rather than a list of columns somebody has to keep correct (ADR-0010, ADR-0014). Nobody may read
+  the mapping yet, deliberately — both paths ADR-0014 names depend on something unbuilt.
+- **Q21 closed as "tenant", and it turned out to block nothing.** The question was recorded as
+  blocking ADM-63 on the premise that "tenant" meant a tenant column on every client-bearing table.
+  ADM-62 had already made `clients` the account, so `orders.client_id` is one column under either
+  answer. What the question was really protecting is the vocabulary: member roles are owner /
+  employee / read-only, never `admin | lawyer`. Membership is ADM-68 and lands with `apps/web`.
+- **ADM-69 got a backlog id of its own.** Three sections of the spec legislate an access log that no
+  row scheduled; it had been riding on ADM-6 by association, which made ADM-56 look buildable when
+  it would have shipped break-glass without the record that makes it accountable.
+- **ADM-40: the service history reads the log the triggers had been filling since 08-11.** An empty
+  result under RLS is two different answers, and the screen asks `is_assigned_to()` — the policy's
+  own predicate — to tell them apart.
+- **ADM-57: entitlements.** Four tables split by who they are about — `plans` and `plan_services`
+  are catalogue, `entitlements` and `entitlement_services` are billing and therefore administration
+  (ADR-0014). Both purchase models resolve to one relation, as §8.3 predicted, and it is one
+  primitive plus a wrapper: `entitlement_covers` asks whether a purchase reaches a service,
+  `client_is_entitled_to` is that under an `exists`. A plan deliberately has **no price row** — §8
+  names an annual subscription while recording a monthly figure, and a recurring price would have to
+  commit to a period the spec has not chosen.
+- **ADM-63: `orders`.** Pins a frozen version and refuses to be re-pointed; delivered out of review
+  or not at all, for a `lawyer_required` version and for an Art. 22 request alike; delivered against
+  the purchase it names rather than against the client's coverage, because a client holding two
+  one-off purchases is covered for both services while neither covers the other's.
+- **ADR-0019: on a client-bearing table, RLS decides who reads and a security-definer trigger
+  decides what a write may do.** The only writer holds `service_role`, which RLS does not apply to,
+  so a lifecycle in a policy is a lifecycle the writer is not subject to. And a guard running as its
+  caller cannot read `entitlements` at all — it would refuse a correct delivery citing another
+  client, while a narrowed policy on `service_versions` would leave a check comparing against null,
+  which raises nothing. A guard that sees less than the truth fails in both directions, one silently.
+- **Two dependency rows were wrong, and neither was findable by reading.** Q21's was imaginary,
+  ADM-57's named ADM-1 where it meant ADM-62. Both were settled by building the thing and seeing
+  what it needed.
+- **Two verification scenarios asserted a loud refusal and were wrong, not the migration.**
+  Withholding a grant makes a denial loud only where the table has no authorised reader inside the
+  same database role. Everywhere else the silent empty result is the design, and the answer is a
+  function that hands a screen the yes/no instead of the rows.
+
 ## Done — the checkers are checked (2026-08-14)
 
 - **`check:copy` and `py-lane` have tests**, 41 of them, and the vitest runner collects
@@ -62,32 +107,6 @@ accumulates its own changelog stops being a map and starts being read out of hab
   registration.
 - Access control, merged under the one-developer suspension clause. It joins the list owed a review.
 
-## Done — documents sorted by when they are read (2026-08-14)
-
-- **`docs/STATE.md` is tier 1** and the only file a session reads on arrival: the wave, what is in
-  flight, the questions that block something and what they block, the debts with the date each was
-  first recorded. `/session-start` used to read the ROADMAP, two sections of the console spec, eight
-  of the DoD and the latest journal — over a thousand lines to produce a ten-line briefing, most of
-  it history no session acts on.
-- **The ROADMAP is a map again**: 435 lines to 145. Ten `## Done` sections moved to
-  [history/2026-Q3.md](history/2026-Q3.md), read on request. Nothing was deleted and nothing was
-  shortened; what changed is that it stopped being mandatory reading.
-- **`docs:check` holds the sizes**, because appending a section is easier than moving one, and a
-  rule nobody executes is a rule that is absent — which this repository has now learned five times.
-  STATE past 60 lines fails; the ROADMAP past 200 lines or three `## Done` sections fails, with the
-  message naming the fix. A debt older than three weeks is a **note**, never a failure: a check that
-  failed on one would be answered by deleting the line rather than closing the debt.
-- **Debts carry the date they were first recorded.** The list used to be retyped into each journal,
-  which hid age — `TeamPage` has had no empty state for three sessions, and the access-control review
-  has been owed since 2026-08-04. An item carried that long is a decision nobody stated out loud.
-- **Archiving is an audit, not a move.** When a section ages out, each lesson in it is asked whether
-  a gate, a `CLAUDE.md` rule or the DoD now carries it. "Nothing" is a permitted answer and becomes a
-  debt — the same question this repository spent the week asking about its code, turned on its docs.
-- The budget check was **green while measuring nothing** on its first run: `contents` is keyed by
-  absolute path and the lookup used a repo-relative name, so `undefined` was skipped silently. Found
-  by probing, not by reading. It now fails on a missing file rather than shrugging, and three probes
-  — oversize, missing, a fourth `## Done` — were each watched going red.
-
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):
@@ -105,21 +124,12 @@ accumulates its own changelog stops being a map and starts being read out of hab
    that renders the switcher has to import the dictionary and start knowing which languages the
    product speaks.
 
-**Data layer** (PO): the catalogue half shipped — see the section above. What remains is
-`document_blocks`, which waits on the trace schema below because the two constrain each other's
-shape; `orders` (ADM-63), the first table to carry client data; and the law-reference register
-(ADM-21). Orders do not need an event table of their own: `audit_events` is the log, and a new
-domain table joins it by gaining an entity mapping in `audit_change` — which raises rather than
-logging a null service, so the mapping cannot be forgotten.
-
-**`orders` waits on nothing again, and it took two moves to get there.** On 2026-08-14 this line
-was rewritten to say Q21 blocked ADM-63 — whether a client account is a person or a tenant decides
-whether the table carries an account id — and that was the right worry to have. It was answered on
-2026-08-15 by building the thing first: ADM-62 made `clients` an anchor holding no personal data,
-which is the account under either reading, so `orders.client_id` is one column either way. **Q21 is
-closed as "tenant"** and membership is ADM-68, deferred to `apps/web`. What the question was really
-protecting was the vocabulary — member roles are owner / employee / read-only, never
-`admin | lawyer` — and that is now written down (`specs/admin-console.md` §13).
+**Data layer** (PO): the catalogue and client halves have both shipped — see the section above. What
+remains is `document_blocks`, which waits on the trace schema below because the two constrain each
+other's shape, and the law-reference register (ADM-21). Nothing in the client half gets an event
+table of its own: `audit_events` is the log, and a new domain table joins it by gaining an entity
+mapping in `audit_change` — which raises rather than logging a null service, so the mapping cannot
+be forgotten.
 
 **Core contract** (drafted in the PO zone, checked against the core zone — the same developer, so
 what stands in for a countersignature is that the mocks run and the schema is written down rather
@@ -134,8 +144,8 @@ console happens to own.
 
 - Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
   service card (ADM-58) and the assignment editor on it (ADM-10) are there. Still on fixtures or
-  unbuilt — the versions tab with pause/resume, and the orders table with its event timeline
-  (ADM-63, ADM-66).
+  unbuilt — the versions tab with pause/resume, and the order card with its event timeline
+  (ADM-66), which the table under it no longer waits for.
   Every feature now reaches its data through its own `api/` layer, `anatomy` included.
 - Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits

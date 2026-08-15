@@ -49,7 +49,8 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260814120000', 'approve_user_grants_only'),
   ('20260814130000', 'client_identity'),
   ('20260815120000', 'entitlements'),
-  ('20260815130000', 'orders')
+  ('20260815130000', 'orders'),
+  ('20260815140000', 'law_norm_register')
 on conflict (version) do nothing;
 
 -- Confirm. One row per file in supabase/migrations/, and no more.

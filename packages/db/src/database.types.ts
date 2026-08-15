@@ -217,6 +217,72 @@ export type Database = {
           },
         ];
       };
+      law_norms: {
+        Row: {
+          act_id: string;
+          act_scope_reason: string | null;
+          act_title: string;
+          article: string | null;
+          canonical_url: string;
+          created_at: string;
+          fingerprint: string | null;
+          id: string;
+          interval_reason: string | null;
+          last_checked_at: string | null;
+          last_verified_at: string | null;
+          normalizer_version: number;
+          probe_interval: string;
+          probe_interval_hours: number | null;
+          scope: Database["public"]["Enums"]["law_norm_scope"];
+          source: Database["public"]["Enums"]["law_source"];
+          source_url: string;
+          state: Database["public"]["Enums"]["law_norm_state"];
+          updated_at: string;
+        };
+        Insert: {
+          act_id: string;
+          act_scope_reason?: string | null;
+          act_title: string;
+          article?: string | null;
+          canonical_url: string;
+          created_at?: string;
+          fingerprint?: string | null;
+          id?: string;
+          interval_reason?: string | null;
+          last_checked_at?: string | null;
+          last_verified_at?: string | null;
+          normalizer_version?: number;
+          probe_interval?: string;
+          probe_interval_hours?: number | null;
+          scope?: Database["public"]["Enums"]["law_norm_scope"];
+          source: Database["public"]["Enums"]["law_source"];
+          source_url: string;
+          state?: Database["public"]["Enums"]["law_norm_state"];
+          updated_at?: string;
+        };
+        Update: {
+          act_id?: string;
+          act_scope_reason?: string | null;
+          act_title?: string;
+          article?: string | null;
+          canonical_url?: string;
+          created_at?: string;
+          fingerprint?: string | null;
+          id?: string;
+          interval_reason?: string | null;
+          last_checked_at?: string | null;
+          last_verified_at?: string | null;
+          normalizer_version?: number;
+          probe_interval?: string;
+          probe_interval_hours?: number | null;
+          scope?: Database["public"]["Enums"]["law_norm_scope"];
+          source?: Database["public"]["Enums"]["law_source"];
+          source_url?: string;
+          state?: Database["public"]["Enums"]["law_norm_state"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       orders: {
         Row: {
           client_id: string;
@@ -503,6 +569,48 @@ export type Database = {
           },
         ];
       };
+      service_law_refs: {
+        Row: {
+          created_at: string;
+          id: string;
+          norm_id: string;
+          relied_on: string;
+          service_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          norm_id: string;
+          relied_on: string;
+          service_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          norm_id?: string;
+          relied_on?: string;
+          service_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_law_refs_norm_id_fkey";
+            columns: ["norm_id"];
+            isOneToOne: false;
+            referencedRelation: "law_norms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_law_refs_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       service_version_prices: {
         Row: {
           amount_minor: number;
@@ -631,6 +739,10 @@ export type Database = {
         Args: { target_client: string; target_service: string };
         Returns: boolean;
       };
+      effective_probe_interval: {
+        Args: { target_norm: string };
+        Returns: string;
+      };
       entitlement_covers: {
         Args: { target_entitlement: string; target_service: string };
         Returns: boolean;
@@ -642,6 +754,15 @@ export type Database = {
       is_assigned_to: { Args: { target_service: string }; Returns: boolean };
       is_primary_for: { Args: { target_service: string }; Returns: boolean };
       jwt_role: { Args: never; Returns: string };
+      max_probe_interval: { Args: never; Returns: string };
+      norm_behind_published_service: {
+        Args: { target_norm: string };
+        Returns: boolean;
+      };
+      recommended_probe_interval: {
+        Args: { target_norm: string };
+        Returns: string;
+      };
       set_primary_lawyer: {
         Args: { new_lawyer: string; target_service: string };
         Returns: undefined;
@@ -652,6 +773,10 @@ export type Database = {
       audit_action: "insert" | "update" | "delete";
       entitlement_kind: "one_off" | "subscription";
       generation_mode: "template" | "block_assembly" | "full_generation";
+      law_norm_scope: "article" | "act";
+      law_norm_state:
+        "unverified" | "verified" | "drifted" | "under_review" | "impact_confirmed" | "unreachable";
+      law_source: "zakon_rada";
       order_status:
         | "intake"
         | "submitted"
@@ -809,6 +934,16 @@ export const Constants = {
       audit_action: ["insert", "update", "delete"],
       entitlement_kind: ["one_off", "subscription"],
       generation_mode: ["template", "block_assembly", "full_generation"],
+      law_norm_scope: ["article", "act"],
+      law_norm_state: [
+        "unverified",
+        "verified",
+        "drifted",
+        "under_review",
+        "impact_confirmed",
+        "unreachable",
+      ],
+      law_source: ["zakon_rada"],
       order_status: [
         "intake",
         "submitted",

@@ -1,0 +1,10 @@
+{
+  "extends": "../config/tsconfig.base.json",
+  "compilerOptions": {
+    // This package's internal imports carry explicit `.ts` extensions, because
+    // the article fetcher is a Deno edge function that will import these files
+    // unchanged and Deno resolves nothing implicitly. See src/index.ts.
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src"]
+}

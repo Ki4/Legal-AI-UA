@@ -184,3 +184,41 @@ update public.profiles set full_name = 'Sandbox Admin', role = 'admin'
 where id = '10000000-0000-0000-0000-00000000000a';
 update public.profiles set full_name = 'Unattached Lawyer', role = 'lawyer'
 where id = '10000000-0000-0000-0000-00000000000b';
+
+-- Olena gets a password too, and the reason is one specific screen.
+--
+-- The order card renders three entitlement states, and one of them exists only
+-- under RLS: a purchase that is *recorded and not readable* (ADR-0019). An
+-- admin sees the row; a lawyer sees that there is one and may not read it. To
+-- meet that state locally somebody has to sign in as a lawyer who is attached
+-- to the service the orders sit on — and Olena is accountable for it, while
+-- `unattached@example.test` deliberately is not.
+--
+-- Her role has to reach `app_metadata` as well as `profiles`: the JWT is what
+-- `RequireAuth` and every policy read, and the profile row is the display
+-- mirror (ADR-0018).
+-- `instance_id` is not decoration: GoTrue filters by it, and a row without one
+-- is answered "wrong email or password" no matter how correct the password is.
+-- The lawyers above were inserted with an id and an email and nothing else,
+-- which was fine while nobody signed in as them.
+update auth.users
+set instance_id = '00000000-0000-0000-0000-000000000000',
+  encrypted_password = extensions.crypt('sandbox', extensions.gen_salt('bf')),
+  email_confirmed_at = now(),
+  -- Null here fails the same way the token columns do, and just as opaquely:
+  -- GoTrue scans both into non-nullable Go values. The lawyers were inserted
+  -- with an id and an email, so everything else on the row is null.
+  raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb),
+  created_at = coalesce(created_at, now()),
+  updated_at = now(),
+  aud = 'authenticated',
+  role = 'authenticated',
+  raw_app_meta_data = '{"provider":"email","providers":["email"],"role":"lawyer"}'::jsonb,
+  confirmation_token = '',
+  recovery_token = '',
+  email_change = '',
+  email_change_token_new = '',
+  email_change_token_current = '',
+  phone_change_token = '',
+  reauthentication_token = ''
+where id = '10000000-0000-0000-0000-000000000001';

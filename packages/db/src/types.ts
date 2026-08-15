@@ -32,6 +32,29 @@ export type OrderStatus = Enums["order_status"];
 export type EntitlementKind = Enums["entitlement_kind"];
 
 /**
+ * The same values at runtime, for narrowing a state that arrives as loose text.
+ * The audit log stores payloads as `jsonb`, so a status read back out of it is
+ * a `string` until something checks it.
+ *
+ * `satisfies` catches a value that stops being a state; it cannot catch one
+ * that is added and missed here. What does is `orderStatusKey` in the console's
+ * `shared/vocabulary.ts`: a `Record<OrderStatus, TranslationKey>` fails to
+ * compile until a new state also has a word, and a state with a word and no
+ * entry here would render on the card and vanish from the timeline — visibly
+ * odd, which is the failure this pair is arranged to produce rather than
+ * silence.
+ */
+export const ORDER_STATUSES = [
+  "intake",
+  "submitted",
+  "generating",
+  "in_review",
+  "delivered",
+  "cancelled",
+  "abandoned",
+] as const satisfies readonly OrderStatus[];
+
+/**
  * Not an enum in the database: `profiles.role` is `text`, and a row can carry
  * no role at all while a registration waits for approval.
  */
@@ -89,6 +112,8 @@ export type AuditEventRow = Tables["audit_events"]["Row"];
 export type ClientRow = Tables["clients"]["Row"];
 
 export type OrderRow = Tables["orders"]["Row"];
+
+export type EntitlementRow = Tables["entitlements"]["Row"];
 
 /**
  * The tables a per-service history can show a change to (spec §4.8).

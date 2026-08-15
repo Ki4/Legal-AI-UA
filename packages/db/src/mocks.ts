@@ -9,6 +9,7 @@
 import type {
   AuditEventRow,
   ClientRow,
+  EntitlementRow,
   GenerationTrace,
   OrderRow,
   PracticeAreaRow,
@@ -463,6 +464,9 @@ export const mockOrders: OrderRow[] = [
     id: "ord-4",
     client_id: "cli-9b17ce",
     service_version_id: "sv-divorce-2",
+    // Names an entitlement no fixture row has, which is what a lawyer meets
+    // live: the id is a column of `orders` and readable, the row it points at
+    // is administration and is not (ADR-0019).
     entitlement_id: "ent-3",
     status: "generating",
     reviewer_id: null,
@@ -472,5 +476,87 @@ export const mockOrders: OrderRow[] = [
     delivered_at: null,
     closed_at: null,
     updated_at: "2026-08-11T07:31:00.000Z",
+  },
+];
+
+/**
+ * Two purchases, shaped so the card has both halves of §8.6 to render: a
+ * one-off, whose validity ends when the law moves and therefore carries no end
+ * date (§8.1), and a subscription that was revoked — a term that was cut short
+ * rather than one that lapsed, which is why `revoked_at` is its own column.
+ */
+export const mockEntitlements: EntitlementRow[] = [
+  {
+    id: "ent-1",
+    client_id: "cli-4f2a91",
+    kind: "one_off",
+    plan_code: null,
+    valid_from: "2026-08-01T08:00:00.000Z",
+    valid_until: null,
+    revoked_at: null,
+    granted_by: "usr-admin",
+    created_at: "2026-08-01T08:00:00.000Z",
+  },
+  {
+    id: "ent-2",
+    client_id: "cli-4f2a91",
+    kind: "subscription",
+    plan_code: "annual",
+    valid_from: "2026-08-01T08:00:00.000Z",
+    valid_until: "2027-08-01T08:00:00.000Z",
+    revoked_at: "2026-08-07T09:00:00.000Z",
+    granted_by: "usr-admin",
+    created_at: "2026-08-01T08:00:00.000Z",
+  },
+];
+
+/**
+ * What the log holds about one order, which is what the card's timeline reads
+ * (ADR-0010: the order has no event table of its own). Ordered oldest first
+ * here; the api layer sorts, because nothing depends on fixture order (DoD §5).
+ *
+ * `after` carries the whole row live. Only `status` is kept here, because only
+ * `status` is selected — the timeline asks for the field it renders rather than
+ * the payload it would have to pick through.
+ */
+export const mockOrderEvents: AuditEventRow[] = [
+  {
+    id: 101,
+    occurred_at: "2026-08-10T09:15:00.000Z",
+    actor_id: null,
+    actor_role: null,
+    service_id: "svc-divorce",
+    action: "insert",
+    entity_table: "orders",
+    entity_id: "ord-1",
+    changed_columns: null,
+    before: null,
+    after: { status: "intake" },
+  },
+  {
+    id: 102,
+    occurred_at: "2026-08-10T09:40:00.000Z",
+    actor_id: "usr-olena",
+    actor_role: "lawyer",
+    service_id: "svc-divorce",
+    action: "update",
+    entity_table: "orders",
+    entity_id: "ord-1",
+    changed_columns: ["status", "submitted_at", "updated_at"],
+    before: null,
+    after: { status: "submitted" },
+  },
+  {
+    id: 103,
+    occurred_at: "2026-08-10T10:05:00.000Z",
+    actor_id: "usr-departed",
+    actor_role: "lawyer",
+    service_id: "svc-divorce",
+    action: "update",
+    entity_table: "orders",
+    entity_id: "ord-1",
+    changed_columns: ["reviewer_id", "updated_at"],
+    before: null,
+    after: {},
   },
 ];

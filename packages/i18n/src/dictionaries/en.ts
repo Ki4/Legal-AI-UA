@@ -211,6 +211,42 @@ export const en: Dictionary = {
   "order.status.cancelled": "Cancelled",
   "order.status.abandoned": "Abandoned",
 
+  // The order card (ADM-66, §4.16) -------------------------------------------
+  "order.loading": "Loading the order",
+  "order.backToList": "← Back to orders",
+  "order.field.entitlement": "Paid for by",
+  "order.field.ended": "Ended",
+  "order.field.stillOpen": "still open",
+  "order.gone.hint": "Check the address. The order may have been deleted — or it is not yours.",
+  "order.error.noneSelected": "No order selected.",
+  "order.error.notFound": "Order not found.",
+  "order.error.forbidden": "You do not have access to this order.",
+  "order.error.network": "Could not reach the server. Check your connection.",
+  "order.error.load": "Could not load the order.",
+
+  // What it pins (§5.4) ------------------------------------------------------
+  "order.pinned.frozen": "Frozen",
+  "order.pinned.hint":
+    "The order is pinned to this version for good. When the service is republished, the document is still explained by this one.",
+
+  // The purchase it will be delivered under (§8.6, ADR-0019) ------------------
+  "order.entitlement.none": "not paid for yet",
+  // Not "nothing bought": the row exists, and reading it is administration's.
+  "order.entitlement.withheld": "recorded, an admin can read it",
+  "order.entitlement.oneOff": "One-off purchase",
+  "order.entitlement.subscription": "Subscription",
+  "order.entitlement.until": "valid until",
+  "order.entitlement.untilLawChanges": "valid until the law changes",
+  "order.entitlement.revoked": "Revoked",
+
+  // The timeline is a read of the log, not a second history (§6.1) -----------
+  "order.timeline.title": "What happened to it",
+  "order.timeline.subtitle":
+    "A read of the change log, not a record of its own. The order's state is a projection of these events.",
+  "order.timeline.what": "What happened",
+  "order.timeline.empty.title": "Nothing recorded yet",
+  "order.timeline.empty.hint": "The log records changes from the day it was added.",
+
   // Who answers for a service (ADM-10) --------------------------------------
   "assignment.title": "Who answers for this service",
   "assignment.subtitle":

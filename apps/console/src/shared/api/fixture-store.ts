@@ -15,6 +15,8 @@
 import {
   mockAuditEvents,
   mockClients,
+  mockEntitlements,
+  mockOrderEvents,
   mockOrders,
   mockPracticeAreas,
   mockProfiles,
@@ -26,6 +28,7 @@ import {
 import type {
   AuditEventRow,
   ClientRow,
+  EntitlementRow,
   OrderRow,
   PracticeAreaRow,
   ProfileRow,
@@ -63,6 +66,8 @@ export const practiceAreaRows: PracticeAreaRow[] = mockPracticeAreas.map((row) =
 export const auditEventRows: AuditEventRow[] = mockAuditEvents.map((row) => ({ ...row }));
 export const clientRows: ClientRow[] = mockClients.map((row) => ({ ...row }));
 export const orderRows: OrderRow[] = mockOrders.map((row) => ({ ...row }));
+export const entitlementRows: EntitlementRow[] = mockEntitlements.map((row) => ({ ...row }));
+export const orderEventRows: AuditEventRow[] = mockOrderEvents.map((row) => ({ ...row }));
 
 /**
  * The reference row a service points at. Null when the code resolves to
@@ -116,6 +121,16 @@ export function priceRowOf(versionId: string, currency = "UAH"): ServiceVersionP
 }
 
 /** Null for an id no client row has — nothing in the fixtures hides a client. */
+/**
+ * Null for an entitlement no fixture row has, which stands in for two live
+ * situations at once: no such purchase, and a purchase this reader may not read
+ * (ADR-0019). The api layer tells those apart from the order's own column
+ * before it asks here, exactly as it does live.
+ */
+export function entitlementById(id: string): EntitlementRow | null {
+  return entitlementRows.find((row) => row.id === id) ?? null;
+}
+
 export function clientById(id: string): ClientRow | null {
   return clientRows.find((row) => row.id === id) ?? null;
 }

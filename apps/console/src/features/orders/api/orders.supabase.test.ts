@@ -8,10 +8,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   supabaseOrdersApi,
+  toEntitlement,
   toOrderListItem,
   toReviewer,
   type OrderQueryRow,
 } from "./orders.supabase";
+import { toStatusAfter } from "./status";
 
 // `app/supabase.ts` builds its client at import time and throws when the env
 // vars are absent, which they are under Vitest. So the client is replaced here
@@ -195,5 +197,55 @@ describe("supabaseOrdersApi.list", () => {
     result.error = { message: "boom", code: "42501", details: "", hint: "" };
 
     await expect(supabaseOrdersApi.list(50)).rejects.toThrowError();
+  });
+});
+
+describe("toEntitlement", () => {
+  it("is none when the order names no purchase", () => {
+    expect(toEntitlement({ entitlement_id: null, entitlements: null })).toEqual({ kind: "none" });
+  });
+
+  it("is withheld when a purchase is named and the row is not readable", () => {
+    // ADR-0019 in one assertion. PostgREST returns null for an embed the policy
+    // filtered out, which is the same null a missing row gives — so reading the
+    // embed alone would report "nothing bought" about a paid order.
+    expect(toEntitlement({ entitlement_id: "ent-1", entitlements: null })).toEqual({
+      kind: "withheld",
+    });
+  });
+
+  it("is known when the row comes back", () => {
+    expect(
+      toEntitlement({
+        entitlement_id: "ent-1",
+        entitlements: {
+          id: "ent-1",
+          kind: "one_off",
+          valid_until: null,
+          revoked_at: null,
+        },
+      } as unknown as Parameters<typeof toEntitlement>[0]),
+    ).toEqual({
+      kind: "known",
+      id: "ent-1",
+      entitlementKind: "one_off",
+      validUntil: null,
+      revokedAt: null,
+    });
+  });
+});
+
+describe("toStatusAfter", () => {
+  it("recognises a state the schema has", () => {
+    expect(toStatusAfter("in_review")).toBe("in_review");
+  });
+
+  it("refuses anything else rather than casting it through", () => {
+    // The payload is jsonb, so this arrives as loose text. A state that is not
+    // one disappears from the timeline instead of reaching `orderStatusKey`,
+    // where an unmapped value would take the screen down (DoD §5).
+    expect(toStatusAfter("nonsense")).toBeNull();
+    expect(toStatusAfter(undefined)).toBeNull();
+    expect(toStatusAfter(7)).toBeNull();
   });
 });

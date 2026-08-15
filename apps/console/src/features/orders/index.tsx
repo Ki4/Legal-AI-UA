@@ -1,5 +1,6 @@
 import type { RouteObject } from "react-router";
 import { RequireAuth } from "../../app/RequireAuth";
+import { OrderCardPage } from "./components/OrderCardPage";
 import { OrdersListPage } from "./components/OrdersListPage";
 
 // Both staff roles, and the guard is presentation rather than protection: what
@@ -13,6 +14,14 @@ export const ordersRoutes: RouteObject[] = [
     element: (
       <RequireAuth roles={["admin", "lawyer"]}>
         <OrdersListPage />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/orders/:orderId",
+    element: (
+      <RequireAuth roles={["admin", "lawyer"]}>
+        <OrderCardPage />
       </RequireAuth>
     ),
   },

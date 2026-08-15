@@ -16,6 +16,8 @@
 import type { QueryData } from "@supabase/supabase-js";
 import { asAuditedTable } from "@legal-ai/db";
 import { supabase } from "../../../app/supabase";
+import { namesOf } from "../../../shared/api/actor-names";
+import { actorFrom, actorIdsOf, type ActorNames } from "../../../shared/audit";
 import { AppError } from "../../../shared/api/errors";
 import { fromPostgrest } from "../../../shared/api/postgrest";
 import type { ServiceHistoryApi } from "./contract";
@@ -37,30 +39,16 @@ function historyQuery() {
 export type AuditEventQueryRow = QueryData<ReturnType<typeof historyQuery>>[number];
 
 /**
- * Names for the actors on a page of events, by id.
- *
- * Absent from the map means no name is available — either the profile is
- * hidden from this reader by `profiles_select_staff`, or the row exists and its
- * `full_name` is null, which the column allows. Those two are collapsed
- * deliberately: they differ in cause and not in anything the reader can do,
- * since both leave an id and a role and no name. What must not collapse is
- * either of them into "nobody acted", and that distinction is made in
- * `toActor` from `actor_id` alone, before this map is consulted.
+ * Kept as a thin wrapper over the shared resolver so the tests that name this
+ * function keep naming something, and so a reader of this file still sees where
+ * the actor comes from. The rules themselves live in `shared/api/audit.ts` —
+ * the order card reads the same log and must not hold a second copy of them.
  */
-export type ActorNames = ReadonlyMap<string, string>;
-
 export function toActor(
   row: Pick<AuditEventQueryRow, "actor_id" | "actor_role">,
   names: ActorNames,
 ): HistoryActor {
-  if (row.actor_id === null) return { kind: "system", roleAtTheTime: row.actor_role };
-
-  const fullName = names.get(row.actor_id);
-  if (fullName === undefined) {
-    return { kind: "unnamed", id: row.actor_id, roleAtTheTime: row.actor_role };
-  }
-
-  return { kind: "person", id: row.actor_id, fullName, roleAtTheTime: row.actor_role };
+  return actorFrom(row, names);
 }
 
 export function toHistoryEvent(row: AuditEventQueryRow, names: ActorNames): ServiceHistoryEvent {
@@ -79,23 +67,10 @@ export function toHistoryEvent(row: AuditEventQueryRow, names: ActorNames): Serv
   };
 }
 
-async function namesOf(ids: readonly string[]): Promise<ActorNames> {
-  if (ids.length === 0) return new Map();
-
-  const { data, error } = await supabase.from("profiles").select("id, full_name").in("id", ids);
-
-  // Deliberately not fatal. A history whose actors are anonymous is worth
-  // reading; a history that refuses to render because a name lookup failed is
-  // not. The rows that came back are used and the rest fall through to
-  // "unnamed", which is a state the screen already has to render.
-  if (error) return new Map();
-
-  const names = new Map<string, string>();
-  for (const row of data ?? []) {
-    if (row.full_name !== null) names.set(row.id, row.full_name);
-  }
-  return names;
-}
+// `ActorNames` is re-exported because this module's tests name it, and because
+// a reader of `toHistoryEvent`'s signature should be able to follow the type
+// without leaving the file they are in.
+export type { ActorNames };
 
 export const supabaseServiceHistoryApi: ServiceHistoryApi = {
   async get(serviceId, limit) {
@@ -132,11 +107,7 @@ export const supabaseServiceHistoryApi: ServiceHistoryApi = {
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
 
-    const actorIds = [
-      ...new Set(page.map((row) => row.actor_id).filter((id): id is string => id !== null)),
-    ];
-
-    const names = await namesOf(actorIds);
+    const names = await namesOf(actorIdsOf(page));
 
     return {
       serviceId: service.id,

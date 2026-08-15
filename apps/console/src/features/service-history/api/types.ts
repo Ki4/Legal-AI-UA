@@ -15,24 +15,15 @@
 //   is the database's job and is already done.
 
 import type { AuditAction, AuditedTable } from "@legal-ai/db";
+import type { AuditActor } from "../../../shared/audit";
 
 /**
- * Who acted, in the three states the log can actually produce. They are one
- * field rather than a nullable name because collapsing them says something
- * false: "system" against a change a person made, or a blank where a colleague
- * this reader may not see stands (DoD §5).
- *
- * - `person` — the actor's profile was readable, so there is a name.
- * - `unnamed` — somebody acted, and their profile is not readable: a
- *   deactivated account, or a row RLS hides from this reader.
- * - `system` — no actor at all. `auth.uid()` is null outside a request, so a
- *   migration, a seed or a scheduled job lands here rather than being
- *   attributed to whoever happened to deploy.
+ * Who acted. Re-exported under the name this feature's components already use
+ * rather than redefined: the order card reads the same log (§4.16), and two
+ * definitions of "the actor could not be named" is exactly the drift
+ * `apps/console/CLAUDE.md` sends shared code to `shared/` to avoid.
  */
-export type HistoryActor =
-  | { kind: "person"; id: string; fullName: string; roleAtTheTime: string | null }
-  | { kind: "unnamed"; id: string; roleAtTheTime: string | null }
-  | { kind: "system"; roleAtTheTime: string | null };
+export type HistoryActor = AuditActor;
 
 export interface ServiceHistoryEvent {
   /**

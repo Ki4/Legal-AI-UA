@@ -18,4 +18,12 @@ import { supabaseOrdersApi } from "./orders.supabase";
 export const ordersApi: OrdersApi = supabaseOrdersApi;
 
 export type { OrdersApi } from "./contract";
-export type { OrderListItem, OrderReviewer, OrdersPage } from "./types";
+export type {
+  OrderCard,
+  OrderEntitlement,
+  OrderEvent,
+  OrderListItem,
+  OrderReviewer,
+  OrdersPage,
+  PinnedVersion,
+} from "./types";

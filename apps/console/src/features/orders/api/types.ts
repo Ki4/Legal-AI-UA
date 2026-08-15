@@ -19,7 +19,15 @@
 //   card (§4.16) is where the entitlement gets a view model that says which of
 //   those two situations the reader is in.
 
-import type { OrderStatus } from "@legal-ai/db";
+import type {
+  AuditAction,
+  EntitlementKind,
+  GenerationMode,
+  OrderStatus,
+  ReviewMode,
+  ServiceStatus,
+} from "@legal-ai/db";
+import type { AuditActor } from "../../../shared/audit";
 
 /**
  * Who is answering for this order, in the three states the data can produce.
@@ -81,4 +89,87 @@ export interface OrdersPage {
    * a guess from a full page.
    */
   hasMore: boolean;
+}
+
+// The card (§4.16) ------------------------------------------------------------
+
+/**
+ * What the order will be delivered under, and this is where ADR-0019's silent
+ * refusal becomes something a reader can act on.
+ *
+ * `orders.entitlement_id` is a column of `orders`, so a lawyer reads it. The
+ * `entitlements` row it points at is administration, so a lawyer does not
+ * (§8.6). Those are two different absences and the screen must not render them
+ * alike: nothing bought yet is a fact about the order, while "recorded, and not
+ * yours to read" is a fact about the reader.
+ *
+ * - `none` — no entitlement recorded. The order is still in intake.
+ * - `withheld` — one is recorded, and this reader may not see which. The right
+ *   sentence is about who may read it, never a blank that reads as `none`.
+ * - `known` — recorded and readable, which today means an admin is looking.
+ */
+export type OrderEntitlement =
+  | { kind: "none" }
+  | { kind: "withheld" }
+  | {
+      kind: "known";
+      id: string;
+      entitlementKind: EntitlementKind;
+      /** Null on a one-off, whose validity ends when the law moves (§8.1). */
+      validUntil: string | null;
+      revokedAt: string | null;
+    };
+
+/**
+ * The frozen version this order was placed against (§5.4, ADR-0009).
+ *
+ * `frozen` is carried rather than derived on the screen, because it is the
+ * thing that makes the pin mean anything: a version id proves nothing if what
+ * sits behind it could still change. A published version cannot, and a reader
+ * looking at a document's origin needs to be told that rather than to know it.
+ */
+export interface PinnedVersion {
+  serviceId: string;
+  serviceTitle: string;
+  versionId: string;
+  version: number;
+  status: ServiceStatus;
+  generationMode: GenerationMode;
+  reviewMode: ReviewMode;
+  frozen: boolean;
+}
+
+/**
+ * One entry of the timeline, which is a read of `audit_events` and not a second
+ * history (ADR-0010). §6.1 is explicit that current status is a projection of
+ * this log, so `statusAfter` is what makes the timeline say "moved to review"
+ * rather than "changed two columns".
+ */
+export interface OrderEvent {
+  id: number;
+  occurredAt: string;
+  action: AuditAction;
+  changedColumns: string[];
+  /** The state the order was left in, when this event changed it. */
+  statusAfter: OrderStatus | null;
+  actor: AuditActor;
+}
+
+export interface OrderCard {
+  id: string;
+  clientPseudonym: string;
+  status: OrderStatus;
+  humanReviewRequested: boolean;
+  reviewer: OrderReviewer;
+  entitlement: OrderEntitlement;
+  pinned: PinnedVersion;
+
+  placedAt: string;
+  submittedAt: string | null;
+  deliveredAt: string | null;
+  /** Set when the order ended without delivery — cancelled or abandoned. */
+  closedAt: string | null;
+
+  /** Newest first, like the history screen. */
+  timeline: OrderEvent[];
 }

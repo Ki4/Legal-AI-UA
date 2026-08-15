@@ -2,7 +2,7 @@
 // both are typed as `OrdersApi` so a drifting implementation fails to compile
 // rather than failing in a browser (ADR-0012).
 
-import type { OrdersPage } from "./types";
+import type { OrderCard, OrdersPage } from "./types";
 
 export interface OrdersApi {
   /**
@@ -36,4 +36,22 @@ export interface OrdersApi {
    * attached to anything, so an empty list for them means what it says.
    */
   hasAnyAssignment(): Promise<boolean>;
+
+  /**
+   * One order, with everything §4.16 renders and its timeline.
+   *
+   * Throws AppError("not_found") when there is no such order — which is also
+   * what a reader gets for an order that exists and is not theirs, and that is
+   * deliberate. `orders_select_staff` filters the row out, the query returns
+   * nothing, and telling an unauthorised caller that a record exists is itself
+   * a leak. The list is where the distinction between "none of these are yours"
+   * and "there are none" is worth drawing, because there the reader has not
+   * named a specific order.
+   *
+   * The timeline is a read of `audit_events`, not a second history (ADR-0010).
+   * An order with an empty one is not possible today — the insert is itself an
+   * event — but an empty array is an ordinary answer rather than an error, in
+   * case the log is ever narrowed by a policy this screen cannot see.
+   */
+  get(orderId: string): Promise<OrderCard>;
 }

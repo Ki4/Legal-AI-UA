@@ -252,6 +252,42 @@ export const uk = {
   "order.status.cancelled": "Скасовано",
   "order.status.abandoned": "Покинуто",
 
+  // The order card (ADM-66, §4.16) -------------------------------------------
+  "order.loading": "Завантажуємо замовлення",
+  "order.backToList": "← До списку замовлень",
+  "order.field.entitlement": "Оплачено за",
+  "order.field.ended": "Завершено",
+  "order.field.stillOpen": "ще триває",
+  "order.gone.hint": "Перевірте адресу. Замовлення могло бути видалене — або воно не ваше.",
+  "order.error.noneSelected": "Замовлення не вибрано.",
+  "order.error.notFound": "Замовлення не знайдено.",
+  "order.error.forbidden": "У вас немає доступу до цього замовлення.",
+  "order.error.network": "Не вдалося зв’язатися із сервером. Перевірте з’єднання.",
+  "order.error.load": "Не вдалося завантажити замовлення.",
+
+  // Що саме закріплено (§5.4) ------------------------------------------------
+  "order.pinned.frozen": "Заморожено",
+  "order.pinned.hint":
+    "Замовлення закріплене за цією версією назавжди. Навіть коли послугу перевидадуть, документ пояснюється саме нею.",
+
+  // Покупка, за якою видадуть документ (§8.6, ADR-0019) ----------------------
+  "order.entitlement.none": "ще не оплачено",
+  // Не «нічого не куплено»: рядок існує, просто читати його — справа адміністрування.
+  "order.entitlement.withheld": "записано, читає адміністратор",
+  "order.entitlement.oneOff": "Разова покупка",
+  "order.entitlement.subscription": "Підписка",
+  "order.entitlement.until": "діє до",
+  "order.entitlement.untilLawChanges": "діє, поки не зміниться закон",
+  "order.entitlement.revoked": "Скасовано",
+
+  // Стрічка подій — це читання журналу, а не друга історія (§6.1) ------------
+  "order.timeline.title": "Що з ним відбувалося",
+  "order.timeline.subtitle":
+    "Це читання журналу змін, а не окремий запис. Стан замовлення — проєкція цих подій.",
+  "order.timeline.what": "Що сталося",
+  "order.timeline.empty.title": "Подій ще немає",
+  "order.timeline.empty.hint": "Журнал фіксує зміни з моменту, коли його додали.",
+
   // Who answers for a service (ADM-10) --------------------------------------
   "assignment.title": "Хто відповідає за цю послугу",
   "assignment.subtitle": "Відповідальний — один. Заміна має ті самі права й жодного з обов’язків.",

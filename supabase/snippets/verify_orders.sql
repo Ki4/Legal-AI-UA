@@ -26,6 +26,14 @@
 --     because one arm covering for the other is exactly how a policy passes its
 --     test while half of it does nothing.
 
+-- **The counts below are scoped to this script's own fixtures**, and that is not
+-- fastidiousness. They used to count the whole table, which worked for as long
+-- as `seed.sql` held no rows of this kind — and broke the day it did
+-- (2026-08-15, when the order card needed something to render). A verification
+-- script that assumes an empty baseline is one that fails on the seed rather
+-- than on the schema, which is the least useful red there is. Every fixture
+-- here uses the `00000000-` prefix; the seed uses its own.
+
 \set ON_ERROR_STOP on
 \set QUIET on
 set client_min_messages = notice;
@@ -493,13 +501,13 @@ begin
   --------------------------------------------------- 15. an admin sees the pipeline
   -- §7.3: an admin sees a case depersonalised, and this table is already that.
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000001a","app_metadata":{"role":"admin"}}';
-  select count(*) into n from public.orders;
+  select count(*) into n from public.orders where id::text like '00000000-%';
   raise notice '% 15. an admin sees every order (% of 6)',
     case when n = 6 then 'PASS' else 'FAIL' end, n;
 
   ------------------------------ 16. the assigned lawyer sees their services' orders
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000001b","app_metadata":{"role":"lawyer"}}';
-  select count(*) into n from public.orders;
+  select count(*) into n from public.orders where id::text like '00000000-%';
   raise notice '% 16. the assigned lawyer sees the orders of both their services (% of 6)',
     case when n = 6 then 'PASS' else 'FAIL' end, n;
 
@@ -508,13 +516,13 @@ begin
   -- because somebody handed it to them — which is the arm of the policy that
   -- would otherwise be dead code hidden behind the assignment arm.
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000001c","app_metadata":{"role":"lawyer"}}';
-  select count(*) into n from public.orders;
+  select count(*) into n from public.orders where id::text like '00000000-%';
   raise notice '% 17. a reviewer assigned to no service still sees their own matters (% of 3)',
     case when n = 3 then 'PASS' else 'FAIL' end, n;
 
   ------------------------------------------------ 18. and a stranger sees nothing
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000001d","app_metadata":{"role":"lawyer"}}';
-  select count(*) into n from public.orders;
+  select count(*) into n from public.orders where id::text like '00000000-%';
   raise notice '% 18. a lawyer with no assignment and no matter sees no client at all (% rows)',
     case when n = 0 then 'PASS' else 'FAIL' end, n;
 

@@ -16,6 +16,7 @@ import type {
   AuditAction,
   AuditedTable,
   GenerationMode,
+  OrderStatus,
   ReviewMode,
   ServiceStatus,
 } from "@legal-ai/db";
@@ -65,4 +66,23 @@ export const auditedTableKey: Record<AuditedTable, TranslationKey> = {
   service_version_prices: "history.entity.service_version_prices",
   questionnaire_fields: "history.entity.questionnaire_fields",
   service_assignments: "history.entity.service_assignments",
+  plan_services: "history.entity.plan_services",
+  orders: "history.entity.orders",
+};
+
+/**
+ * The lifecycle of an order (§4.16, ADR-0005). A real enum, so a state added to
+ * `order_status` in a migration fails to compile here until it also has a word
+ * — which matters more than usual on this one: the states are what the screen
+ * *is*, and a `??` fallback would render `in_review` at a client-facing
+ * milestone and nobody would find out until they read it.
+ */
+export const orderStatusKey: Record<OrderStatus, TranslationKey> = {
+  intake: "order.status.intake",
+  submitted: "order.status.submitted",
+  generating: "order.status.generating",
+  in_review: "order.status.in_review",
+  delivered: "order.status.delivered",
+  cancelled: "order.status.cancelled",
+  abandoned: "order.status.abandoned",
 };

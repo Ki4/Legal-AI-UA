@@ -17,6 +17,14 @@
 --     enough and the seven-year log becomes the thing that identifies the
 --     person. So the scenarios read `before`/`after` and assert the absence.
 
+-- **The counts below are scoped to this script's own fixtures**, and that is not
+-- fastidiousness. They used to count the whole table, which worked for as long
+-- as `seed.sql` held no rows of this kind — and broke the day it did
+-- (2026-08-15, when the order card needed something to render). A verification
+-- script that assumes an empty baseline is one that fails on the seed rather
+-- than on the schema, which is the least useful red there is. Every fixture
+-- here uses the `00000000-` prefix; the seed uses its own.
+
 \set ON_ERROR_STOP on
 \set QUIET on
 set client_min_messages = notice;
@@ -62,7 +70,7 @@ begin
     case when label like 'client-%' and length(label) = 15 then 'PASS' else 'FAIL' end, label;
 
   ------------------------------------------------- 1b. and no two share one
-  select count(distinct pseudonym) into n from public.clients;
+  select count(distinct pseudonym) into n from public.clients where id::text like '00000000-%';
   raise notice '% 1b. pseudonyms are distinct (% of 2)',
     case when n = 2 then 'PASS' else 'FAIL' end, n;
 
@@ -166,13 +174,13 @@ begin
 
   -------------------------------------------- 7. staff read the pseudonyms
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f2","app_metadata":{"role":"lawyer"}}';
-  select count(*) into n from public.clients;
+  select count(*) into n from public.clients where id::text like '00000000-%';
   raise notice '% 7. a lawyer sees clients by pseudonym (% rows)',
     case when n = 2 then 'PASS' else 'FAIL' end, n;
 
   ------------------------------------- 8. a pending registration reads nothing
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f3","app_metadata":{}}';
-  select count(*) into n from public.clients;
+  select count(*) into n from public.clients where id::text like '00000000-%';
   raise notice '% 8. a registration awaiting approval sees no clients (% rows)',
     case when n = 0 then 'PASS' else 'FAIL' end, n;
 

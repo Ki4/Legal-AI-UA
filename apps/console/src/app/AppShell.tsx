@@ -9,6 +9,7 @@ import { ThemeToggle } from "./ThemeToggle";
 // language the module was written in, permanently, whatever the reader chose.
 const baseNav: { to: string; key: TranslationKey }[] = [
   { to: "/services", key: "nav.services" },
+  { to: "/orders", key: "nav.orders" },
   { to: "/account", key: "nav.account" },
   { to: "/design", key: "nav.design" },
 ];

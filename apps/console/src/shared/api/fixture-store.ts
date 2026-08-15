@@ -14,6 +14,8 @@
 
 import {
   mockAuditEvents,
+  mockClients,
+  mockOrders,
   mockPracticeAreas,
   mockProfiles,
   mockServiceAssignments,
@@ -23,6 +25,8 @@ import {
 } from "@legal-ai/db";
 import type {
   AuditEventRow,
+  ClientRow,
+  OrderRow,
   PracticeAreaRow,
   ProfileRow,
   ServiceAssignmentRow,
@@ -57,6 +61,8 @@ export const serviceAssignmentRows: ServiceAssignmentRow[] = mockServiceAssignme
 export const profileRows: ProfileRow[] = mockProfiles.map((row) => ({ ...row }));
 export const practiceAreaRows: PracticeAreaRow[] = mockPracticeAreas.map((row) => ({ ...row }));
 export const auditEventRows: AuditEventRow[] = mockAuditEvents.map((row) => ({ ...row }));
+export const clientRows: ClientRow[] = mockClients.map((row) => ({ ...row }));
+export const orderRows: OrderRow[] = mockOrders.map((row) => ({ ...row }));
 
 /**
  * The reference row a service points at. Null when the code resolves to
@@ -107,6 +113,11 @@ export function priceRowOf(versionId: string, currency = "UAH"): ServiceVersionP
       (row) => row.service_version_id === versionId && row.currency === currency,
     ) ?? null
   );
+}
+
+/** Null for an id no client row has — nothing in the fixtures hides a client. */
+export function clientById(id: string): ClientRow | null {
+  return clientRows.find((row) => row.id === id) ?? null;
 }
 
 export function profileById(id: string): ProfileRow | null {

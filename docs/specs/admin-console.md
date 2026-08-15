@@ -441,6 +441,16 @@ rest on being able to prove who did what and when. A mutable status column prove
 A side benefit: the per-service statistics in §4.7 are computed from this same log. No separate
 counters.
 
+**`orders.status` is a column, and this section is what decides whether that is allowed.** The
+direction is what matters. What is ruled out above is a status maintained _alongside_ a log — one
+written by the application, the other by hope, and nothing keeping them honest. On `orders` the
+column is the thing that is written and the log is derived from it: every move passes a transition
+guard and lands in `audit_events` with its before and after, so the timeline ADM-66 renders is
+reconstructed from the log exactly as this section requires, and a scenario in
+`verify_orders.sql` reads the delivery back out of the log alone to keep that claim earning itself.
+There is one answer, not two. A second, hand-maintained answer is what this section refuses, and it
+still does.
+
 ### 6.2 Three cuts of one log
 
 | Question                            | Cut         | What the event must carry        |
@@ -1083,6 +1093,31 @@ expensive after `orders` exists:
   one that has now been paid on paper: member roles are owner / employee / read-only and not
   `admin | lawyer` (§13). A premise that expensive is worth re-testing against the schema that
   actually shipped rather than the one the question imagined.
+
+ADM-63 has shipped, and all four bullets above are schema rather than prose: the foreign key points
+at `service_versions` and a guard refuses to move it, the audit mapping is the entity mapping in
+`audit_change`, no column records staleness, and `reviewer_id` is on the table before there are rows
+to retrofit it into. Three things it settled that the bullets did not reach:
+
+- **An order is delivered against the purchase it names, not against the client's coverage.** The
+  guard asks `entitlement_covers(entitlement_id, service)`. A client who holds two one-off purchases
+  is covered for both services and neither purchase covers the other's — a client-level check would
+  accept the wrong pointer and record a document as paid for by something that did not pay for it.
+  Removing that distinction from the guard turns exactly one verification scenario red, which is
+  what a scenario is for.
+- **The reviewer is a lawyer, and need not be assigned to the service.** §5.6's argument against
+  locks applies unchanged: the assigned lawyer is away, the document is due, and a firm that cannot
+  staff around a lock keeps the lock loose enough never to block anything. `service_assignments`
+  says who may be _offered_ the work; `orders.reviewer_id` says who took it. Which is why the read
+  policy has two arms and not one — a reviewer assigned to nothing still reads their own matters,
+  and removing that arm turns exactly one scenario red as well.
+- **The rules are triggers, not policies, because the only writer bypasses RLS** (ADR-0019). Orders
+  arrive through the gateway (ADM-5), which will hold `service_role`. A lifecycle enforced by a policy
+  would be a lifecycle the one writer is not subject to. The guards are also `security definer`, and
+  that is load-bearing rather than convenient: they read `entitlements`, which a lawyer may not read
+  at all, so a caller-rights guard would refuse a correct delivery — and a narrowed policy on
+  `service_versions` would leave the publication check comparing against null, which raises nothing
+  at all. A guard that sees less than the truth fails in both directions, and one of them is silent.
 
 ### Authoring sandbox
 

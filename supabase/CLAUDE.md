@@ -14,6 +14,21 @@ Row Level Security is enabled on every table, no exceptions, from the migration 
 A table with RLS enabled and no policies is the safe default while access rules are worked out —
 never ship a table with RLS off.
 
+## On a client-bearing table, RLS is not where the rules go
+
+RLS decides who may read a row. What a **write** may do — a lifecycle, a pin that cannot move, a
+precondition for delivery — is a `before` trigger, and a `security definer` one. Two reasons, both
+in `docs/adr/0019-client-table-rules-live-in-security-definer-triggers.md`: the gateway writes these
+tables as `service_role`, which RLS does not apply to at all, and a guard running as its caller sees
+only what the caller may see — which for `entitlements` is nothing, so it would refuse a correct
+write citing somebody else's client.
+
+The corollary is about refusals. Withholding the grant makes a denial loud, and that is available
+only where the table has **no** authorised reader inside `authenticated` — `client_identities` has
+none, `entitlements` has admins. Everywhere else the denial is a silent empty result, and the answer
+is that no screen without the right reads the table: a `security definer` function hands it the
+yes/no instead.
+
 ## Explicit grants only
 
 "Automatically expose new tables" is disabled project-wide, and

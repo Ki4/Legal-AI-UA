@@ -619,6 +619,36 @@ plausible later. A published version is frozen (ADR-0009), so a currency that ar
 publication could not be added without breaking the freeze — and the freeze trigger must therefore
 cover the price rows as well as the version. The amounts themselves are still open (§14).
 
+Built as four tables (ADM-57), and the split between the two pairs is the design. `plans` and
+`plan_services` are catalogue: a product the firm sells and the services it covers, about no
+particular client, so role is the right instrument and staff read them the way they read the
+catalogue. `entitlements` and `entitlement_services` are about one client — pseudonymous, since
+`client_id` is the ADM-62 anchor, but billing, which ADR-0014 lists among the things administration
+means. So an admin reads them and a lawyer does not.
+
+**Coverage is per service, never per version.** An order pins a version because a document has to
+stay explainable years later (ADR-0009); an entitlement covers the product, because the promise of
+§8 is that the client keeps receiving the current one. Pinning coverage to a version would end a
+client's cover the moment the firm improved the thing they paid for.
+
+Two things this turned up that were not visible from the prose:
+
+- **A plan has no price, and inventing one would have answered an open question by writing a column
+  name.** `service_version_prices` is an amount frozen with its version. A subscription price is
+  not that shape — it recurs, so it carries a period, and this section names an _annual_
+  subscription while recording a _monthly_ figure. That is left unbuilt and stated rather than
+  guessed; it joins Q9, which is open on the amounts anyway.
+- **One relation means one function, not one query written twice.** Coverage reaches a service by
+  two routes — a one-off names its services, a subscription inherits its plan's — and no consumer
+  joins its own way there. `entitlement_covers(entitlement, service)` is the primitive: is this
+  purchase live, and does it reach this service? `client_is_entitled_to(client, service)` is that
+  primitive under an `exists`, which is the whole of the difference between them. Two questions get
+  asked and they are not the same one: an order records which entitlement paid for it, so its
+  delivery guard asks about that purchase, while a screen deciding what to offer asks about the
+  client. Answering the second where the first was meant would accept a document paid for by a
+  purchase that did not cover it — the client is covered, by something else. That is what makes
+  §8.3's "one mechanism plus an entitlement record" true in the schema rather than only on paper.
+
 ## 9. Law monitoring
 
 §8 sells a promise about legislation. This section is the machinery that keeps it.
@@ -962,7 +992,17 @@ worth being able to name in a backlog.
 | ADM-54 | Transcript store, extraction to answers, confirmation (§5.5) | ADM-18        | L    |
 | ADM-55 | Retention jobs and the two erasure paths (§7.2)              | ADM-1, ADM-6  | M    |
 | ADM-56 | Break-glass grants, expiry and client notification (§7.3)    | ADM-6, ADM-69 | M    |
-| ADM-57 | Entitlements: one-off sets and platform plans (§8.6)         | ADM-1         | M    |
+| ADM-57 | Entitlements: one-off sets and platform plans (§8.6)         | ADM-62        | M    |
+
+ADM-57 has shipped as `plans`, `plan_services`, `entitlements` and `entitlement_services`, with
+`client_is_entitled_to()` as the one relation §8.6 asked for.
+
+Its dependency is corrected here from ADM-1 to ADM-62, which is the same defect Q21 turned up one
+row down and is worth naming twice. An entitlement belongs to a client, so it could never have been
+built on the document-metadata schema alone; the row was written before client identity had a
+backlog id and nothing went back to it. The correction costs nothing today — ADM-62 shipped first
+anyway — but a dependency list is read to decide what is buildable, and one that is wrong in the
+safe direction this time is not more trustworthy for it.
 
 ADM-55 sits next to ADM-6 for the same reason: a clock that starts late is not a retention policy,
 and the data it should have covered is already held. It covers every row of §7.2 that has a table
@@ -1254,6 +1294,17 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   history gives. The history screen asks `is_assigned_to()`, the policy's own predicate, and only
   when the result is empty and the reader is a lawyer (§4.8). Every screen that lands on a table
   with a per-row policy will meet this.
+- **A refusal can be made loud only where nobody is allowed in.** `client_identities` fails with a
+  permission error because its grant is withheld from everybody, and that was recorded as the
+  better failure. `entitlements` cannot have it: an admin must read those rows, and an admin and a
+  lawyer reach Postgres as the same database role — `authenticated`, with the distinction living in
+  a JWT claim, which a grant cannot see. So the grant is unavoidable, the policy is what filters,
+  and a lawyer meets the empty array again. The answer is not a better error; it is that no
+  lawyer-facing screen reads those tables at all — `client_is_entitled_to()` gives them the yes/no
+  their screen actually needs, and the ambiguity is designed out rather than detected. The general
+  form, worth having before the next client-bearing table: **withholding the grant is available
+  only where the table has no authorised reader inside the same database role.** Everywhere else,
+  plan for the silent empty result from the start.
 - Column names in the audit log render raw — `published_at`, not a translated phrase. A dictionary
   would have to be extended by every migration that adds a column and would fall back to nothing in
   between, and the reader of an audit log is someone who can be trusted with the schema's own word:

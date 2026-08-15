@@ -129,6 +129,151 @@ export type Database = {
         };
         Relationships: [];
       };
+      entitlement_services: {
+        Row: {
+          entitlement_id: string;
+          service_id: string;
+        };
+        Insert: {
+          entitlement_id: string;
+          service_id: string;
+        };
+        Update: {
+          entitlement_id?: string;
+          service_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "entitlement_services_entitlement_id_fkey";
+            columns: ["entitlement_id"];
+            isOneToOne: false;
+            referencedRelation: "entitlements";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "entitlement_services_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      entitlements: {
+        Row: {
+          client_id: string;
+          created_at: string;
+          granted_by: string | null;
+          id: string;
+          kind: Database["public"]["Enums"]["entitlement_kind"];
+          plan_code: string | null;
+          revoked_at: string | null;
+          valid_from: string;
+          valid_until: string | null;
+        };
+        Insert: {
+          client_id: string;
+          created_at?: string;
+          granted_by?: string | null;
+          id?: string;
+          kind: Database["public"]["Enums"]["entitlement_kind"];
+          plan_code?: string | null;
+          revoked_at?: string | null;
+          valid_from?: string;
+          valid_until?: string | null;
+        };
+        Update: {
+          client_id?: string;
+          created_at?: string;
+          granted_by?: string | null;
+          id?: string;
+          kind?: Database["public"]["Enums"]["entitlement_kind"];
+          plan_code?: string | null;
+          revoked_at?: string | null;
+          valid_from?: string;
+          valid_until?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "entitlements_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "entitlements_granted_by_fkey";
+            columns: ["granted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "entitlements_plan_code_fkey";
+            columns: ["plan_code"];
+            isOneToOne: false;
+            referencedRelation: "plans";
+            referencedColumns: ["code"];
+          },
+        ];
+      };
+      plan_services: {
+        Row: {
+          added_at: string;
+          plan_code: string;
+          service_id: string;
+        };
+        Insert: {
+          added_at?: string;
+          plan_code: string;
+          service_id: string;
+        };
+        Update: {
+          added_at?: string;
+          plan_code?: string;
+          service_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "plan_services_plan_code_fkey";
+            columns: ["plan_code"];
+            isOneToOne: false;
+            referencedRelation: "plans";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "plan_services_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      plans: {
+        Row: {
+          code: string;
+          created_at: string;
+          is_active: boolean;
+          label_en: string;
+          label_uk: string;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          is_active?: boolean;
+          label_en: string;
+          label_uk: string;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          is_active?: boolean;
+          label_en?: string;
+          label_uk?: string;
+        };
+        Relationships: [];
+      };
       practice_areas: {
         Row: {
           code: string;
@@ -408,6 +553,14 @@ export type Database = {
         Args: { new_role: string; target_user: string };
         Returns: undefined;
       };
+      client_is_entitled_to: {
+        Args: { target_client: string; target_service: string };
+        Returns: boolean;
+      };
+      entitlement_covers: {
+        Args: { target_entitlement: string; target_service: string };
+        Returns: boolean;
+      };
       erase_client: {
         Args: { basis: string; target_client: string };
         Returns: undefined;
@@ -422,6 +575,7 @@ export type Database = {
     };
     Enums: {
       audit_action: "insert" | "update" | "delete";
+      entitlement_kind: "one_off" | "subscription";
       generation_mode: "template" | "block_assembly" | "full_generation";
       personal_data_basis:
         | "consent"
@@ -570,6 +724,7 @@ export const Constants = {
   public: {
     Enums: {
       audit_action: ["insert", "update", "delete"],
+      entitlement_kind: ["one_off", "subscription"],
       generation_mode: ["template", "block_assembly", "full_generation"],
       personal_data_basis: [
         "consent",

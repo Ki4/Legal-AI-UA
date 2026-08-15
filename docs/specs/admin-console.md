@@ -57,11 +57,13 @@ pipeline.
 /services/:id/law          the norms this service depends on
 /law                       law reference register
 /law/signals               triage queue for detected changes
+/orders                    orders, depersonalised (§4.15)
+/orders/:id                one order: what it pins, its state, its timeline (§4.16)
 /team                      team (admin only)
 /account                   own profile
 ```
 
-Three decisions are baked into this map.
+Four decisions are baked into this map.
 
 **Versions and the archive are not a top-level section.** They are a tab on the service card, and
 the archive is a filter on that tab. A separate "archive" entry in the sidebar creates a dead
@@ -72,6 +74,11 @@ contributing its own child route. This is not cosmetic — it is the preconditio
 working in parallel. If the tabs are branches of one component, both developers edit the same file
 every day. The layout itself lives in `src/app/`, not inside a feature, so that no feature imports
 from a sibling (the rule in `apps/console/CLAUDE.md`).
+
+**Orders are top level, not a tab on the service card.** An order belongs to a client and pins a
+version; the service card is about a service across all of its versions. Filing orders under it
+would file a client's matter under the product they bought, which is the wrong axis the first time
+somebody asks for everything belonging to one client. §4.15 carries the rest of the reasoning.
 
 **The index route stops being a redirect to `/services`.** A lawyer assigned to services has
 recurring obligations with dates on them — upcoming effective dates, scheduled reviews, signals
@@ -332,6 +339,40 @@ Detected changes waiting for a decision, with the diff.
 ### 4.14 Account — `/account`
 
 - As any user, I change my password, language and theme.
+
+### 4.15 Orders — `/orders`
+
+Added when ADM-63 shipped. The map in §3 predates orders entirely, which is why these two sections
+sit at the end of §4 rather than beside the service tabs: the numbers are referenced from elsewhere
+in this document and renumbering them would break references to answer a question about reading
+order.
+
+**Top level, not a tab on the service card.** An order belongs to a client and pins a _version_; the
+service card is about a service across all its versions. Filing orders under it would be filing a
+client's matter under the product they bought, which is the wrong axis the first time somebody wants
+"everything for this client".
+
+- As a lawyer, I see the orders on the services I am accountable for, and the ones handed to me.
+- As an admin, I see every order, depersonalised — a pseudonym, a version, a state (§7.3).
+- As either, I open one.
+
+The list carries no personal data, and that is not a limitation of this screen: `orders` holds none
+(ADM-62). The empty result a lawyer gets for somebody else's service is the ambiguity §13 describes,
+and it is handled the way the service history handles it — by asking the policy's own predicate.
+
+### 4.16 Order card — `/orders/:id`
+
+- As a lawyer, I see what this order pins: which service, which version, and that the version is
+  frozen — so I know what a document issued from it would be made of (§5.4).
+- As a lawyer, I see its state, and how it got there, from the log rather than from a second
+  history (§6.1, ADR-0010).
+- As a lawyer, I see who is reviewing it and whether a human was required or asked for (ADR-0005).
+- As an admin, I see which entitlement it will be delivered under (§8.6).
+
+Three sections this screen deliberately does **not** have yet, because the tables behind them do
+not exist: the client's answers (ADM-64), the issued document and its passport (ADM-65), and the
+generation runs (ADM-26). A placeholder for each would be an invented product decision about
+screens nobody has specified.
 
 ## 5. Metadata
 

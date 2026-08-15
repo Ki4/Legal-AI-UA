@@ -185,6 +185,8 @@ export const uk = {
   "history.entity.service_version_prices": "Ціна версії",
   "history.entity.questionnaire_fields": "Поле анкети",
   "history.entity.service_assignments": "Призначення юриста",
+  "history.entity.plan_services": "Послуга в тарифі",
+  "history.entity.orders": "Замовлення",
   // Somebody acted and we have no name for them — not nobody, and not the
   // system. The sentence has to leave the reader knowing a person was involved.
   "history.actor.unnamed": "невідомий користувач",
@@ -208,6 +210,47 @@ export const uk = {
   "history.error.forbidden": "У вас немає доступу до історії цієї послуги.",
   "history.error.network": "Не вдалося зв’язатися із сервером. Перевірте з’єднання.",
   "history.error.load": "Не вдалося завантажити історію.",
+
+  // Orders (ADM-66, §4.15) ---------------------------------------------------
+  //
+  // Клієнт на цих екранах — псевдонім, і жодне слово тут не має натякати, що
+  // за ним видно людину. «Замовник» назвав би особу; «клієнт» називає рахунок.
+  "nav.orders": "Замовлення",
+  "orders.title": "Замовлення",
+  "orders.subtitle": "Клієнти позначені псевдонімами. Персональних даних цей екран не показує.",
+  "orders.loading": "Завантажуємо замовлення",
+  "orders.field.client": "Клієнт",
+  "orders.field.service": "Послуга",
+  "orders.field.version": "Версія",
+  "orders.field.status": "Стан",
+  "orders.field.reviewer": "Перевіряє",
+  "orders.field.placed": "Створено",
+  "orders.reviewer.none": "нікому не передано",
+  "orders.reviewer.unnamed": "невідомий юрист",
+  "orders.humanReview": "Клієнт попросив людину",
+  "orders.showMore": "Показати більше",
+  "orders.loadingMore": "Завантажуємо…",
+  "orders.empty.title": "Замовлень ще немає",
+  "orders.empty.hint":
+    "Замовлення створює клієнт через шлюз. Поки шлюз не працює, цей список порожній.",
+  // Той самий порожній масив, що й у «немає замовлень», і інша причина.
+  "orders.restricted.title": "Тут нічого вам не видно",
+  "orders.restricted.hint":
+    "Юрист бачить замовлення послуг, до яких його залучено, і ті, що передали особисто йому.",
+  "orders.failed.title": "Замовлення не завантажено",
+  "orders.failed.hint": "Це не означає, що замовлень немає. Спробуйте ще раз.",
+  "orders.error.forbidden": "У вас немає доступу до замовлень.",
+  "orders.error.network": "Не вдалося зв’язатися із сервером. Перевірте з’єднання.",
+  "orders.error.load": "Не вдалося завантажити замовлення.",
+
+  // Стани замовлення (ADR-0005, §4.16) --------------------------------------
+  "order.status.intake": "Збираємо відповіді",
+  "order.status.submitted": "Відповіді надано",
+  "order.status.generating": "Готуємо документ",
+  "order.status.in_review": "На перевірці юриста",
+  "order.status.delivered": "Видано",
+  "order.status.cancelled": "Скасовано",
+  "order.status.abandoned": "Покинуто",
 
   // Who answers for a service (ADM-10) --------------------------------------
   "assignment.title": "Хто відповідає за цю послугу",
@@ -272,6 +315,13 @@ export const ukPlurals = {
     few: "Показано {count} записи",
     many: "Показано {count} записів",
     other: "Показано {count} записів",
+  },
+  // 1 замовлення, 3 замовлення, 5 замовлень — і знову з 21.
+  "orders.shown": {
+    one: "Показано {count} замовлення",
+    few: "Показано {count} замовлення",
+    many: "Показано {count} замовлень",
+    other: "Показано {count} замовлень",
   },
   "catalogue.matchesElsewhere": {
     one: "{count} послуга відповідає пошуку в інших галузях.",

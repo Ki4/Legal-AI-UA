@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { accountRoutes } from "../features/account";
 import { anatomyRoutes } from "../features/anatomy";
+import { ordersRoutes } from "../features/orders";
 import { designKitRoutes } from "../features/design-kit";
 import { serviceDetailRoutes } from "../features/service-detail";
 import { serviceHistoryRoutes } from "../features/service-history";
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       ...servicesRoutes,
       ...serviceDetailRoutes,
       ...serviceHistoryRoutes,
+      ...ordersRoutes,
       ...anatomyRoutes,
       ...accountRoutes,
       ...teamRoutes,

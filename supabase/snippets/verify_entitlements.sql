@@ -24,6 +24,14 @@
 --     term that was revoked are distinguishable afterwards. Every one of these
 --     had a plausible schema in which it was allowed.
 
+-- **The counts below are scoped to this script's own fixtures**, and that is not
+-- fastidiousness. They used to count the whole table, which worked for as long
+-- as `seed.sql` held no rows of this kind — and broke the day it did
+-- (2026-08-15, when the order card needed something to render). A verification
+-- script that assumes an empty baseline is one that fails on the seed rather
+-- than on the schema, which is the least useful red there is. Every fixture
+-- here uses the `00000000-` prefix; the seed uses its own.
+
 \set ON_ERROR_STOP on
 \set QUIET on
 set client_min_messages = notice;
@@ -351,7 +359,7 @@ begin
   -- convenience. No lawyer-facing screen reads these tables at all, so nothing
   -- has to tell "you may not see this" apart from "there is nothing to see" —
   -- the ambiguity is designed out instead of detected.
-  select count(*) into n from public.entitlements;
+  select count(*) into n from public.entitlements where id::text like '00000000-%';
   raise notice '% 15. a lawyer reads no entitlement, silently (% rows)',
     case when n = 0 then 'PASS' else 'FAIL' end, n;
 
@@ -370,7 +378,7 @@ begin
 
   ------------------------------------- 17. an admin reads billing, because it is theirs
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000e1","app_metadata":{"role":"admin"}}';
-  select count(*) into n from public.entitlements;
+  select count(*) into n from public.entitlements where id::text like '00000000-%';
   raise notice '% 17. an admin sees the entitlements (% rows)',
     case when n = 3 then 'PASS' else 'FAIL' end, n;
 

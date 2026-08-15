@@ -148,6 +148,8 @@ export const en: Dictionary = {
   "history.entity.service_versions": "Service version",
   "history.entity.service_version_prices": "Version price",
   "history.entity.questionnaire_fields": "Questionnaire field",
+  "history.entity.plan_services": "Service in a plan",
+  "history.entity.orders": "Order",
   "history.entity.service_assignments": "Lawyer assignment",
   "history.actor.unnamed": "unknown user",
   "history.actor.system": "system",
@@ -168,6 +170,46 @@ export const en: Dictionary = {
   "history.error.forbidden": "You do not have access to this service's history.",
   "history.error.network": "Could not reach the server. Check your connection.",
   "history.error.load": "Could not load the history.",
+
+  // Orders (ADM-66, §4.15) ---------------------------------------------------
+  //
+  // The client is a pseudonym on these screens, and no word here should suggest
+  // a person is visible behind it.
+  "nav.orders": "Orders",
+  "orders.title": "Orders",
+  "orders.subtitle": "Clients appear as pseudonyms. This screen shows no personal data.",
+  "orders.loading": "Loading orders",
+  "orders.field.client": "Client",
+  "orders.field.service": "Service",
+  "orders.field.version": "Version",
+  "orders.field.status": "State",
+  "orders.field.reviewer": "Reviewer",
+  "orders.field.placed": "Placed",
+  "orders.reviewer.none": "not taken",
+  "orders.reviewer.unnamed": "unnamed lawyer",
+  "orders.humanReview": "Client asked for a human",
+  "orders.showMore": "Show more",
+  "orders.loadingMore": "Loading…",
+  "orders.empty.title": "No orders yet",
+  "orders.empty.hint":
+    "An order is placed by a client through the gateway. Until the gateway runs, this list stays empty.",
+  "orders.restricted.title": "Nothing here is visible to you",
+  "orders.restricted.hint":
+    "A lawyer sees the orders of services they are attached to, and the ones handed to them personally.",
+  "orders.failed.title": "The orders did not load",
+  "orders.failed.hint": "That does not mean there are none. Try again.",
+  "orders.error.forbidden": "You do not have access to the orders.",
+  "orders.error.network": "Could not reach the server. Check your connection.",
+  "orders.error.load": "Could not load the orders.",
+
+  // Order states (ADR-0005, §4.16) -------------------------------------------
+  "order.status.intake": "Collecting answers",
+  "order.status.submitted": "Answers given",
+  "order.status.generating": "Preparing the document",
+  "order.status.in_review": "With a lawyer",
+  "order.status.delivered": "Delivered",
+  "order.status.cancelled": "Cancelled",
+  "order.status.abandoned": "Abandoned",
 
   // Who answers for a service (ADM-10) --------------------------------------
   "assignment.title": "Who answers for this service",
@@ -221,6 +263,10 @@ export const enPlurals: PluralDictionary = {
   "history.shown": {
     one: "Showing {count} entry",
     other: "Showing {count} entries",
+  },
+  "orders.shown": {
+    one: "Showing {count} order",
+    other: "Showing {count} orders",
   },
   "catalogue.matchesElsewhere": {
     one: "{count} service matches your search in other areas.",

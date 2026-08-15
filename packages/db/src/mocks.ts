@@ -8,7 +8,9 @@
 
 import type {
   AuditEventRow,
+  ClientRow,
   GenerationTrace,
+  OrderRow,
   PracticeAreaRow,
   ProfileRow,
   ServiceAssignmentRow,
@@ -376,3 +378,99 @@ export const mockTrace: GenerationTrace = {
     },
   ],
 };
+
+// Clients and their orders (ADM-62, ADM-63) ---------------------------------
+//
+// Pseudonyms only, and not as a convention this file is being careful about —
+// `clients` has no name column to be careless with. That is the split ADM-62
+// made, and it is why a fixture for a client-bearing screen needs no warning
+// about invented people: there is nowhere here to put one.
+
+export const mockClients: ClientRow[] = [
+  {
+    id: "cli-4f2a91",
+    pseudonym: "client-4f2a91",
+    created_at: "2026-08-01T08:00:00.000Z",
+    erased_at: null,
+    erasure_basis: null,
+  },
+  {
+    id: "cli-9b17ce",
+    pseudonym: "client-9b17ce",
+    created_at: "2026-08-03T14:30:00.000Z",
+    erased_at: null,
+    erasure_basis: null,
+  },
+];
+
+/**
+ * Deliberately uneven, because the list has to render states that differ from
+ * each other rather than four rows of the same thing:
+ *
+ *   `ord-1` is with a lawyer who is readable — the ordinary case.
+ *   `ord-2` is in intake with nobody on it, so `reviewer` is `none` and must
+ *     not render like `ord-3`.
+ *   `ord-3` names a reviewer no profile row matches, which is the fixture
+ *     equivalent of a profile RLS hides: `unnamed`, and the state a nullable
+ *     name would have collapsed into `none`.
+ *   `ord-4` is `generating` with `human_review_requested`, the Art. 22 shape
+ *     that changes what the state means without changing the state.
+ */
+export const mockOrders: OrderRow[] = [
+  {
+    id: "ord-1",
+    client_id: "cli-4f2a91",
+    service_version_id: "sv-divorce-2",
+    entitlement_id: "ent-1",
+    status: "in_review",
+    reviewer_id: "usr-olena",
+    human_review_requested: false,
+    placed_at: "2026-08-10T09:15:00.000Z",
+    submitted_at: "2026-08-10T09:40:00.000Z",
+    delivered_at: null,
+    closed_at: null,
+    updated_at: "2026-08-10T10:05:00.000Z",
+  },
+  {
+    id: "ord-2",
+    client_id: "cli-9b17ce",
+    service_version_id: "sv-alimony-1",
+    entitlement_id: null,
+    status: "intake",
+    reviewer_id: null,
+    human_review_requested: false,
+    placed_at: "2026-08-09T16:00:00.000Z",
+    submitted_at: null,
+    delivered_at: null,
+    closed_at: null,
+    updated_at: "2026-08-09T16:00:00.000Z",
+  },
+  {
+    id: "ord-3",
+    client_id: "cli-4f2a91",
+    service_version_id: "sv-divorce-2",
+    entitlement_id: "ent-2",
+    status: "delivered",
+    reviewer_id: "usr-departed",
+    human_review_requested: false,
+    placed_at: "2026-08-05T11:20:00.000Z",
+    submitted_at: "2026-08-05T11:45:00.000Z",
+    delivered_at: "2026-08-06T08:30:00.000Z",
+    closed_at: null,
+    updated_at: "2026-08-06T08:30:00.000Z",
+  },
+  {
+    id: "ord-4",
+    client_id: "cli-9b17ce",
+    service_version_id: "sv-divorce-2",
+    entitlement_id: "ent-3",
+    status: "generating",
+    reviewer_id: null,
+    human_review_requested: true,
+    placed_at: "2026-08-11T07:05:00.000Z",
+    submitted_at: "2026-08-11T07:30:00.000Z",
+    delivered_at: null,
+    closed_at: null,
+    updated_at: "2026-08-11T07:31:00.000Z",
+  },
+];

@@ -28,6 +28,8 @@ export type QuestionnaireFieldType = Enums["questionnaire_field_type"];
 export type PersonalDataBasis = Enums["personal_data_basis"];
 export type SpecialCategoryBasis = Enums["special_category_basis"];
 export type AuditAction = Enums["audit_action"];
+export type OrderStatus = Enums["order_status"];
+export type EntitlementKind = Enums["entitlement_kind"];
 
 /**
  * Not an enum in the database: `profiles.role` is `text`, and a row can carry
@@ -81,6 +83,14 @@ export type ServiceAssignmentRow = Tables["service_assignments"]["Row"];
 export type AuditEventRow = Tables["audit_events"]["Row"];
 
 /**
+ * The pseudonymous anchor (ADM-62). Holds no personal data at all — the mapping
+ * to a person is `client_identities`, which nothing in this console may read.
+ */
+export type ClientRow = Tables["clients"]["Row"];
+
+export type OrderRow = Tables["orders"]["Row"];
+
+/**
  * The tables a per-service history can show a change to (spec §4.8).
  *
  * `audit_events.entity_table` is `text`, not an enum — the log records the
@@ -93,9 +103,18 @@ export type AuditEventRow = Tables["audit_events"]["Row"];
  * covers the other half at runtime, so an unmapped table renders as itself
  * rather than as nothing.
  *
- * Client tables are absent deliberately, not by oversight. `clients` and
- * `client_identities` log with a null `service_id` (they belong to no service),
- * so they cannot appear on a screen filtered to one.
+ * Client tables are absent deliberately, not by oversight. `clients`,
+ * `client_identities`, `entitlements` and `entitlement_services` all log with a
+ * null `service_id` — they belong to no service, and for the entitlement pair
+ * that null is a decision rather than an accident (ADR-0019: a purchase is
+ * billing, and billing is not the accountable lawyer's cut of the log). None of
+ * them can appear on a screen filtered to one service.
+ *
+ * `plan_services` and `orders` are here because they are the two that do carry
+ * a service: a service joining a paid plan changes who may order it, and an
+ * order is the matter under it. Both arrived on 2026-08-15 and neither was
+ * added at the time, which is the failure this comment predicts one paragraph
+ * up — nothing makes a migration that adds a trigger fail to compile here.
  */
 export const AUDITED_TABLES = [
   "services",
@@ -103,6 +122,8 @@ export const AUDITED_TABLES = [
   "service_version_prices",
   "questionnaire_fields",
   "service_assignments",
+  "plan_services",
+  "orders",
 ] as const satisfies readonly (keyof Tables)[];
 
 export type AuditedTable = (typeof AUDITED_TABLES)[number];

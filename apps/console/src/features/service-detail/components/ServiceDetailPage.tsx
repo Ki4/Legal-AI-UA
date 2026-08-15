@@ -113,6 +113,9 @@ export function ServiceDetailPage() {
         <Link to={`/services/${service.id}/history`} className="text-brand hover:underline">
           {t("card.history")}
         </Link>
+        <Link to={`/services/${service.id}/law`} className="text-brand hover:underline">
+          {t("card.law")}
+        </Link>
       </div>
     </section>
   );

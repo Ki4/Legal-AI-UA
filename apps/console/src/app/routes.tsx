@@ -3,6 +3,7 @@ import { accountRoutes } from "../features/account";
 import { anatomyRoutes } from "../features/anatomy";
 import { ordersRoutes } from "../features/orders";
 import { designKitRoutes } from "../features/design-kit";
+import { lawRoutes } from "../features/law";
 import { serviceDetailRoutes } from "../features/service-detail";
 import { serviceHistoryRoutes } from "../features/service-history";
 import { servicesRoutes } from "../features/services";
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       ...serviceDetailRoutes,
       ...serviceHistoryRoutes,
       ...ordersRoutes,
+      ...lawRoutes,
       ...anatomyRoutes,
       ...accountRoutes,
       ...teamRoutes,

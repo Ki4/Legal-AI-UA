@@ -16,6 +16,9 @@ import type {
   AuditAction,
   AuditedTable,
   GenerationMode,
+  LawNormScope,
+  LawNormState,
+  LawSource,
   OrderStatus,
   ReviewMode,
   ServiceStatus,
@@ -68,6 +71,7 @@ export const auditedTableKey: Record<AuditedTable, TranslationKey> = {
   service_assignments: "history.entity.service_assignments",
   plan_services: "history.entity.plan_services",
   orders: "history.entity.orders",
+  service_law_refs: "history.entity.service_law_refs",
 };
 
 /**
@@ -77,6 +81,37 @@ export const auditedTableKey: Record<AuditedTable, TranslationKey> = {
  * *is*, and a `??` fallback would render `in_review` at a client-facing
  * milestone and nobody would find out until they read it.
  */
+/**
+ * What a watched norm is currently known to be (§9.11). Six values, where the
+ * spec's table lists eight — `stale by time` and `scheduled` are derived and
+ * therefore have no schema value to map. Their words live under
+ * `law.freshness.*`, which is where the code that derives them looks.
+ */
+export const lawNormStateKey: Record<LawNormState, TranslationKey> = {
+  unverified: "law.state.unverified",
+  verified: "law.state.verified",
+  drifted: "law.state.drifted",
+  under_review: "law.state.under_review",
+  impact_confirmed: "law.state.impact_confirmed",
+  unreachable: "law.state.unreachable",
+};
+
+/** Article by default, whole act as the marked exception (§9.4). */
+export const lawNormScopeKey: Record<LawNormScope, TranslationKey> = {
+  article: "law.field.article",
+  act: "law.wholeAct",
+};
+
+/**
+ * Where a norm is published. A hostname is not interface copy — it is the same
+ * string in both languages — but it goes through a key anyway, because the day a
+ * second source arrives it needs a name a reader recognizes rather than a
+ * domain.
+ */
+export const lawSourceKey: Record<LawSource, TranslationKey> = {
+  zakon_rada: "law.source.zakon_rada",
+};
+
 export const orderStatusKey: Record<OrderStatus, TranslationKey> = {
   intake: "order.status.intake",
   submitted: "order.status.submitted",

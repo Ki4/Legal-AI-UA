@@ -16,11 +16,13 @@ import {
   mockAuditEvents,
   mockClients,
   mockEntitlements,
+  mockLawNorms,
   mockOrderEvents,
   mockOrders,
   mockPracticeAreas,
   mockProfiles,
   mockServiceAssignments,
+  mockServiceLawRefs,
   mockServices,
   mockServiceVersionPrices,
   mockServiceVersions,
@@ -29,10 +31,12 @@ import type {
   AuditEventRow,
   ClientRow,
   EntitlementRow,
+  LawNormRow,
   OrderRow,
   PracticeAreaRow,
   ProfileRow,
   ServiceAssignmentRow,
+  ServiceLawRefRow,
   ServiceRow,
   ServiceVersionPriceRow,
   ServiceVersionRow,
@@ -68,6 +72,13 @@ export const clientRows: ClientRow[] = mockClients.map((row) => ({ ...row }));
 export const orderRows: OrderRow[] = mockOrders.map((row) => ({ ...row }));
 export const entitlementRows: EntitlementRow[] = mockEntitlements.map((row) => ({ ...row }));
 export const orderEventRows: AuditEventRow[] = mockOrderEvents.map((row) => ({ ...row }));
+
+// Mutable, unlike most of the rows above, because the law feature is the first
+// one whose fixtures are *written* as well as read — entering a reference and
+// dropping one are contract operations. A test that adds a row restores it
+// afterwards; Vitest isolates files from each other and not within one (DoD §8).
+export const lawNormRows: LawNormRow[] = mockLawNorms.map((row) => ({ ...row }));
+export const serviceLawRefRows: ServiceLawRefRow[] = mockServiceLawRefs.map((row) => ({ ...row }));
 
 /**
  * The reference row a service points at. Null when the code resolves to

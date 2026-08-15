@@ -1035,9 +1035,14 @@ expensive after `orders` exists:
 - **Staleness is a projection, not a column.** "This document rests on an article that has since
   changed" is derived from the norm register (§9.3) through the pinned version, exactly the reverse
   index ADM-24 builds. A boolean on the order would be a copy of the truth that drifts from it.
-- **ADM-68 is the one that cannot be retrofitted cheaply.** See Q21: it decides whether every
-  client-bearing table carries a tenant column and every policy scopes by it. Deciding it after
-  ADM-63 ships means changing the schema and every RLS policy written against it.
+- **ADM-68 turned out to be cheap to defer, and the reason is worth keeping.** This bullet used to
+  read that it "cannot be retrofitted cheaply" — that every client-bearing table would carry a
+  tenant column and every policy scope by it. Q21 answered "tenant" and none of that follows,
+  because ADM-62 built `clients` as an anchor holding no personal data, which makes it the account
+  already. `orders.client_id` is the same column under either answer. The cost that was real is the
+  one that has now been paid on paper: member roles are owner / employee / read-only and not
+  `admin | lawyer` (§13). A premise that expensive is worth re-testing against the schema that
+  actually shipped rather than the one the question imagined.
 
 ### Authoring sandbox
 
@@ -1240,8 +1245,8 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   uuid is not something a person can hold in their head, and a counter would publish how many
   clients the firm has (§7.3).
 - `client_identities` ships with no grant and no read policy. The two paths ADR-0014 names both
-  depend on something that does not exist — assignment runs through `orders` (Q21), and break-glass
-  owes the access log (ADM-69). A grant table without the log would be the failure that ADR calls
+  depend on something that does not exist — assignment runs through `orders` (ADM-63), and
+  break-glass owes the access log (ADM-69). A grant table without the log would be the failure that ADR calls
   out by name: control that is visible and not real.
 - An empty result under RLS is two different answers, and a screen has to ask which one it got. Any
   member of staff may read any service, but only an admin or an attached lawyer may read its
@@ -1259,6 +1264,24 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   column on the nearest existing table. It was found by reading ADM-56's dependency list: the row
   claimed to be buildable on the action log alone, which would have shipped break-glass without the
   record that makes it accountable.
+- **A client account is a tenant, not a person** (Q21). `clients` is the account; one or more people
+  belong to it. A ФОП with an accountant and two employees is an ordinary Ukrainian client, and the
+  answer "person" does not refuse that case so much as push it off the platform — a second account
+  and documents forwarded by email, which is client data leaving the system that was built to hold
+  it. §7.2 is the second reason: firm staff and client personnel have different retention bases and
+  different clocks, and one table cannot carry two honestly.
+  **Nothing in the schema changes today, and that is the finding rather than a convenience.** The
+  question was recorded as blocking ADM-63 on the premise that "tenant" means a tenant column on
+  every client-bearing table and every policy scoped by it. ADM-62 built the anchor to hold no
+  personal data, so `clients` is already the account: `orders` and everything after it key on
+  `clients.id` under either answer, and membership arrives as its own table (ADM-68) rather than as
+  a column everywhere. What is decided now and would have been expensive later is the vocabulary:
+  member roles are **owner / employee / read-only**, deliberately not `admin | lawyer`, which are
+  the law firm's roles and the words every RLS policy is written in. Membership lands with
+  `apps/web`, because no client authenticates until there is a client-facing app — §7.3's three
+  readers are all firm staff, which is why ADM-63 writes no policy that mentions a member at all.
+  `client_identities` stays 1:1 with `clients` until ADM-68, and its primary key is the single place
+  that changes then (ADR-0014, §7.1).
 
 ## 14. Open questions
 
@@ -1294,34 +1317,6 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   the amounts are not. The euro figures discussed in §8 are a recorded conversion so the order of
   magnitude survives, not a decision.
 - **Q14. Delivery format to the client — .docx, .pdf, or both?** Part of the passport (§5.3).
-- **Q21. Is a client account a person, or a tenant with members?** ADR-0014 settled that clients do
-  not live in `profiles`, and that is unchanged — it gets stronger, not weaker, once a client is a
-  ФОП. What it did not settle is whether the thing that owns an order is **one person** or an
-  **account other people belong to**: a sole proprietor with an accountant and two employees, all
-  needing to see the firm's documents, none of them the person who signed up.
-
-  The two answers produce different schemas. A person means `orders.client_id` points at a client
-  identity and access is "you own it". A tenant means a `client_accounts` table, a membership table
-  with its own roles (owner / employee / read-only — words that are **not** `admin | lawyer`, which
-  are the law firm's roles and the words RLS policies are written in), and every client-bearing
-  table carrying the account id with every policy scoped by it.
-
-  Three reasons it cannot wait until somebody asks for it:
-
-  1. **Retrofitting is the expensive kind.** Adding a tenant column later means a migration on every
-     table holding client data plus a rewrite of every policy written against them — and each
-     rewrite is an access-control change under the review rule in `supabase/CLAUDE.md`.
-  2. **Putting client staff in `profiles` would be the cheap wrong answer**, and the policy that
-     makes it wrong already exists: staff read staff names. A client's accountant would see the law
-     firm's colleagues, and a lawyer would see the client's employees, because both are "staff" to a
-     table that only knows one organisation.
-  3. **GDPR retention differs by whose data it is** (§7.2). Firm staff and client personnel have
-     different bases and different schedules, and one table cannot carry two clocks honestly.
-
-  ADR-0014's rule generalises cleanly if the answer is "tenant": role governs platform capability,
-  **membership** governs data — the same sentence with assignment replaced. That is the shape to
-  beat, not a decision taken. Blocks ADM-63; ADM-62 can start either way.
-
 - **Q19. Does a questionnaire field carry a group, or is grouping read off the key prefix?** The
   map in §4.4 shows fields grouped the way a client meets them, and the dictionary has only
   `position`. The prefix convention (`respondent_*`) already exists in practice and costs nothing
@@ -1343,7 +1338,8 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   lawyer in the loop for the other two modes.
 - **Q16. Invitations or self-registration?** ADM-34 either exists or does not.
 - **Q17. Deactivation: soft disable or account deletion?**
-  **Already answered, listed so they stop being reopened**
+
+**Already answered, listed so they stop being reopened**
 
 - **Q10** — a one-off covers a set of services; a package is an entitlement with several, not a
   separate kind (§8.6).
@@ -1356,6 +1352,9 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   lawyer and any number of cover lawyers with the same rights; the accountable one can add cover
   themselves, so a Friday absence no longer breaches the §9.16 deadline by Monday with nobody at
   fault (§13).
+- **Q21** — a client account is a tenant. `clients` is that account; membership is ADM-68 and lands
+  with `apps/web`. It turned out to block nothing: ADM-62 built the anchor to hold no personal data,
+  so `orders` keys on `clients.id` under either answer (§13).
 
 - One-off versus subscription — both (§8).
 - Currency — UAH (§8). The amounts themselves are still open.

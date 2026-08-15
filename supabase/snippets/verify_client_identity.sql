@@ -106,9 +106,9 @@ begin
   begin
     insert into public.client_identities (client_id, full_name)
     values ('00000000-0000-0000-0000-0000000000c1', 'Second Person');
-    raise notice 'FAIL 5. one client account holds two people while Q21 is open';
+    raise notice 'FAIL 5. one client account holds two people before ADM-68 exists';
   exception when unique_violation then
-    raise notice 'PASS 5. a second person needs the membership table Q21 decides on';
+    raise notice 'PASS 5. a second person waits for the membership table (ADM-68)';
   end;
 
   -------------------------------- 6. the log says an identity exists, not whose

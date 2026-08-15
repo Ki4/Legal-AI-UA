@@ -112,12 +112,14 @@ shape; `orders` (ADM-63), the first table to carry client data; and the law-refe
 domain table joins it by gaining an entity mapping in `audit_change` — which raises rather than
 logging a null service, so the mapping cannot be forgotten.
 
-**`orders` no longer waits on nothing.** This line used to end "client-bearing tables wait on
-nothing else now that Q10–Q13 are closed", and that stopped being true on 2026-08-14. Q10–Q13 are
-closed and **Q21** is not: whether a client account is a person or a tenant with members decides
-whether this table carries an account id at all, and adding one afterwards is a migration on every
-client-bearing table plus a rewrite of every policy standing on them. ADM-62 can start either way;
-ADM-63 cannot.
+**`orders` waits on nothing again, and it took two moves to get there.** On 2026-08-14 this line
+was rewritten to say Q21 blocked ADM-63 — whether a client account is a person or a tenant decides
+whether the table carries an account id — and that was the right worry to have. It was answered on
+2026-08-15 by building the thing first: ADM-62 made `clients` an anchor holding no personal data,
+which is the account under either reading, so `orders.client_id` is one column either way. **Q21 is
+closed as "tenant"** and membership is ADM-68, deferred to `apps/web`. What the question was really
+protecting was the vocabulary — member roles are owner / employee / read-only, never
+`admin | lawyer` — and that is now written down (`specs/admin-console.md` §13).
 
 **Core contract** (drafted in the PO zone, checked against the core zone — the same developer, so
 what stands in for a countersignature is that the mocks run and the schema is written down rather
@@ -153,10 +155,11 @@ console happens to own.
 - **Client accounts and orders — ADM-62…68**, scoped on 2026-08-14 rather than left as the word
   "deferred": client identity and its pseudonym mapping, `orders` as the first table carrying client
   data, the answers with their provenance, the issued document and its passport, the order card, and
-  the per-order review queue. **Q21 comes first** — whether a client account is a person or a tenant
-  with members, which is what a ФОП with employees turns it into. It decides whether every
-  client-bearing table carries an account id, and retrofitting that means a migration plus a rewrite
-  of every policy standing on those tables.
+  the per-order review queue. ADM-62 has shipped and Q21 is closed as "tenant", so ADM-63 is next
+  and no longer waits on a decision. **ADM-68 — the membership table — stays here on purpose:** a
+  ФОП's accountant needs an account to log into before membership means anything, and that is
+  `apps/web`. §7.3's three readers of client data are all firm staff, so nothing in the console
+  writes a policy that mentions a member.
 - Payments, funnel dashboards, pricing — no longer blocked on positioning; they now wait on
   `apps/web` and on real orders.
 - Legislative-change monitoring (ADR-0011, spec §9) — the article watcher, the signal triage

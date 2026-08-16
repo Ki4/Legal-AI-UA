@@ -10,6 +10,34 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the norm register (2026-08-15)
+
+ADM-21 in one PR (#54), with the offline halves of ADM-41 and ADM-43. §8 has sold a promise about
+legislation since 2026-08-04; until this it rested on no table at all.
+
+- **"A norm is watched once" became a constraint** — `unique nulls not distinct (source, act_id,
+article)`, where the `nulls not distinct` is the load-bearing half: two act-scoped rows for one
+  act carry a null article each, so without it the constraint would have collided with nothing.
+- **A trigger could not enforce the cadence cap alone, and finding out took building it.** Three
+  orderings slip past any trigger on these two tables, and the third is the one care would not have
+  caught: a service being _published_ later changes the answer while writing to neither table. So
+  the cap is derived on read as well — `effective_probe_interval` is what the scheduler gets.
+- **Q4 was answered as a format rather than a deadline**, which changed a rule's owner instead of
+  removing the rule: the cap became an internal operating maximum. Closing it _removed_ a dependency
+  — Q5 through Q8 were recorded as depending on its number and none does.
+- **A backlog line would have blocked three tasks on two unbuilt foundation rows.** "Fetching,
+  normalization and diffing belong to the core owner's zone", read with ADR-0004 and ADR-0016, put
+  a fetcher with no model call in it inside an unbuilt Python service behind an unbuilt gateway.
+  ADR-0020 moves it to an edge function; §10 carries the correction rather than leaving it inferred.
+- **Two of §9.11's eight states are derived and one is a transition.** `no impact` ends its own
+  definition with "re-fingerprint and continue", after which the norm is `verified` anyway — storing
+  both is the second simultaneous answer §6.1 refuses.
+- **Two verification scenarios were wrong and the schema was right both times.** The script is the
+  newer artifact, so when the two disagree it is the better first suspect.
+- **The feature was complete, tested and unreachable.** `/law` had no link anywhere while every gate
+  was green. DoD §1 gained a line; no script can see an orphaned route.
+- Five probes, each reddening exactly the tests written for it.
+
 ## Done — the first screens over client data (2026-08-15)
 
 ADM-66 in two PRs (#52, #53). `/orders` and `/orders/:id`, reading `orders`, `entitlements` and
@@ -94,34 +122,6 @@ reads them, and each one holds the pseudonym rather than the person.
   same database role. Everywhere else the silent empty result is the design, and the answer is a
   function that hands a screen the yes/no instead of the rows.
 
-## Done — the checkers are checked (2026-08-14)
-
-- **`check:copy` and `py-lane` have tests**, 41 of them, and the vitest runner collects
-  `scripts/**/*.test.mjs` so a gate can no longer be the one thing nothing runs. Both scripts kept
-  their behaviour and gained a seam: `check-copy.mjs` exports `checkSource(relPath, text)` and runs
-  the CLI only when invoked as one, `py-lane.mjs` exports the four functions that decide how a
-  command line is built. The summary line `check:copy` prints on the real tree is byte-identical
-  before and after the refactor, which is the only evidence that matters for a refactor of a gate.
-- Every rule gets both halves: a source that must trip it and the source one line away that must
-  not. A checker that flags everything and a checker that flags nothing are equally useless, and
-  only the pair tells them apart. The probe file that used to be driven by hand is now fixtures.
-- **The injection test runs the real shell.** `py-lane`'s quoting is not asserted as a string
-  shape; the built command line is handed to an actual `cmd.exe` with a staged filename of
-  `apps/core/x & echo INJECTED`, and the test checks the second half did not run. Its companion
-  feeds the unquoted form — the shape `shell: true` builds — and asserts that one _does_ run it, so
-  the first test cannot pass against a shell that executes nothing. Windows-only and skipped on
-  ubuntu CI, which is stated in the file rather than left to be discovered.
-- Reverting `buildCmdLine` to the vulnerable form turns three tests red, one of them the live
-  `cmd.exe` one; dropping `aria-label` from the user-visible attribute set turns exactly one red.
-  Both were run.
-- Two of the new tests failed on their first run and both were the test being wrong, which is worth
-  recording: one probe carried a stray letter that tripped the JSX-text rule, and one assumed a
-  reason-less `check-copy-ignore` still suppressed the line below it. It does not — a malformed
-  directive is not a half-working one — and that behaviour is now asserted rather than incidental.
-- **Still open: `check-docs.mjs` and `check-sql.mjs` have no tests** and have had none for longer.
-  They were not touched here because a refactor of a gate is only safe next to the evidence that its
-  output did not move, and doing three at once buys that evidence for none of them.
-
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):
@@ -139,9 +139,9 @@ reads them, and each one holds the pseudonym rather than the person.
    that renders the switcher has to import the dictionary and start knowing which languages the
    product speaks.
 
-**Data layer** (PO): the catalogue and client halves have both shipped — see the section above. What
-remains is `document_blocks`, which waits on the trace schema below because the two constrain each
-other's shape, and the law-reference register (ADM-21). Nothing in the client half gets an event
+**Data layer** (PO): the catalogue and client halves have both shipped, and so has the law-reference
+register (ADM-21) — see the sections above. What remains is `document_blocks`, which waits on the
+trace schema below because the two constrain each other's shape. Nothing in the client half gets an event
 table of its own: `audit_events` is the log, and a new domain table joins it by gaining an entity
 mapping in `audit_change` — which raises rather than logging a null service, so the mapping cannot
 be forgotten.
@@ -187,12 +187,13 @@ console happens to own.
   writes a policy that mentions a member.
 - Payments, funnel dashboards, pricing — no longer blocked on positioning; they now wait on
   `apps/web` and on real orders.
-- Legislative-change monitoring (ADR-0011, spec §9) — the article watcher, the signal triage
-  queue and the effective-date calendar; the task list is ADM-41…53, and the register those tasks
-  watch is ADM-21…24. Sequenced after the authoring loop; the publication feed is deliberately
-  neither built nor bought. One ordering constraint that is easy to get backwards: **citation entry
-  and link normalisation (ADM-41, ADM-42) land before the scheduler (ADM-44)**, because watching a
-  register of un-normalised links reproduces the pinned-revision trap at scale and its symptom is
-  silence.
+- Legislative-change monitoring (ADR-0011, spec §9) — **what is left of it.** The register and the
+  normalisation are no longer deferred (ADM-21 and the offline halves of ADM-41 and ADM-43, on
+  2026-08-15), so the ordering constraint this line warned about — normalise before you schedule —
+  is satisfied rather than pending. Still here: the fetcher with its §9.15 safety conditions
+  (ADM-42, ADM-43's network half, ADM-50), the scheduler (ADM-44), triage, the calendar and the
+  health surfaces (ADM-45…49, ADM-51…53), and ADM-22…24 on the register. It was sequenced after the
+  authoring loop and was not built there — going first is what surfaced ADR-0020. The publication
+  feed remains deliberately neither built nor bought.
 - GDPR P1: data export, account deletion as anonymization, retention cron, subprocessor list.
 - Notifications, payouts, SLA tracking, audit-log UI.

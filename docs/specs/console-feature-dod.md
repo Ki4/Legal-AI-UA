@@ -23,9 +23,14 @@ Two levels, and they answer different questions:
 - [ ] `routes.tsx` gained exactly one import and one spread.
 - [ ] No import from a sibling feature. Shared code goes to `packages/*` or `src/shared/`.
 - [ ] The feature can be deleted by removing its folder and its two lines in `routes.tsx`.
+- [ ] **The screen is reachable without typing its URL** — a link in the shell nav, or from the
+      screen it belongs under. Added on 2026-08-16, because the law register shipped complete,
+      tested and unreachable: lint, typecheck, 392 tests and `check:copy` were all green on a route
+      nothing led to. No gate can see this one, which is why it is a checklist line.
 
-The last item is the real test. If deleting the folder breaks something else, the boundary is not
-where it claims to be.
+The deletion item is the real test of the boundary. If deleting the folder breaks something else,
+the boundary is not where it claims to be. The reachability item is the test of the other direction —
+a feature so isolated that nothing points at it is isolated from its readers too.
 
 ## 2. The `api/` layer
 

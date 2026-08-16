@@ -30,6 +30,9 @@ export type SpecialCategoryBasis = Enums["special_category_basis"];
 export type AuditAction = Enums["audit_action"];
 export type OrderStatus = Enums["order_status"];
 export type EntitlementKind = Enums["entitlement_kind"];
+export type LawSource = Enums["law_source"];
+export type LawNormScope = Enums["law_norm_scope"];
+export type LawNormState = Enums["law_norm_state"];
 
 /**
  * The same values at runtime, for narrowing a state that arrives as loose text.
@@ -116,6 +119,14 @@ export type OrderRow = Tables["orders"]["Row"];
 export type EntitlementRow = Tables["entitlements"]["Row"];
 
 /**
+ * A watched norm. Watched once and depended on many times (§9.3), which is why
+ * the dependency is a row of its own rather than a column here.
+ */
+export type LawNormRow = Tables["law_norms"]["Row"];
+
+export type ServiceLawRefRow = Tables["service_law_refs"]["Row"];
+
+/**
  * The tables a per-service history can show a change to (spec §4.8).
  *
  * `audit_events.entity_table` is `text`, not an enum — the log records the
@@ -140,6 +151,13 @@ export type EntitlementRow = Tables["entitlements"]["Row"];
  * order is the matter under it. Both arrived on 2026-08-15 and neither was
  * added at the time, which is the failure this comment predicts one paragraph
  * up — nothing makes a migration that adds a trigger fail to compile here.
+ *
+ * `service_law_refs` is here and `law_norms` is not, and the split is the same
+ * one: a dependency is one service's business, so a lawyer answering for that
+ * service should see a norm being attached to it or dropped from it. The
+ * register belongs to no service — ten may share one norm — so it logs with a
+ * null `service_id` and its edits are the admin cut. What a lawyer reads when a
+ * norm moves is the signal (ADM-46), not the register's edit history.
  */
 export const AUDITED_TABLES = [
   "services",
@@ -149,6 +167,7 @@ export const AUDITED_TABLES = [
   "service_assignments",
   "plan_services",
   "orders",
+  "service_law_refs",
 ] as const satisfies readonly (keyof Tables)[];
 
 export type AuditedTable = (typeof AUDITED_TABLES)[number];

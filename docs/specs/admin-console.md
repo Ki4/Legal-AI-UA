@@ -294,7 +294,9 @@ tracking interval, when it was last successfully checked.
 - As a lawyer, I mark a reference as covering a whole act when that is genuinely the dependency,
   and I record why.
 - As a lawyer, I change the tracking interval for a norm away from the recommended default, and I
-  record the reason.
+  record the reason. **Served from `/law` rather than from this screen** (ADM-21): the cadence
+  belongs to the norm, which every dependent service shares, and a control under one service's
+  heading would read as that service's setting — the misconception §9.3 exists to prevent.
 - As a lawyer, I cannot set an interval that would break the detection window promised to clients.
 - As a lawyer, I see one honest freshness figure for the service, rolled up from its references.
 
@@ -817,9 +819,25 @@ New acts amending a tracked act are deliberately absent from this table — see 
 
 Three rules around this:
 
-- **Configuration must not be able to break the commercial promise.** For a norm behind a published
-  service, the interval cannot be set longer than the detection window §8 commits to. Same shape as
-  the ADR-0005 constraint: the model refuses configurations that contradict a promise.
+- **Configuration must not be able to outrun the platform's own watch.** For a norm behind a
+  published service the interval cannot exceed an **operating maximum of 7 days**. Same shape as the
+  ADR-0005 constraint: the model refuses configurations that contradict a commitment.
+
+  This sentence used to read "longer than the detection window §8 commits to", and Q4's answer
+  removed the number it depended on: the promise to a client is a **format, not a deadline** — we say
+  that a change was found and that we are acting on it, and we do not commit to a count of days. What
+  the rule was protecting survives without that number, so the maximum is now **internal and
+  engineering-owned**: it is how stale we are prepared to let our own watch of a live service become,
+  ours to revise, and it is not quoted to anybody. `max_probe_interval()` in
+  `20260815140000_law_norm_register.sql` is the one place it is written down.
+
+  It is enforced twice, and the second is the one that holds. A trigger refuses the setting where it
+  can see that it matters, which is what §4.9 promises a lawyer. But three orderings slip past any
+  trigger on those tables — a slow interval set before the norm has dependencies, a dependency added
+  afterwards, and a service being _published_ later, which touches neither table. So the cap is also
+  applied on read: `effective_probe_interval()` is what the scheduler is handed, and no sequence of
+  writes can outrun it.
+
 - **No adaptive frequency.** "Check volatile acts more often" is superficially clever and wrong
   here: an act untouched for three years and then amended is precisely the dangerous case, and
   adaptive cadence is asleep for it.
@@ -1090,6 +1108,11 @@ written against a table that does not exist.
 Fetching, normalization and diffing belong to the core owner's zone; the console owns entry,
 triage, the calendar and the health surfaces.
 
+**ADR-0020 overrules that first clause for the fetcher itself**, and the correction is worth reading
+rather than inferring: the fetcher is a Supabase Edge Function, because it holds no model call and
+routing it through `apps/core` would have blocked ADM-41, ADM-42 and ADM-43 on two unbuilt foundation
+rows. The rest of the sentence stands, including §9.12's AI diff classification when it arrives.
+
 ADM-50 is not optional polish. It is what makes building the fetcher instead of buying a feed a
 sound decision rather than a cheap one — without it the failure mode is silence (§9.15). It ships
 with ADM-43, not after it.
@@ -1296,8 +1319,28 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   URL itself is kept only for display (§9.2).
 - The article is required by default; act-level tracking is an explicit, justified exception
   (§9.4).
-- The tracking interval is per norm, with a recommended default a person may override, and a floor
-  that configuration cannot push past the promised detection window (§9.8).
+- The tracking interval is per norm, with a recommended default a person may override, and a cap
+  that configuration cannot push past — an internal operating maximum rather than a promised
+  detection window, since Q4 was answered as a format rather than a deadline (§9.8).
+- **The article fetcher is a Supabase Edge Function, not `apps/core`** (ADR-0020). It contains no
+  model call, and routing it through an unbuilt Python service behind an unbuilt gateway would have
+  blocked the whole watcher on ADM-3 and ADM-5. The normalization it shares with the console lives in
+  `packages/law-refs`, dependency-free so that Deno reads its source unchanged — one definition of
+  what a pasted link means, because two would disagree as a norm that never drifts.
+- **A pasted pinned revision is resolved, not refused.** §9.5.1 tells the lawyer to paste the
+  revision they were reading, so the entry form strips it, watches the text in force, and says on
+  screen that it did. Refusing would have been the harsher reading of §9.2 and would have taught
+  lawyers to edit URLs by hand before pasting them.
+- **The article is typed, not parsed out of the URL.** The `#n123` anchor a rada link carries is an
+  internal paragraph id rather than an article number, and reading it as one would fill the register
+  with confident nonsense (§9.5.2).
+- **Two of §9.11's eight states are derived rather than stored, and one is a transition.**
+  `stale by time` is `last_verified_at` plus a multiple of the interval, and `scheduled` is a
+  property of a future-dated signal (ADM-47) — a column for either would be a copy of the truth that
+  drifts from it. `no impact` ends its own definition with "re-fingerprint and continue", after which
+  the norm is `verified` by definition; storing it as well would be the second simultaneous answer
+  §6.1 refuses. The judgement is not lost — it is an update to the row, so it lands in `audit_events`
+  with its author, which is what §9.11 asks for.
 - No adaptive frequency (§9.8).
 - Scheduled full human review of a service is on by default (§9.8).
 - Known future changes become calendar entries with reminders in the lawyer's cabinet, not
@@ -1426,9 +1469,6 @@ reference to "Q9" written six months ago still points at the same question. Ids 
 
 **Blocking law monitoring (§9)**
 
-- **Q4. What detection window do we promise clients?** A day, a week. Every interval in §9.8 is
-  derived from this number, and the floor that configuration cannot cross is set by it. This is
-  the first question to answer in this group — the rest depend on it.
 - **Q5. Does a published service pause itself when an impact is confirmed?** §9.16 proposes yes.
   It costs revenue on a false positive and prevents selling a document we know to be wrong.
 - **Q6. Is the client told as soon as an impact is confirmed, or only once the fix ships?** §9.16
@@ -1468,6 +1508,12 @@ reference to "Q9" written six months ago still points at the same question. Ids 
 
 **Already answered, listed so they stop being reopened**
 
+- **Q4** — the promise is a **format, not a deadline**. The client is told that a change was found
+  and that we are acting on it; no count of days is quoted. That does not leave §9.8 without a
+  number: what the interval cap was protecting is internal, so it became an engineering-owned
+  operating maximum of 7 days rather than a figure sales can be held to (§9.8, ADM-21). The question
+  was answered on 2026-08-15, and answering it this way removed a dependency rather than adding one —
+  the four questions below it were listed as depending on Q4's number and none of them does.
 - **Q10** — a one-off covers a set of services; a package is an entitlement with several, not a
   separate kind (§8.6).
 - **Q11** — the subscription is to the platform, and the plan decides which services it covers

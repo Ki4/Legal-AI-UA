@@ -165,6 +165,7 @@ export const uk = {
   "card.error.load": "Не вдалося завантажити цю послугу.",
   "card.anatomy": "Анатомія документа →",
   "card.history": "Історія змін →",
+  "card.law": "Норми, на які спирається →",
 
   // The history screen (§4.8) -----------------------------------------------
   // Deliberately plain words. This screen is read when somebody is trying to
@@ -187,6 +188,7 @@ export const uk = {
   "history.entity.service_assignments": "Призначення юриста",
   "history.entity.plan_services": "Послуга в тарифі",
   "history.entity.orders": "Замовлення",
+  "history.entity.service_law_refs": "Посилання на норму",
   // Somebody acted and we have no name for them — not nobody, and not the
   // system. The sentence has to leave the reader knowing a person was involved.
   "history.actor.unnamed": "невідомий користувач",
@@ -331,6 +333,133 @@ export const uk = {
   "account.role": "Роль",
   "account.roleNone": "не призначено",
   "account.userId": "Ідентифікатор користувача",
+
+  // The law register (§4.11) -------------------------------------------------
+  // The subtitle says the one thing about this screen a reader cannot deduce
+  // from it: the register is shared. Without that sentence a lawyer meets a norm
+  // their service rests on, changes its cadence, and has no way to know they
+  // just changed it for somebody else's service too.
+  "nav.law": "Реєстр норм",
+  "law.title": "Реєстр норм",
+  "law.subtitle":
+    "Норму відстежують один раз. Послуги спираються на неї окремо — і на одну норму їх може бути кілька.",
+  "law.loading": "Завантажуємо реєстр",
+  "law.empty.title": "У реєстрі ще немає норм",
+  "law.empty.hint":
+    "Норма зʼявляється тут, коли юрист додає посилання на вкладці «Право» відповідної послуги.",
+  "law.failed.title": "Реєстр не завантажився",
+  "law.failed.hint": "Це не означає, що реєстр порожній — запит не дійшов.",
+  "law.error.load": "Не вдалося завантажити реєстр норм.",
+  "law.error.forbidden": "Реєстр норм читають лише співробітники фірми.",
+  "law.error.network": "Не вдалося зʼєднатися із сервером. Перевірте мережу та спробуйте ще раз.",
+  "law.field.act": "Акт",
+  "law.field.article": "Стаття",
+  "law.field.state": "Стан",
+  "law.field.freshness": "Перевірка",
+  "law.field.cadence": "Періодичність",
+  "law.field.dependents": "Спираються",
+  "law.wholeAct": "Весь акт",
+  "law.wholeActReason": "Підстава відстежувати весь акт",
+  "law.openSource": "Відкрити джерело",
+  "law.source.zakon_rada": "zakon.rada.gov.ua",
+  "law.dependents.none": "жодна послуга",
+  "law.cadence.change": "Змінити періодичність",
+  "law.cadence.hours": "Годин між перевірками",
+  "law.cadence.reason": "Чому не рекомендована",
+  "law.cadence.reasonHint": "Періодичність спільна для всіх послуг, що спираються на цю норму.",
+  "law.cadence.save": "Зберегти",
+  "law.cadence.saving": "Зберігаємо",
+  "law.cadence.cancel": "Скасувати",
+  // One sentence for two refusals, because the screen cannot tell them apart:
+  // both arrive as a guard raising, and reading the server's own text back to a
+  // lawyer is exactly what DoD §6 forbids.
+  "law.cadence.error.validation":
+    "Таку періодичність відхилено: або вона відрізняється від рекомендованої і не пояснена, або вона рідша за максимум для норми під опублікованою послугою.",
+  "law.cadence.error.forbidden":
+    "Періодичність змінює адміністратор або юрист послуги, що спирається на цю норму.",
+  "law.cadence.error.network": "Не вдалося зʼєднатися із сервером. Зміну не збережено.",
+  "law.cadence.error.save": "Не вдалося змінити періодичність.",
+
+  // The states a norm can be in (§9.11) --------------------------------------
+  // Six, not the eight §9.11 lists: "stale by time" and "scheduled" are derived
+  // rather than stored, so they have their own keys below and none here.
+  "law.state.unverified": "Ще не перевірялася",
+  "law.state.verified": "Збігається",
+  "law.state.drifted": "Текст змінився",
+  "law.state.under_review": "Розбирають",
+  "law.state.impact_confirmed": "Впливає на документ",
+  "law.state.unreachable": "Не вдається прочитати",
+
+  // §9.10: «розбіжностей не знайдено» і «перевірка не відбулася» — різні речі.
+  "law.freshness.never": "жодної успішної перевірки",
+  "law.freshness.fresh": "перевірено {when}",
+  "law.freshness.stale": "не перевірялася з {when}",
+  "law.freshness.staleHint":
+    "Це окрема тривога, а не тиша: зламаний збирач виглядає точно як ідеальний порядок.",
+
+  // A service's law dependencies (§4.9) --------------------------------------
+  "serviceLaw.title": "Норми, на які спирається послуга",
+  "serviceLaw.subtitle": "Кожен запис — одна норма і один рядок про те, заради чого вона тут.",
+  "serviceLaw.loading": "Завантажуємо посилання на норми",
+  "serviceLaw.notFound.title": "Послугу не знайдено",
+  "serviceLaw.notFound.hint": "Схоже, в адресі помилка.",
+  "serviceLaw.empty.title": "Жодної норми ще не записано",
+  "serviceLaw.empty.hint": "Додайте перше посилання формою нижче.",
+  "serviceLaw.failed.title": "Посилання не завантажилися",
+  "serviceLaw.failed.hint": "Це не означає, що їх немає — запит не дійшов.",
+  "serviceLaw.error.load": "Не вдалося завантажити посилання на норми.",
+  "serviceLaw.error.forbidden": "Ці посилання читають лише співробітники фірми.",
+  "serviceLaw.error.network":
+    "Не вдалося зʼєднатися із сервером. Перевірте мережу та спробуйте ще раз.",
+  "serviceLaw.reliedOn": "На що спирається",
+  "serviceLaw.remove": "Прибрати",
+  "serviceLaw.removing": "Прибираємо",
+  "serviceLaw.remove.error": "Не вдалося прибрати посилання.",
+  "serviceLaw.remove.forbidden":
+    "Посилання прибирає адміністратор або юрист, призначений на цю послугу.",
+
+  // Entry (§9.5) -------------------------------------------------------------
+  "serviceLaw.add.title": "Додати посилання на норму",
+  "serviceLaw.add.url": "Посилання",
+  "serviceLaw.add.urlHint":
+    "Вставте посилання на чинну редакцію. Якщо ви читали закріплену — вставляйте її, система приведе до чинної.",
+  "serviceLaw.add.actTitle": "Назва акта",
+  "serviceLaw.add.actTitleHint":
+    "Так, як його називають юристи. Знадобиться, лише якщо норми ще немає в реєстрі.",
+  "serviceLaw.add.article": "Стаття",
+  "serviceLaw.add.articleHint": "Лише номер: 105 або 75-1. Частину чи пункт напишіть рядком нижче.",
+  "serviceLaw.add.wholeAct": "Залежність від усього акта",
+  "serviceLaw.add.wholeActReason": "Чому весь акт",
+  "serviceLaw.add.wholeActHint":
+    "Весь акт спрацьовує на будь-яку зміну в ньому. Беріть, лише якщо залежність справді така, і напишіть чому.",
+  "serviceLaw.add.reliedOn": "На що спирається",
+  "serviceLaw.add.reliedOnHint":
+    "Один рядок. Через півроку саме він скаже читачеві, чи важлива зміна.",
+  "serviceLaw.add.submit": "Додати",
+  "serviceLaw.add.submitting": "Додаємо",
+  "serviceLaw.add.resolved": "Відстежуватимемо: {act}",
+  // §9.5.1 — вставлену закріплену редакцію не відхиляють, її розвʼязують. Але
+  // мовчки цього не роблять: юрист має побачити, що дивитимуться не на те, що
+  // він вставив.
+  "serviceLaw.add.revisionStripped":
+    "Ви вставили закріплену редакцію. Відстежуватимемо чинну — закріплена не змінюється ніколи, тож стеження за нею не спрацювало б жодного разу.",
+  // The honest half of shipping before the fetcher (§9.6, ADM-42).
+  "serviceLaw.add.notFetched":
+    "Текст статті ще ніхто не звіряв: збирача поки немає, тож номер статті не перевірено ніде, крім вашої уваги.",
+  "serviceLaw.link.not_a_url": "Це не схоже на посилання.",
+  "serviceLaw.link.unknown_source": "Ми стежимо лише за zakon.rada.gov.ua.",
+  "serviceLaw.link.not_an_act_url": "Це посилання не на сторінку акта.",
+  "serviceLaw.link.unparsable_act_id":
+    "Не вдалося розібрати, який це акт. Відкрийте акт на сайті й скопіюйте адресу звідти.",
+  "serviceLaw.article.blank": "Назвіть статтю.",
+  "serviceLaw.article.unrecognized": "Лише номер статті: 105 або 75-1.",
+  "serviceLaw.add.error.validation":
+    "Запис відхилено. Перевірте посилання, номер статті та рядок про те, на що спирається послуга.",
+  "serviceLaw.add.error.conflict": "Ця послуга вже спирається на цю норму.",
+  "serviceLaw.add.error.forbidden":
+    "Посилання додає адміністратор або юрист, призначений на цю послугу.",
+  "serviceLaw.add.error.network": "Не вдалося зʼєднатися із сервером. Запис не додано.",
+  "serviceLaw.add.error.save": "Не вдалося додати посилання.",
 } as const satisfies Record<string, string>;
 
 /**
@@ -364,6 +493,39 @@ export const ukPlurals = {
     few: "{count} послуги відповідають пошуку в інших галузях.",
     many: "{count} послуг відповідають пошуку в інших галузях.",
     other: "{count} послуг відповідають пошуку в інших галузях.",
+  },
+  // How many services rest on one norm — the register's whole argument in a
+  // number. 1 послуга, 3 послуги, 5 послуг, and round again at 21.
+  "law.dependents": {
+    one: "{count} послуга",
+    few: "{count} послуги",
+    many: "{count} послуг",
+    other: "{count} послуг",
+  },
+  // Said on a service's own tab, about the *other* services sharing the norm.
+  "serviceLaw.alsoRelied": {
+    one: "На цю норму спирається ще {count} послуга.",
+    few: "На цю норму спираються ще {count} послуги.",
+    many: "На цю норму спираються ще {count} послуг.",
+    other: "На цю норму спираються ще {count} послуг.",
+  },
+  // The cadence, in whichever unit divides evenly — see `cadenceLabel`. Both
+  // forms are counted phrases, which is why neither is a ternary.
+  // The singular form drops the number on purpose — "щодня" rather than "кожен
+  // 1 день". That is what a plural entry is for: the alternative is a
+  // `count === 1` ternary at the call site, which is correct English, wrong
+  // Ukrainian, and invisible until somebody counts to five.
+  "law.cadence.everyHours": {
+    one: "щогодини",
+    few: "кожні {count} години",
+    many: "кожні {count} годин",
+    other: "кожні {count} годин",
+  },
+  "law.cadence.everyDays": {
+    one: "щодня",
+    few: "кожні {count} дні",
+    many: "кожні {count} днів",
+    other: "кожні {count} днів",
   },
 } as const satisfies PluralDictionaryShape;
 

@@ -12,6 +12,13 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // Permits an import to say `./link.ts`, and requires nobody to. It is on at
+    // the base rather than in one package because tsc applies the *consumer's*
+    // options to the files it follows into: `packages/law-refs` writes explicit
+    // extensions so that the Deno edge function (ADR-0020) can import its source
+    // unchanged, and every package that imports it therefore has to allow them.
+    // Safe with `noEmit`, which is set below and is what this option requires.
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "noEmit": true

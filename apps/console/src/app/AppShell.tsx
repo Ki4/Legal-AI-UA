@@ -10,6 +10,7 @@ import { ThemeToggle } from "./ThemeToggle";
 const baseNav: { to: string; key: TranslationKey }[] = [
   { to: "/services", key: "nav.services" },
   { to: "/orders", key: "nav.orders" },
+  { to: "/law", key: "nav.law" },
   { to: "/account", key: "nav.account" },
   { to: "/design", key: "nav.design" },
 ];

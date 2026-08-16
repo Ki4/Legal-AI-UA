@@ -21,6 +21,14 @@ export function fromPostgrest(error: PostgrestError, what: string): AppError {
     case "23503": // foreign_key_violation
     case "23514": // check_violation
       return new AppError("validation", `${what}: ${error.message}`, { cause: error });
+    // raise_exception — a `raise exception` in a plpgsql guard. Not guesswork:
+    // every occurrence of this code in this schema is a before-trigger refusing
+    // a write on a rule the migration states, which is a rejected input and
+    // nothing else. Left as `unknown` it produced the generic fallback sentence
+    // for refusals the reader can act on — a cadence past the operating maximum,
+    // an interval changed with no reason given.
+    case "P0001":
+      return new AppError("validation", `${what}: ${error.message}`, { cause: error });
     default:
       return new AppError("unknown", `${what}: ${error.message}`, { cause: error });
   }

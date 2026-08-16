@@ -11,10 +11,12 @@ import type {
   ClientRow,
   EntitlementRow,
   GenerationTrace,
+  LawNormRow,
   OrderRow,
   PracticeAreaRow,
   ProfileRow,
   ServiceAssignmentRow,
+  ServiceLawRefRow,
   ServiceRow,
   ServiceVersionPriceRow,
   ServiceVersionRow,
@@ -558,5 +560,161 @@ export const mockOrderEvents: AuditEventRow[] = [
     changed_columns: ["reviewer_id", "updated_at"],
     before: null,
     after: {},
+  },
+];
+
+/**
+ * The law register (§9.3). Four norms, chosen so that every state the screen has
+ * to tell apart has a row producing it rather than a branch nobody has seen:
+ *
+ *   `norm-sk-105` — verified recently, and the one two services share. It is the
+ *     fixture that makes "watched once, depended on many times" visible: the
+ *     divorce service and the alimony service both rest on it.
+ *   `norm-sk-180` — verified, but long enough ago that it is stale by time. Not
+ *     an error and not a detected change: §9.10's third answer, which a screen
+ *     rendering only green and red has nowhere to put.
+ *   `norm-ck-act` — act-level, with its reason. §9.4's marked exception, and the
+ *     only row where `article` is null.
+ *   `norm-cpc-116` — entered and never successfully checked. Today this is what
+ *     every real norm looks like, because nothing fetches yet.
+ *
+ * `fingerprint` is null wherever `last_verified_at` is null, and set wherever it
+ * is not: a hash without a verification date, or the reverse, is a state the
+ * fetcher cannot produce and a fixture should not invent (DoD §2).
+ */
+export const mockLawNorms: LawNormRow[] = [
+  {
+    id: "norm-sk-105",
+    source: "zakon_rada",
+    act_id: "2947-14",
+    act_title: "Сімейний кодекс України",
+    scope: "article",
+    article: "105",
+    act_scope_reason: null,
+    source_url: "https://zakon.rada.gov.ua/laws/show/2947-14/ed20240101#n800",
+    canonical_url: "https://zakon.rada.gov.ua/laws/show/2947-14",
+    state: "verified",
+    fingerprint: "sha256:0f4c1b9d",
+    normalizer_version: 1,
+    probe_interval: "1 day",
+    probe_interval_hours: 24,
+    interval_reason: null,
+    last_checked_at: "2026-08-15T04:00:00.000Z",
+    last_verified_at: "2026-08-15T04:00:00.000Z",
+    created_at: "2026-07-02T10:00:00.000Z",
+    updated_at: "2026-08-15T04:00:00.000Z",
+  },
+  {
+    id: "norm-sk-180",
+    source: "zakon_rada",
+    act_id: "2947-14",
+    act_title: "Сімейний кодекс України",
+    scope: "article",
+    article: "180",
+    act_scope_reason: null,
+    source_url: "https://zakon.rada.gov.ua/laws/show/2947-14",
+    canonical_url: "https://zakon.rada.gov.ua/laws/show/2947-14",
+    state: "verified",
+    fingerprint: "sha256:77ab30e1",
+    normalizer_version: 1,
+    probe_interval: "1 day",
+    probe_interval_hours: 24,
+    interval_reason: null,
+    last_checked_at: "2026-07-20T04:00:00.000Z",
+    last_verified_at: "2026-07-20T04:00:00.000Z",
+    created_at: "2026-07-02T10:05:00.000Z",
+    updated_at: "2026-07-20T04:00:00.000Z",
+  },
+  {
+    id: "norm-ck-act",
+    source: "zakon_rada",
+    act_id: "435-15",
+    act_title: "Цивільний кодекс України",
+    scope: "act",
+    article: null,
+    act_scope_reason: "The template rests on the act as a whole; noise expected.",
+    source_url: "https://zakon.rada.gov.ua/laws/show/435-15",
+    canonical_url: "https://zakon.rada.gov.ua/laws/show/435-15",
+    state: "unverified",
+    fingerprint: null,
+    normalizer_version: 1,
+    probe_interval: "7 days",
+    probe_interval_hours: 168,
+    interval_reason: null,
+    last_checked_at: null,
+    last_verified_at: null,
+    created_at: "2026-07-11T13:30:00.000Z",
+    updated_at: "2026-07-11T13:30:00.000Z",
+  },
+  {
+    id: "norm-cpc-116",
+    source: "zakon_rada",
+    act_id: "1618-15",
+    act_title: "Цивільний процесуальний кодекс України",
+    scope: "article",
+    article: "116",
+    act_scope_reason: null,
+    source_url: "https://zakon.rada.gov.ua/laws/show/1618-15",
+    canonical_url: "https://zakon.rada.gov.ua/laws/show/1618-15",
+    state: "unverified",
+    fingerprint: null,
+    normalizer_version: 1,
+    probe_interval: "12:00:00",
+    probe_interval_hours: 12,
+    interval_reason: "Amended twice during the procedural reform.",
+    last_checked_at: null,
+    last_verified_at: null,
+    created_at: "2026-08-03T08:45:00.000Z",
+    updated_at: "2026-08-03T08:45:00.000Z",
+  },
+];
+
+/**
+ * Which service rests on which norm, and for what (§9.5.6).
+ *
+ * `svc-poa` is deliberately absent: a service with no law references at all is
+ * the state every service is in before somebody enters the first one, and the
+ * empty screen needs a fixture that produces it.
+ */
+export const mockServiceLawRefs: ServiceLawRefRow[] = [
+  {
+    id: "ref-divorce-105",
+    service_id: "svc-divorce",
+    norm_id: "norm-sk-105",
+    relied_on: "Grounds on which a marriage may be dissolved by a court.",
+    created_at: "2026-07-02T10:10:00.000Z",
+    updated_at: "2026-07-02T10:10:00.000Z",
+  },
+  {
+    id: "ref-divorce-cpc",
+    service_id: "svc-divorce",
+    norm_id: "norm-cpc-116",
+    relied_on: "Which court the application is filed with.",
+    created_at: "2026-08-03T08:50:00.000Z",
+    updated_at: "2026-08-03T08:50:00.000Z",
+  },
+  {
+    id: "ref-alimony-105",
+    service_id: "svc-alimony",
+    norm_id: "norm-sk-105",
+    relied_on: "Dissolution is the ground the maintenance claim follows from.",
+    created_at: "2026-07-14T09:00:00.000Z",
+    updated_at: "2026-07-14T09:00:00.000Z",
+  },
+  {
+    id: "ref-alimony-180",
+    service_id: "svc-alimony",
+    norm_id: "norm-sk-180",
+    relied_on: "The parents' duty to maintain a child until majority.",
+    created_at: "2026-07-14T09:02:00.000Z",
+    updated_at: "2026-07-14T09:02:00.000Z",
+  },
+  {
+    id: "ref-alimony-ck",
+    service_id: "svc-alimony",
+    norm_id: "norm-ck-act",
+    relied_on: "General obligations law, relied on throughout the template.",
+    created_at: "2026-07-14T09:05:00.000Z",
+    updated_at: "2026-07-14T09:05:00.000Z",
   },
 ];

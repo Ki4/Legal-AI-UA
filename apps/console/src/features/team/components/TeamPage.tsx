@@ -1,5 +1,5 @@
 import { useI18n, type TranslationKey } from "@legal-ai/i18n";
-import { Badge, Button } from "@legal-ai/ui";
+import { Badge, Button, EmptyState, Skeleton } from "@legal-ai/ui";
 import { useEffect, useState } from "react";
 import { AppError } from "../../../shared/api/errors";
 import { teamApi } from "../api";
@@ -47,11 +47,41 @@ export function TeamPage() {
     }
   }
 
+  // The three states this screen used to collapse into one (DoD §4). It rendered
+  // a line of text while loading and an empty `<ul>` for everything else, so a
+  // request that failed and a firm with nobody in it looked identical — and the
+  // second is the reading an admin would take, because it is the plausible one.
+  if (loading) {
+    return (
+      <section className="space-y-4">
+        <h1 className="text-2xl font-semibold">{t("team.title")}</h1>
+        <Skeleton rows={3} label={t("team.loading")} className="max-w-3xl" />
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">{t("team.title")}</h1>
-      {loading && <p className="text-sm text-inkSoft">{t("common.loading")}</p>}
-      {error !== null && <p className="text-sm text-danger-ink">{t(error)}</p>}
+
+      {error !== null && (
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-danger-ink">{t(error)}</p>
+          <Button variant="secondary" onClick={() => void load()}>
+            {t("common.tryAgain")}
+          </Button>
+        </div>
+      )}
+
+      {members.length === 0 &&
+        (error === null ? (
+          <EmptyState title={t("team.empty.title")} hint={t("team.empty.hint")} />
+        ) : (
+          // Deliberately not the sentence above: "nobody has registered" is a
+          // fact about the firm, and this is a fact about the request.
+          <EmptyState title={t("team.failed.title")} hint={t("team.failed.hint")} />
+        ))}
+
       <ul className="grid max-w-3xl gap-3">
         {members.map((member) => (
           <li key={member.id} className="rounded-card border border-line bg-paper p-4">

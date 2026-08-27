@@ -100,7 +100,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
             strokeWidth={3}
             aria-hidden="true"
             className={cn(
-              "pointer-events-none absolute left-[2.5px] text-white opacity-0",
+              "pointer-events-none absolute left-[2.5px] text-onBrand opacity-0",
               "peer-checked:opacity-100 peer-indeterminate:opacity-0",
             )}
           />
@@ -108,7 +108,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
             size={13}
             strokeWidth={3}
             aria-hidden="true"
-            className="pointer-events-none absolute left-[2.5px] text-white opacity-0 peer-indeterminate:opacity-100"
+            className="pointer-events-none absolute left-[2.5px] text-onBrand opacity-0 peer-indeterminate:opacity-100"
           />
         </span>
         <span className={cn("min-w-0 text-sm text-ink", disabled && "opacity-50")}>{label}</span>

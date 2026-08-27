@@ -12,8 +12,127 @@ the document, and — depending on the service type — a lawyer reviews it befo
   power of attorney) without hiring a lawyer for the whole process.
 - **Lawyers** — review AI-generated output where the service requires it, author the templates
   and blocks the AI assembles from, and stay the accountable party for anything with legal
-  consequences.
+  consequences. Some are listed on the platform for reach and author nothing — see "A provider is
+  not a tenant" below.
 - **Admins** — approve new lawyer/admin accounts and operate the platform.
+
+Lawyers are served in two capacities that are easy to conflate and cost different things to build.
+They are **staff** of a practice, and they are **customers of ours** — the platform sells them reach
+and tooling on a subscription. The first is what the console is; the second is what the platform
+becomes. Nothing in the schema distinguishes them today, and nothing needs to until the first lawyer
+who is not our own staff signs in.
+
+## Four ways a need is met
+
+A client arrives with a need, not with a preference about how it is served. The platform answers in
+one of four ways, and the first three are the same machine at three settings:
+
+|     | What the client gets                                | Who is in the loop | Cost                  |
+| --- | --------------------------------------------------- | ------------------ | --------------------- |
+| 1   | A templated document, filled from their answers     | nobody             | cheapest, immediate   |
+| 2   | A document assembled from lawyer-authored blocks    | a lawyer, always   | more                  |
+| 3   | A drafted document a lawyer reads and stands behind | a lawyer, always   | most                  |
+| 4   | A lawyer                                            | only a person      | not a document at all |
+
+**Tiers 1 to 3 are already the two axes of a service version.** `generation_mode` says how the text
+is produced and `review_mode` says whether a person signs it off, and the constraint between them —
+only `template` may run unreviewed — is what makes tier 1 a configuration rather than a risk. Tier 3
+is not a different product from tier 2; it is the same row with the console read as a lawyer's
+instrument rather than an administrator's panel. Making that lawyer faster is the whole of the value
+we add at that tier.
+
+**Tier 4 is genuinely different and the schema does not carry it yet.** Every order today must end in
+a document: the lifecycle leads to `delivered`, and delivery checks the pinned version, the reviewer
+and the entitlement. A consultation has no template, no version and no file. It is still a service —
+somebody sells it, somebody is accountable for it, somebody must be able to ask later what happened —
+so it belongs on the same spine with a third axis on the version saying what is delivered, rather
+than in a second table of leads with its own funnel, its own statistics and its own audit story.
+
+The reason to record a consultation at all, even where no money moves through us, is **attribution**.
+"We sent you eleven clients this month" has to be a query.
+
+## A provider is not a tenant
+
+The platform lists lawyers who are not our staff. They came for reach: a client picks a service, or
+picks a person, or talks to the intake bot until it is clear that what they need is a person — and
+lands on a lawyer who is on the platform. Some of those lawyers also author and review the automated
+services; most will not.
+
+This looks like multi-tenancy and it is not, and the distinction is worth several months.
+
+- **A provider is a listing.** A public profile, practice areas, a bar certificate, a way to be
+  reached, a subscription to us for being there. Nothing about it needs isolation, because the
+  profile is public by design.
+- **A tenant is an isolated workspace.** A firm running its own practice here: its own catalogue, its
+  own staff, its own clients, with a hard guarantee that no row of one firm is reachable from
+  another.
+
+The platform needs providers early and tenants late. Nothing in the four tiers above requires a
+second isolated catalogue.
+
+What the provider does need is already half-built. A lawyer's participation is decided by
+`service_assignments`, not by their role: an external lawyer holds the `lawyer` role with **no
+assignments**, our own lawyer holds the same role with them. The two ends of the same spectrum, and
+one table already tells them apart. Competences (§5.6 of the console spec) gain a second and stronger
+purpose here — they stop being an internal hint for the assignment picker and become the shop window
+a client chooses from, which is what makes Q20 (does a competence carry evidence?) a question about a
+public claim rather than about internal hygiene.
+
+**One precondition, and it has a deadline rather than a priority.** Around a dozen policies are
+written as "any member of staff" — `using (jwt_role() in ('admin','lawyer'))` — because today every
+member of staff is one firm's. `clients_select_staff` is among them, which means the day an external
+lawyer can register is the day every registered lawyer can read every client anchor on the platform.
+Pseudonymous, so no name leaks; the volume and the timing still do. The failure is silent, as this
+class of failure always is: nothing raises, no gate reddens, the rows are simply visible to people
+they were never meant for. **Before external registration opens, every one of those policies answers
+"platform-wide or own practice?" explicitly, and answers it through a named predicate rather than a
+literal repeated in each file.** The verification scenario to write first is the mirror of the `anon`
+one: a lawyer with no assignments sees no row of any table they have no business in.
+
+## The business client, and the subject of a document
+
+A sole proprietor with employees — the medical practice in the section below is the worked example —
+does not order one document. They maintain a set of them, per person, on a clock: a contract, an
+appointment order, a safety briefing, a health record with an expiry. That is a subscription
+customer with an administrator, and it is the strongest case for the cabinet the client platform
+becomes.
+
+It also breaks an assumption the schema currently makes quietly: **that a document is about whoever
+ordered it.** A practice ordering an employment contract for a named employee introduces a person who
+is not the account, not a member of it, and not a user of the platform at all — and whose personal
+data is in the document.
+
+The answer is the shape `clients` and `client_identities` already use, applied a second time: a
+pseudonymous subject anchored to the account, and its mapping to a person in one table that erasure
+deletes. Orders gain an optional subject. Everything that counts, joins or reports keeps touching no
+person.
+
+The consequence that is not technical: **for employee data the business client is the controller and
+we are the processor.** That is a different legal relationship from the one we have with a client
+ordering their own divorce petition — a different contract, retention decided by them rather than by
+§7.2, and an erasure request that arrives from the practice rather than from the employee.
+
+## What we prove first
+
+The MVP is **tier 1 only**: templated documents, and an intake that is close to a bare chat bot. The
+client says what they need, the bot settles which service it is, they order, and the package arrives
+in the same conversation. No catalogue to browse, no cabinet, no provider directory.
+
+This is a proof of concept in the literal sense — the thing being proved is that people will describe
+a legal need to a bot and pay for what comes back. Everything above waits on that answer, and none of
+it is cheaper to build before it.
+
+Two things follow for how the rest is prepared, and they pull in opposite directions on purpose.
+
+**What is laid in now** is what a later retrofit would have to reach into live client data to
+change: an answer records where it came from from the very first one (§5.5 — channel, source turn,
+confidence, and `ai_generated` trust until a human confirms), because the MVP's intake is already
+conversational and provenance cannot be reconstructed afterwards; a document's passport is designed
+whole even where the MVP leaves half of it null; the order spine keeps pinning a frozen version.
+
+**What is not built** is everything whose shape the proof of concept might change: the provider
+directory, the tenant, the review queue, the client cabinet. Recording the decision is not the same
+as taking it, and this file is where the decisions are recorded.
 
 ## Generation modes
 

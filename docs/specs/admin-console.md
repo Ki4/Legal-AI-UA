@@ -1490,8 +1490,27 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   today; a column costs one migration and survives the day a group is renamed. Grouping in a key
   is data hidden inside a string, and keys are immutable — which makes the cheap answer the one
   that cannot be undone. Blocks only the grouped view, not the field list.
+- **Q22. Does money move through us on a consultation, or is it a handoff?** `docs/VISION.md`
+  settles that tier 4 is a service on the order spine rather than a second funnel, because
+  attribution needs the record either way. It does not settle the commercial shape: a commission on
+  a paid consultation, a listing subscription the lawyer pays regardless, or a pure introduction we
+  are not party to. The first two put a price and an entitlement on a consultation; the third leaves
+  the order with no payment at all, which the delivery guard currently refuses. Blocks the shape of
+  the delivery axis, not its existence.
+- **Q23. For an employee's data, who is the controller?** A business client maintaining documents for
+  its staff introduces a person who is neither the account nor a member of it (`docs/VISION.md`). If
+  the practice is the controller and we are the processor, retention is theirs to set rather than
+  §7.2's to fix, and an erasure request arrives from the practice about a person we have no
+  relationship with. That is a different contract and a different lifecycle on the subject mapping,
+  and it is cheaper to know before the first subject row than after.
 
 **Blocking wave planning**
+
+- **Q24. Does the proof of concept charge for anything?** The MVP is tier 1 with a chat intake
+  (`docs/VISION.md`). If the first documents are free or paid outside the platform, `entitlements`
+  leaves the MVP's critical path entirely and the delivery guard's §8.6 requirement has to say so
+  rather than be worked around. If it charges, the gateway (ADM-5) carries a payment on its first
+  day.
 
 - **Q20. Does a competence carry evidence and an expiry, or is an admin's word enough?** §5.6
   makes a competence something an admin grants. A firm that admits lawyers on the strength of a

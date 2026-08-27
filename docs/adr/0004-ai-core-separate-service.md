@@ -15,7 +15,9 @@ core directly, since every call needs auth verification, a rights check, and an 
 
 The AI core is an in-repo, separately-deployed service (future `apps/core`), owned by the core
 developer, exposed through an HTTP contract typed in `packages/core-client` with MSW mocks so
-frontend work can proceed before the core exists.
+frontend work can proceed before the core exists. **The MSW half was overruled on 2026-08-27 by
+ADR-0021:** there is no HTTP client to intercept until the gateway exists (ADM-5), so the package
+ships a `CoreClient` interface and a fixture implementation instead. Revisit when ADM-5 lands.
 
 The frontend never calls the core directly. Every call goes through a Supabase Edge Function
 that verifies the JWT, checks rights, writes an audit record, and only then calls the core. Edge
@@ -29,8 +31,8 @@ Open question, deliberately not settled here: TypeScript vs. Python for the core
 ## Consequences
 
 - The core deploys, scales, and iterates independently of the two frontend apps.
-- The typed contract plus MSW mocks lets frontend work proceed against a stable interface before
-  the core is fully built.
+- The typed contract plus its mocks — MSW as written here, a fixture implementation since ADR-0021 —
+  lets frontend work proceed against a stable interface before the core is fully built.
 - Every generation call is authenticated, authorized, and audited before reaching the core.
 - Two hops (frontend → Edge Function → core) add latency and a second failure surface versus a
   direct call.

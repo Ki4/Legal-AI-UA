@@ -57,8 +57,14 @@ export const PROBES = [
     what: "makes a failed load say the questionnaire is empty",
     file: "apps/console/src/features/service-fields/components/ServiceFieldsPage.tsx",
     test: "apps/console/src/features/service-fields/components/ServiceFieldsPage.test.tsx",
-    from: `title={t("serviceFields.failed.title")} hint={t("serviceFields.failed.hint")}`,
-    to: `title={t("serviceFields.empty.title")} hint={t("serviceFields.empty.hint")}`,
+    // Written against the formatted source, not against how it was typed:
+    // Prettier wrapped this call the moment it was committed, and the probe's
+    // first run reported itself rotted. Working as intended, and worth leaving
+    // in the record — the alternative is a probe that quietly matches nothing.
+    from: `            title={t("serviceFields.failed.title")}
+            hint={t("serviceFields.failed.hint")}`,
+    to: `            title={t("serviceFields.empty.title")}
+            hint={t("serviceFields.empty.hint")}`,
   },
   {
     id: "team-empty-and-error-share-a-sentence",

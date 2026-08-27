@@ -214,6 +214,14 @@ Without them the three colours would be guesses.
 Grouping has no home in the schema yet — the dictionary carries `position` and nothing else
 (Q19).
 
+**"Drag to reorder" above is what ADM-18 did not build, on purpose.** The list reorders with a pair
+of buttons per row. A list that can only be reordered by dragging cannot be reordered by keyboard at
+all, and §12's reader is a non-technical lawyer who may be older and working with a mouse — so the
+accessible version is the one that ships first and the drag handle is what can be layered over it
+later. The reverse order is a rewrite. The buttons are disabled at the ends rather than hidden,
+because a control that appears and disappears as rows move is harder to aim at than one that is
+plainly unavailable.
+
 ### 4.5 Template — `/services/:id/template`
 
 Upload of the source document and extraction status. Block tree: title, text, branching condition,
@@ -1555,6 +1563,16 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   migration plus every live token and a forced sign-out. Decide it before the access-control pass,
   not during — and note that the pass is the same 75 sites, so doing both at once costs one
   traversal of the riskiest area in the schema instead of two.
+
+- **Q26. What shape is a questionnaire `select` option?** The migration says only "a non-empty jsonb
+  array", and ADM-18 was the first thing that had to write one, so it chose: a flat list of strings.
+  That is a decision the screen made, not a reading of the schema, and it is worth revisiting before
+  a client ever sees a questionnaire. The reason is §6 of the DoD: a `select`'s choices are read by
+  the **client**, which makes them user-visible copy, and copy that an admin edits at runtime cannot
+  live in a build-time dictionary — practice areas carry a label column per language for exactly
+  this reason. A list of bare strings can hold one language. Nothing is blocked today, because the
+  console is staff-only and staff read Ukrainian; the cost of deciding late is a migration over live
+  questionnaires plus every answer snapshot that quoted an option by its text.
 
 **Already answered, listed so they stop being reopened**
 

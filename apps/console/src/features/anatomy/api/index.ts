@@ -11,4 +11,4 @@ import { mockAnatomyApi } from "./anatomy.mock";
 export const anatomyApi: AnatomyApi = mockAnatomyApi;
 
 export type { AnatomyApi } from "./contract";
-export type { BlockTrust, GenerationTraceView, TraceBlockView } from "./types";
+export type { BlockTrust, GenerationTraceView, LawRefView, TraceBlockView } from "./types";

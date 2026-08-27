@@ -27,11 +27,29 @@
 // imports the generated Supabase types. This package holds what the core
 // produces.
 
-export { BLOCK_TRUST, GENERATION_TRACE_KEYS, TRACE_BLOCK_KEYS } from "./trace.ts";
+export {
+  BLOCK_CONDITION_KEYS,
+  BLOCK_TRUST,
+  GENERATION_TRACE_KEYS,
+  LAW_REF_KEYS,
+  LAW_SOURCE,
+  TOOL_CALL_KEYS,
+  TOOL_OUTCOME,
+  TRACE_BLOCK_KEYS,
+} from "./trace.ts";
 export type {
+  BlockCondition,
+  BlockConditionKeysAreExhaustive,
   BlockTrust,
   GenerationTrace,
   GenerationTraceKeysAreExhaustive,
+  Instant,
+  LawRef,
+  LawRefKeysAreExhaustive,
+  LawSource,
+  ToolCall,
+  ToolCallKeysAreExhaustive,
+  ToolOutcome,
   TraceBlock,
   TraceBlockKeysAreExhaustive,
 } from "./trace.ts";

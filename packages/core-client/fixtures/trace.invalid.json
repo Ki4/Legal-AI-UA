@@ -7,7 +7,29 @@
       "value": {
         "trace_version": 1,
         "service_id": "svc-divorce",
-        "blocks": [],
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ],
         "generated_by": "core@1.0.0"
       }
     },
@@ -17,15 +39,137 @@
       "value": {
         "trace_version": 1,
         "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
         "blocks": [
           {
-            "id": "blk-header",
-            "title": "Court header",
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
             "trust": "template",
             "needs_attention": false,
-            "law_refs": [],
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
             "questionnaire_fields": [],
+            "tool_calls": [],
             "confidence": 0.9
+          }
+        ]
+      }
+    },
+    {
+      "name": "a law ref carrying its own scope, which article-or-null already decides",
+      "constraint": "additionalProperties",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z",
+            "scope": "article"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a tool call carrying its arguments, where client answers would sit",
+      "constraint": "additionalProperties",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": [
+              {
+                "tool": "retrieve_norm_text",
+                "started_at": "2026-08-26T09:41:11Z",
+                "outcome": "ok",
+                "arguments": {
+                  "applicant_name": "…"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a condition carrying a parsed syntax tree nobody has designed",
+      "constraint": "additionalProperties",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": {
+              "expression": "children is empty",
+              "field_keys": ["children"],
+              "ast": {
+                "op": "empty"
+              }
+            },
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
           }
         ]
       }
@@ -36,13 +180,125 @@
       "value": {
         "trace_version": 1,
         "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
         "blocks": [
           {
-            "id": "blk-header",
-            "title": "Court header",
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
             "trust": "template",
             "needs_attention": false,
-            "law_refs": []
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a law ref with no sentence saying what is relied on",
+      "constraint": "required",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a tool call that does not say how it ended",
+      "constraint": "required",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": [
+              {
+                "tool": "retrieve_norm_text",
+                "started_at": "2026-08-26T09:41:11Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a condition that does not say which fields it read",
+      "constraint": "required",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": {
+              "expression": "children is empty"
+            },
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
           }
         ]
       }
@@ -53,14 +309,95 @@
       "value": {
         "trace_version": 1,
         "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
         "blocks": [
           {
-            "id": "blk-header",
-            "title": "Court header",
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
             "trust": "imported",
             "needs_attention": false,
-            "law_refs": [],
-            "questionnaire_fields": []
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a law source the contract does not define",
+      "constraint": "enum",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "eur_lex",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a tool outcome that is neither ok nor error",
+      "constraint": "enum",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": [
+              {
+                "tool": "retrieve_norm_text",
+                "started_at": "2026-08-26T09:41:11Z",
+                "outcome": "timeout"
+              }
+            ]
           }
         ]
       }
@@ -71,7 +408,29 @@
       "value": {
         "trace_version": 2,
         "service_id": "svc-divorce",
-        "blocks": []
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
       }
     },
     {
@@ -80,32 +439,58 @@
       "value": {
         "trace_version": 1,
         "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
         "blocks": [
           {
-            "id": "blk-header",
-            "title": "Court header",
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
             "trust": "template",
             "needs_attention": "false",
-            "law_refs": [],
-            "questionnaire_fields": []
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
           }
         ]
       }
     },
     {
-      "name": "an empty block id, which is not a stable id",
-      "constraint": "minLength",
+      "name": "an article as a number, which loses a leading zero and 112-1 alike",
+      "constraint": "type",
       "value": {
         "trace_version": 1,
         "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": 112,
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
         "blocks": [
           {
-            "id": "",
-            "title": "Court header",
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
             "trust": "template",
             "needs_attention": false,
-            "law_refs": [],
-            "questionnaire_fields": []
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
           }
         ]
       }
@@ -116,7 +501,190 @@
       "value": {
         "trace_version": 1,
         "service_id": null,
-        "blocks": []
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "an empty block id, which is not a stable id",
+      "constraint": "minLength",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a blank relied_on, which is the field being optional by another route",
+      "constraint": "minLength",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a verification instant with an offset instead of Z",
+      "constraint": "pattern",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T09:15:00+03:00"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a tool call instant with no timezone at all",
+      "constraint": "pattern",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": null,
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": [
+              {
+                "tool": "retrieve_norm_text",
+                "started_at": "2026-08-26T09:41:11",
+                "outcome": "ok"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a condition sent as bare text rather than as the object it is",
+      "constraint": "oneOf",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "law_refs": [
+          {
+            "norm_id": "norm-family-112",
+            "source": "zakon_rada",
+            "act_id": "2947-14",
+            "act_title": "Family Code of Ukraine",
+            "article": "112",
+            "relied_on": "Grounds on which a court dissolves a marriage.",
+            "verified_at": "2026-08-20T06:15:00Z"
+          }
+        ],
+        "blocks": [
+          {
+            "id": "blk-legal-grounds",
+            "title": "Legal grounds",
+            "trust": "template",
+            "needs_attention": false,
+            "selected_by": "children is empty",
+            "law_ref_ids": ["norm-family-112"],
+            "questionnaire_fields": [],
+            "tool_calls": []
+          }
+        ]
       }
     }
   ]

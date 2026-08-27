@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://legal-ai.ua/schema/trace.schema.json",
   "title": "GenerationTrace",
-  "description": "The per-block record of what produced a generated document and why. Produced by the core, read by the lawyer review screen and by the client-facing anatomy view.",
+  "description": "The per-block record of what produced a generated document and why. Produced by the core, read by the lawyer review screen and by the client-facing anatomy view, and archived unchanged in the issued document's passport.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["trace_version", "service_id", "blocks"],
+  "required": ["trace_version", "service_id", "law_refs", "blocks"],
   "properties": {
     "trace_version": {
       "description": "The shape of this document. Incremented when a field is added or removed, so a trace archived years ago can still be read.",
@@ -15,6 +15,11 @@
       "description": "The service this document was generated for.",
       "type": "string",
       "minLength": 1
+    },
+    "law_refs": {
+      "description": "Every norm any block in this trace cites, listed once. A block cites entries here by `norm_id`.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/LawRef" }
     },
     "blocks": {
       "description": "One entry per block that entered the document, in document order.",
@@ -28,11 +33,114 @@
       "type": "string",
       "enum": ["template", "ai_generated", "lawyer_edited"]
     },
+    "LawSource": {
+      "description": "The publisher a norm was read from.",
+      "type": "string",
+      "enum": ["zakon_rada"]
+    },
+    "ToolOutcome": {
+      "description": "Whether a tool call returned a result or failed.",
+      "type": "string",
+      "enum": ["ok", "error"]
+    },
+    "Instant": {
+      "description": "An instant in UTC, ISO 8601 with a `Z` suffix and no offset. Seconds are required; milliseconds are optional.",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+    },
+    "LawRef": {
+      "description": "A norm the document rests on, as it stood when the document was generated. Both a pointer into the register and a snapshot of it: the pointer is what a live screen follows, and the snapshot is what remains readable after the register row has moved on.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "norm_id",
+        "source",
+        "act_id",
+        "act_title",
+        "article",
+        "relied_on",
+        "verified_at"
+      ],
+      "properties": {
+        "norm_id": {
+          "description": "The watched norm this cites, in the platform's register.",
+          "type": "string",
+          "minLength": 1
+        },
+        "source": { "$ref": "#/$defs/LawSource" },
+        "act_id": {
+          "description": "The act as its publisher names it, normalized: `2947-14`, `z0123-19`.",
+          "type": "string",
+          "minLength": 1
+        },
+        "act_title": {
+          "description": "The act's title, for a person to read. The identifier is not one.",
+          "type": "string",
+          "minLength": 1
+        },
+        "article": {
+          "description": "The article within the act, or null when the whole act is what is relied on.",
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "relied_on": {
+          "description": "One line on what the service leans on this norm for, written by the lawyer who attached it. This is what tells a later reader whether a change to the norm matters.",
+          "type": "string",
+          "minLength": 1
+        },
+        "verified_at": {
+          "description": "When this norm was last checked against its published text and found unchanged, as of generation time. Null when it had never been successfully verified.",
+          "oneOf": [{ "$ref": "#/$defs/Instant" }, { "type": "null" }]
+        }
+      }
+    },
+    "BlockCondition": {
+      "description": "The branching condition that selected a block, as the core evaluated it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expression", "field_keys"],
+      "properties": {
+        "expression": {
+          "description": "The condition as the template states it, rendered for a person to read.",
+          "type": "string",
+          "minLength": 1
+        },
+        "field_keys": {
+          "description": "Field keys of the answers the condition read. Keys only, never values.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "ToolCall": {
+      "description": "One call the core made while producing a block. Names what ran and how it ended; carries no arguments and no results.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "started_at", "outcome"],
+      "properties": {
+        "tool": {
+          "description": "The tool's name, as the core registers it.",
+          "type": "string",
+          "minLength": 1
+        },
+        "started_at": { "$ref": "#/$defs/Instant" },
+        "outcome": { "$ref": "#/$defs/ToolOutcome" }
+      }
+    },
     "TraceBlock": {
       "description": "One block of the generated document, and the account of what produced it.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "title", "trust", "needs_attention", "law_refs", "questionnaire_fields"],
+      "required": [
+        "id",
+        "title",
+        "trust",
+        "needs_attention",
+        "selected_by",
+        "law_ref_ids",
+        "questionnaire_fields",
+        "tool_calls"
+      ],
       "properties": {
         "id": {
           "description": "Stable across regenerations, so a re-run updates the trace rather than scrambling it.",
@@ -49,8 +157,12 @@
           "description": "The core is not confident in this block and a human should read it.",
           "type": "boolean"
         },
-        "law_refs": {
-          "description": "The norms this block implements.",
+        "selected_by": {
+          "description": "The condition that put this block in the document, or null when the block is unconditional.",
+          "oneOf": [{ "$ref": "#/$defs/BlockCondition" }, { "type": "null" }]
+        },
+        "law_ref_ids": {
+          "description": "The norms this block implements, as `norm_id` values resolving against the trace's `law_refs`.",
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
         },
@@ -58,6 +170,11 @@
           "description": "Field keys of the client answers that fed this block. Keys only, never values.",
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
+        },
+        "tool_calls": {
+          "description": "The core's calls while producing this block, in the order they started.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/ToolCall" }
         }
       }
     }

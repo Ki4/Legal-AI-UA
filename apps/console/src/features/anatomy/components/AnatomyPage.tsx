@@ -47,8 +47,14 @@ export function AnatomyPage() {
               </div>
               {block.lawRefs.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
+                  {/* `{actTitle} {article}`, the same way CadenceEditor and NormsTable
+                      render a norm — one appearance per norm across the console. An
+                      act-scoped ref has no article and is just the title. */}
                   {block.lawRefs.map((ref) => (
-                    <Citation key={ref} source={ref} />
+                    <Citation
+                      key={ref.normId}
+                      source={`${ref.actTitle} ${ref.article ?? ""}`.trimEnd()}
+                    />
                   ))}
                 </div>
               )}

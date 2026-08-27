@@ -77,51 +77,6 @@ ADM-66 in two PRs (#52, #53). `/orders` and `/orders/:id`, reading `orders`, `en
   the fallbacks guard a state the type system cannot express.
 - Seven probes across the two PRs, each reddening exactly the test written for it.
 
-## Done — the client half (2026-08-14 night → 2026-08-15)
-
-Two sittings, six PRs, and one shape: the tables that carry a client were built before any screen
-reads them, and each one holds the pseudonym rather than the person.
-
-- **ADM-62 split the anchor from the mapping.** `clients` carries a readable pseudonym and no
-  personal data at all; `client_identities` is the one place a name exists, so erasure is a delete
-  rather than a list of columns somebody has to keep correct (ADR-0010, ADR-0014). Nobody may read
-  the mapping yet, deliberately — both paths ADR-0014 names depend on something unbuilt.
-- **Q21 closed as "tenant", and it turned out to block nothing.** The question was recorded as
-  blocking ADM-63 on the premise that "tenant" meant a tenant column on every client-bearing table.
-  ADM-62 had already made `clients` the account, so `orders.client_id` is one column under either
-  answer. What the question was really protecting is the vocabulary: member roles are owner /
-  employee / read-only, never `admin | lawyer`. Membership is ADM-68 and lands with `apps/web`.
-- **ADM-69 got a backlog id of its own.** Three sections of the spec legislate an access log that no
-  row scheduled; it had been riding on ADM-6 by association, which made ADM-56 look buildable when
-  it would have shipped break-glass without the record that makes it accountable.
-- **ADM-40: the service history reads the log the triggers had been filling since 08-11.** An empty
-  result under RLS is two different answers, and the screen asks `is_assigned_to()` — the policy's
-  own predicate — to tell them apart.
-- **ADM-57: entitlements.** Four tables split by who they are about — `plans` and `plan_services`
-  are catalogue, `entitlements` and `entitlement_services` are billing and therefore administration
-  (ADR-0014). Both purchase models resolve to one relation, as §8.3 predicted, and it is one
-  primitive plus a wrapper: `entitlement_covers` asks whether a purchase reaches a service,
-  `client_is_entitled_to` is that under an `exists`. A plan deliberately has **no price row** — §8
-  names an annual subscription while recording a monthly figure, and a recurring price would have to
-  commit to a period the spec has not chosen.
-- **ADM-63: `orders`.** Pins a frozen version and refuses to be re-pointed; delivered out of review
-  or not at all, for a `lawyer_required` version and for an Art. 22 request alike; delivered against
-  the purchase it names rather than against the client's coverage, because a client holding two
-  one-off purchases is covered for both services while neither covers the other's.
-- **ADR-0019: on a client-bearing table, RLS decides who reads and a security-definer trigger
-  decides what a write may do.** The only writer holds `service_role`, which RLS does not apply to,
-  so a lifecycle in a policy is a lifecycle the writer is not subject to. And a guard running as its
-  caller cannot read `entitlements` at all — it would refuse a correct delivery citing another
-  client, while a narrowed policy on `service_versions` would leave a check comparing against null,
-  which raises nothing. A guard that sees less than the truth fails in both directions, one silently.
-- **Two dependency rows were wrong, and neither was findable by reading.** Q21's was imaginary,
-  ADM-57's named ADM-1 where it meant ADM-62. Both were settled by building the thing and seeing
-  what it needed.
-- **Two verification scenarios asserted a loud refusal and were wrong, not the migration.**
-  Withholding a grant makes a denial loud only where the table has no authorised reader inside the
-  same database role. Everywhere else the silent empty result is the design, and the answer is a
-  function that hands a screen the yes/no instead of the rows.
-
 ## Now — wave 1 (parallel, no file overlap)
 
 **Design system completion** (the design-system zone; DoD per design spec §11 for every item):
@@ -146,9 +101,9 @@ table of its own: `audit_events` is the log, and a new domain table joins it by 
 mapping in `audit_change` — which raises rather than logging a null service, so the mapping cannot
 be forgotten.
 
-**Core contract** (drafted in the PO zone, checked against the core zone — the same developer, so
-what stands in for a countersignature is that the mocks run and the schema is written down rather
-than agreed): `packages/core-client` — typed HTTP
+**Core contract** (drafted in the PO zone, countersigned by the core zone — which stops being the
+same developer when the generator gains an owner, so the contract has to be readable by somebody who
+did not write it): `packages/core-client` — typed HTTP
 contract + MSW mocks; the generation trace schema (stable block IDs, trust status,
 `needs_attention`, law/questionnaire refs, tool calls) frozen **before** the generator is
 written. The language question ADR-0004 left open is closed — the core is Python (ADR-0016) — so
@@ -177,6 +132,13 @@ console happens to own.
   (ADR-0013), and the chat primitives are specified in design spec §16 but not built. Positioning
   is answered too: one-off purchase and platform subscription, priced in UAH
   (`docs/specs/admin-console.md` §8, §8.6). The amounts themselves are still open (Q9).
+
+  **What is deferred is the platform, not the channel.** `docs/VISION.md` puts the MVP at tier 1
+  with a chat intake that orders and delivers in the same conversation — so something client-facing
+  exists before `apps/web` does, and this section read alone says it does not. What stays here is
+  the catalogue to browse, the cabinet, the provider directory: everything whose shape the proof of
+  concept might change.
+
 - **Client accounts and orders — ADM-62…68**, scoped on 2026-08-14 rather than left as the word
   "deferred": client identity and its pseudonym mapping, `orders` as the first table carrying client
   data, the answers with their provenance, the issued document and its passport, the order card, and

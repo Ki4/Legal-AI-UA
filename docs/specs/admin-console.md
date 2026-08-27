@@ -804,6 +804,16 @@ What is stored per citation is a **fingerprint of the revision**, not merely a d
 only that somebody looked; a fingerprint says whether what they looked at is still the same thing.
 That is the difference between "worth rechecking" and "this definitively changed".
 
+**And the normalized text itself is kept at every fingerprint change.** A hash detects; it does not
+reconstruct, and it cannot be run backwards. Without the text, the platform can say that the article
+under an issued document moved and never what it used to say — so the diff exists only in the second
+it is produced, and the lawyer triaging a signal six months later has the sentence in `relied_on`
+and nothing else. Keeping it also makes our own normalization rules safe to revise: a stored text
+plus its `normalizer_version` is something to recompute from, where a lone hash leaves every norm
+drifting at once with no way to tell our edit from the legislature's. The fetcher is the only thing
+that ever holds this text, which is why it is written down before the fetcher is (ADR-0020). Law is
+public, so nothing here touches §7.2 or GDPR, and a few hundred articles cost nothing to store.
+
 ### 9.8 Cadence
 
 The interval is configurable per norm, with a recommended default the platform proposes and a
@@ -1230,6 +1240,16 @@ Still without ids and still deferred: consents and the GDPR operations screen; b
 confirmed impact; notifications; payments and payouts. These wait on `apps/web` and on real orders,
 not on an unanswered product question any more.
 
+**The checklist of obligations.** A business client does not want documents, it wants to survive an
+inspection — and what it needs is a **list of what must be covered**, not a bundle of what it
+bought. The two are different objects and the gap between them is the product: "twelve of seventeen
+positions are covered, three rest on an article that moved in March" is what a subscription actually
+sells, and it is the one thing a colleague's forwarded file cannot supply. It joins the subject of a
+document (`docs/VISION.md`) at the other end — a safety briefing or a health record expires on its
+own clock, without any legislation moving — so staleness gains a second cause and, like the first, is
+derived rather than stored. Recorded without an id: the shape depends on Q24 and on whether the MVP
+reaches a business client at all.
+
 **Consultation booking.** Human-in-the-loop today means a lawyer reviewing one document. The next
 step is a client booking time with a lawyer directly — a scheduled consultation rather than a
 review of an artifact. It needs the assigned-lawyer model (already here), availability, and a
@@ -1524,6 +1544,17 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   lawyer in the loop for the other two modes.
 - **Q16. Invitations or self-registration?** ADM-34 either exists or does not.
 - **Q17. Deactivation: soft disable or account deletion?**
+- **Q25. Can one person be a lawyer and an admin at once?** Today they cannot: the role is a single
+  value in `app_metadata`, `approve_user` accepts one of two, and **75 sites** compare
+  `jwt_role()` against a literal. An admin cannot review an order — `orders_lifecycle` requires
+  `profiles.role = 'lawyer'` — and a lawyer cannot publish or price. For a firm of three, a partner
+  who both sells and practises is the normal case rather than the exception, so the model as it
+  stands describes a larger firm than this one. The fix is mechanical and large: roles become a set,
+  `jwt_role()` becomes `has_role()`, and every verification scenario is re-run in both directions.
+  It is cheapest while there is one user and almost no data; a year from now it is the same
+  migration plus every live token and a forced sign-out. Decide it before the access-control pass,
+  not during — and note that the pass is the same 75 sites, so doing both at once costs one
+  traversal of the riskiest area in the schema instead of two.
 
 **Already answered, listed so they stop being reopened**
 

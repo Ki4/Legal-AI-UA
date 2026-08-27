@@ -48,13 +48,21 @@ Six conventions, all enforced in the reference:
 4. **No Supabase type crosses the boundary.** No `PostgrestError`, no Postgres error codes in a
    component.
 5. **A mutation returns the updated entity**, so the caller refreshes without a second round trip.
-6. **Shared domain vocabulary lives in `packages/db`; view models live in the feature.**
+6. **Shared domain vocabulary lives in the package that owns the value; view models live in the
+   feature.** `packages/db` for what Postgres produces — `ServiceStatus`, `GenerationMode`,
+   `ReviewMode`. `packages/core-client` for what the AI core produces — `BlockTrust`, and the
+   generation trace it belongs to (ADR-0021 §5). A feature re-exports the word from its own
+   `api/types.ts` either way, so a component imports `../api` and never learns which package it
+   came from; that is what made moving the trace between the two a one-file diff.
 
-**Rows are snake_case, view models are camelCase.** Row types in `packages/db` are generated from
-the schema (`pnpm db:types`), so they carry Postgres's naming; a view model carries the shape a
-screen renders. Mapping between the two is what the `api/` layer is _for_ — that is why
-regenerating types cannot reach a component. If you find yourself wanting a camelCase row, you are
-about to put the mapping in the wrong place.
+**Wire shapes are snake_case, view models are camelCase**, and there are now two wires. Row types
+in `packages/db` are generated from the schema (`pnpm db:types`), so they carry Postgres's naming.
+The trace in `packages/core-client` is snake_case for a different reason — a Python service writes
+it and a Deno gateway relays it (ADR-0021 §6) — and arrives at the same place: a view model carries
+the shape a screen renders, and mapping between the two is what the `api/` layer is _for_. That is
+why neither regenerating types nor a core release can reach a component. If you find yourself
+wanting a camelCase row, or a camelCase trace, you are about to put the mapping in the wrong
+place.
 
 Nothing is left to migrate: every feature, `anatomy` included, reaches its data through this layer.
 `anatomy` was the cheap half — it renders a hardcoded trace and has no queries at all — which is

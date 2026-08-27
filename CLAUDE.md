@@ -20,6 +20,8 @@ Read this before any change. Zone files add detail; this file is the map.
   the test that compares the two — see `docs/adr/0021-core-contract-is-json-schema-with-bridge-tests.md`,
   which also records why the drift argument that looks sufficient is not. Dependency-free at
   runtime, like `packages/law-refs` and for the same reason: the Deno gateway will import it.
+  `features/anatomy` is its first consumer — it renders a trace these types describe, through a
+  mapper in its own `api/`, so the console meets the core's shape before the core exists.
 - `packages/ui` — the design system (the design-system zone). Console features consume
   it; it never imports from `apps/*`.
 - `packages/db` — mock data + shared types, standing in for Supabase queries until wired.

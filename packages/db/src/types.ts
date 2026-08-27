@@ -202,23 +202,8 @@ export type ProfileRow = Tables["profiles"]["Row"];
 
 export type { Database } from "./database.types";
 
-// The generation trace is not a table — it crosses the gateway from the core
-// (ADR-0004) and is versioned by its own `traceVersion`, so it stays
-// hand-written here.
-
-export type BlockTrust = "template" | "ai_generated" | "lawyer_edited";
-
-export interface TraceBlock {
-  id: string;
-  title: string;
-  trust: BlockTrust;
-  needsAttention: boolean;
-  lawRefs: string[];
-  questionnaireFields: string[];
-}
-
-export interface GenerationTrace {
-  traceVersion: 1;
-  serviceId: string;
-  blocks: TraceBlock[];
-}
+// The generation trace used to live here, hand-written, under a comment
+// admitting it was not a table. It is now `@legal-ai/core-client`, where the
+// authority is `schema/trace.schema.json` rather than this file (ADR-0021 §5:
+// this package holds what Postgres produces, that one holds what the core
+// produces). It is snake_case there, because that is what is on the wire.

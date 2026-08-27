@@ -54,7 +54,9 @@ a feature so isolated that nothing points at it is isolated from its readers too
       and reports no error.
 - [ ] No Supabase type crosses the boundary.
 - [ ] Mutations return the updated entity.
-- [ ] Domain vocabulary in `packages/db`; view models in the feature.
+- [ ] Domain vocabulary in the package that owns the value — `packages/db` for what Postgres
+      produces, `packages/core-client` for what the AI core produces (ADR-0021 §5) — and view
+      models in the feature, re-exporting the word so no component knows which package it is from.
 
 ## 4. Screen states
 

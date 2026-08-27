@@ -50,6 +50,9 @@ importers:
 
   apps/console:
     dependencies:
+      '@legal-ai/core-client':
+        specifier: workspace:*
+        version: link:../../packages/core-client
       '@legal-ai/db':
         specifier: workspace:*
         version: link:../../packages/db

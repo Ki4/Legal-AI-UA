@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@legal-ai/core-client": "workspace:*",
     "@legal-ai/db": "workspace:*",
     "@legal-ai/i18n": "workspace:*",
     "@legal-ai/law-refs": "workspace:*",

@@ -122,12 +122,19 @@ be forgotten.
 
 **Core contract** (drafted in the PO zone, countersigned by the core zone — which stops being the
 same developer when the generator gains an owner, so the contract has to be readable by somebody who
-did not write it): `packages/core-client` — typed HTTP
-contract + MSW mocks; the generation trace schema (stable block IDs, trust status,
-`needs_attention`, law/questionnaire refs, tool calls) frozen **before** the generator is
-written. The language question ADR-0004 left open is closed — the core is Python (ADR-0016) — so
-the trace schema is written as a schema both sides conform to, not as a TypeScript type the
-console happens to own.
+did not write it): `packages/core-client` — the contract, and the generation trace schema (stable
+block IDs, trust status, `needs_attention`, law/questionnaire refs, tool calls) frozen **before**
+the generator is written. The language question ADR-0004 left open is closed — the core is Python
+(ADR-0016) — so the trace schema is written as a schema both sides conform to, not as a TypeScript
+type the console happens to own.
+
+**ADR-0021 settles the rest**, which ADR-0016 had deferred to this item: plain JSON Schema 2020-12
+rather than OpenAPI, TypeScript hand-written rather than generated, and drift closed by bridge
+constants compared against the schema in a test. It also overrules the "MSW mocks" wording above —
+there is no HTTP client to intercept until the gateway (ADM-5), so the package ships a `CoreClient`
+interface and a fixture implementation instead. The package skeleton, the trace schema at its
+existing shape and the drift mechanism have landed; the frozen field list, the job protocol and the
+console wiring are the remaining passes.
 
 ## Next — wave 2
 

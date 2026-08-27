@@ -1,0 +1,14 @@
+{
+  "extends": "../config/tsconfig.base.json",
+  "compilerOptions": {
+    // Same reason as packages/law-refs: the Deno edge-function gateway (ADR-0004,
+    // ADR-0020) will import this package's source unchanged, and Deno resolves
+    // nothing implicitly. See src/index.ts.
+    "allowImportingTsExtensions": true,
+    // The schema and fixture JSON are read with `readFileSync` from the test,
+    // never imported, so that no `.json` import lands on `index.ts`'s graph
+    // (ADR-0021, section 8). That needs the Node types; nothing in `src` does.
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

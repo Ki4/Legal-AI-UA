@@ -1,18 +1,24 @@
 import {
   Badge,
   Button,
+  Checkbox,
   Citation,
   Confidence,
+  ConfirmModal,
+  Dialog,
   EmptyState,
   FormField,
   Input,
   Provenance,
+  RadioGroup,
   Select,
   Spinner,
+  Switch,
   Table,
   TableCell,
   TableHead,
   TableRow,
+  useConfirm,
   type ProvenanceState,
 } from "@legal-ai/ui";
 import { AlertCircle, FileX2 } from "lucide-react";
@@ -82,6 +88,14 @@ export function DesignKitPage() {
   const [demoValue, setDemoValue] = useState("");
   const [demoTouched, setDemoTouched] = useState(false);
   const [demoLawyer, setDemoLawyer] = useState("");
+  const [demoRequired, setDemoRequired] = useState(true);
+  const [demoPersonal, setDemoPersonal] = useState(false);
+  const [demoBasis, setDemoBasis] = useState<string | null>(null);
+  const [demoPaused, setDemoPaused] = useState(false);
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+  const [demoConfirmOpen, setDemoConfirmOpen] = useState(false);
+  const [lastAnswer, setLastAnswer] = useState<string | null>(null);
+  const { confirm, confirmation } = useConfirm();
 
   const demoError = demoTouched && demoValue.trim() === "" ? "This field is required" : undefined;
 
@@ -255,6 +269,152 @@ export function DesignKitPage() {
             Error state pairs an icon with the message — color is never the only signal.
           </p>
         </div>
+      </Section>
+
+      <Section
+        title="Checkbox · Radio · Switch"
+        description="Form controls to match FormField. The label names the control; a second line is a description, not part of the name — nested inside the label a screen reader would read the whole paragraph on every focus."
+      >
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-1">
+            <Checkbox
+              label="Required"
+              description="The client cannot submit the questionnaire without it."
+              checked={demoRequired}
+              onChange={(event) => setDemoRequired(event.target.checked)}
+            />
+            <Checkbox
+              label="Personal data"
+              description="Forces a legal basis and a retention period — the constraint is in the schema, not only here."
+              checked={demoPersonal}
+              onChange={(event) => setDemoPersonal(event.target.checked)}
+            />
+            <Checkbox
+              label="All fields"
+              indeterminate
+              description="Indeterminate: the children disagree."
+            />
+            <Checkbox label="Locked by a published version" disabled />
+            <Checkbox
+              label="Personal data"
+              invalid
+              description="Invalid — the border is not the only signal."
+            />
+          </div>
+          <div className="space-y-6">
+            <RadioGroup
+              name="design-kit-basis"
+              legend="Legal basis"
+              hint="A radio group, not a select: the options differ in a way the person has to read."
+              options={[
+                {
+                  value: "consent",
+                  label: "Consent",
+                  description: "Given by the client, and withdrawable.",
+                },
+                {
+                  value: "contract",
+                  label: "Contract",
+                  description: "Needed to perform the service they ordered.",
+                },
+                {
+                  value: "legal_obligation",
+                  label: "Legal obligation",
+                  description: "Required of us by law.",
+                },
+              ]}
+              value={demoBasis}
+              onValueChange={setDemoBasis}
+            />
+            <RadioGroup
+              name="design-kit-basis-error"
+              legend="Legal basis"
+              error="Personal data without a basis is not a field, it is a liability."
+              options={[
+                { value: "consent", label: "Consent" },
+                { value: "contract", label: "Contract" },
+              ]}
+              value={null}
+              onValueChange={() => undefined}
+            />
+            <div className="border-t border-line pt-2">
+              <Switch
+                label="Pause the service"
+                description="A switch acts the moment it moves. A value a Save button writes is a checkbox."
+                checked={demoPaused}
+                onChange={(event) => setDemoPaused(event.target.checked)}
+              />
+              <Switch label="Auto-recheck weekly" disabled description="Disabled." />
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        title="Dialog · ConfirmModal"
+        description="A native <dialog> opened with showModal(): focus is trapped, Esc closes, the page behind is inert and no z-index can land on top. A click on the backdrop is deliberately not an answer."
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="secondary" onClick={() => setDemoDialogOpen(true)}>
+            Open a dialog
+          </Button>
+          <Button variant="secondary" onClick={() => setDemoConfirmOpen(true)}>
+            Open a confirmation
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void confirm({
+                title: "Delete “marriage_date”?",
+                description:
+                  "Two template blocks reference this field. Deleting it leaves them blank.",
+                confirmLabel: "Delete field",
+                cancelLabel: "Keep it",
+                tone: "danger",
+              }).then((answer) => setLastAnswer(answer ? "confirmed" : "cancelled"));
+            }}
+          >
+            Ask with useConfirm()
+          </Button>
+          {lastAnswer !== null && (
+            <span className="text-xs text-inkMute">
+              useConfirm() resolved <span className="font-mono text-brand">{lastAnswer}</span>
+            </span>
+          )}
+        </div>
+
+        <Dialog
+          open={demoDialogOpen}
+          onClose={() => setDemoDialogOpen(false)}
+          title="Publish version 3"
+          description="Published versions are frozen: blocks and field references stop being editable."
+          closeLabel="Close"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setDemoDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => setDemoDialogOpen(false)}>Publish</Button>
+            </>
+          }
+        >
+          <p>
+            Anything can live in the body — a diff, a form, a list of what a change touches. Tab
+            around: focus does not leave until the dialog does.
+          </p>
+        </Dialog>
+
+        <ConfirmModal
+          open={demoConfirmOpen}
+          title="Pause “Divorce application”?"
+          description="It comes off sale immediately. Orders already placed are unaffected."
+          confirmLabel="Pause the service"
+          cancelLabel="Leave it on sale"
+          tone="danger"
+          onConfirm={() => setDemoConfirmOpen(false)}
+          onCancel={() => setDemoConfirmOpen(false)}
+        />
+        {confirmation}
       </Section>
 
       <Section title="Spinner" description="Inline pending state — Lucide Loader2 in text-inkMute.">

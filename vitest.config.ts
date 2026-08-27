@@ -42,7 +42,13 @@ export default defineConfig({
           // tests of its own brings its setup file into this array — the glob
           // above already collects it, which is the half that would otherwise
           // be forgotten.
-          setupFiles: ["./apps/console/src/test/setup.ts"],
+          setupFiles: [
+            "./apps/console/src/test/setup.ts",
+            // Not a package's setup so much as a capability jsdom is missing —
+            // `<dialog>` has no methods there. See the file for what it does and
+            // does not restore.
+            "./packages/ui/src/test/jsdom-dialog.ts",
+          ],
           // `apps/console/src/app/supabase.ts` throws on import when these are
           // absent, and every screen reaches it through `useAuth`. The values
           // are the local sandbox's on purpose: a test that somehow does issue a

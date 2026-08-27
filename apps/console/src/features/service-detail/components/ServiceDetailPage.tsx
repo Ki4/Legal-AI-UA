@@ -107,6 +107,9 @@ export function ServiceDetailPage() {
       {/* Links, not imports: the two screens behind them are separate features
           and stay that way (DoD §1). What crosses here is a URL. */}
       <div className="flex gap-4">
+        <Link to={`/services/${service.id}/fields`} className="text-brand hover:underline">
+          {t("card.fields")}
+        </Link>
         <Link to={`/services/${service.id}/anatomy`} className="text-brand hover:underline">
           {t("card.anatomy")}
         </Link>

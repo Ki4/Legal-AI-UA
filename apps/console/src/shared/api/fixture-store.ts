@@ -21,6 +21,7 @@ import {
   mockOrders,
   mockPracticeAreas,
   mockProfiles,
+  mockQuestionnaireFields,
   mockServiceAssignments,
   mockServiceLawRefs,
   mockServices,
@@ -35,6 +36,7 @@ import type {
   OrderRow,
   PracticeAreaRow,
   ProfileRow,
+  QuestionnaireFieldRow,
   ServiceAssignmentRow,
   ServiceLawRefRow,
   ServiceRow,
@@ -79,6 +81,12 @@ export const orderEventRows: AuditEventRow[] = mockOrderEvents.map((row) => ({ .
 // afterwards; Vitest isolates files from each other and not within one (DoD §8).
 export const lawNormRows: LawNormRow[] = mockLawNorms.map((row) => ({ ...row }));
 export const serviceLawRefRows: ServiceLawRefRow[] = mockServiceLawRefs.map((row) => ({ ...row }));
+// `options` is jsonb, so the shallow copy every other row gets would share the
+// array with the module-level fixture — and a test that edits one service's
+// choices would edit the constant every other test starts from.
+export const questionnaireFieldRows: QuestionnaireFieldRow[] = mockQuestionnaireFields.map(
+  (row) => ({ ...row, options: Array.isArray(row.options) ? [...row.options] : row.options }),
+);
 
 /**
  * The reference row a service points at. Null when the code resolves to

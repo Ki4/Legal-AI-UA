@@ -28,6 +28,13 @@
 -- The counts are scoped to this script's own fixtures — every one uses the
 -- `00000000-` prefix — because a script that assumes an empty baseline fails on
 -- the seed rather than on the schema.
+--
+-- The **act ids are synthetic for the same reason, and that lesson cost a run.**
+-- `law_norms_watched_once` is unique on (source, act_id, article) and knows
+-- nothing about an id prefix, so fixtures citing a real article of a real code
+-- collided the day `seed.sql` gained norms — the script died loading its
+-- fixtures, before a single scenario. An id prefix scopes the counting; only a
+-- value nothing else would ever use scopes the uniqueness.
 
 \set ON_ERROR_STOP on
 \set QUIET on
@@ -72,7 +79,7 @@ insert into public.service_versions (id, service_id, version, status, generation
 
 -- Article 105 of the Family Code, watched by the service on sale.
 insert into public.law_norms (id, source, act_id, act_title, article, source_url, canonical_url) values
-  ('00000000-0000-0000-0000-0000000fc001', 'zakon_rada', '2947-14', 'Сімейний кодекс України', '105',
+  ('00000000-0000-0000-0000-0000000fc001', 'zakon_rada', 'test-0001', 'Тестовий кодекс А', '105',
    'https://zakon.rada.gov.ua/laws/show/2947-14/ed20240101#n800',
    'https://zakon.rada.gov.ua/laws/show/2947-14');
 
@@ -91,7 +98,7 @@ begin
   ------------------------------------------------- 1. one norm, one row
   begin
     insert into public.law_norms (source, act_id, act_title, article, source_url, canonical_url)
-    values ('zakon_rada', '2947-14', 'Сімейний кодекс України', '105',
+    values ('zakon_rada', 'test-0001', 'Тестовий кодекс А', '105',
             'https://zakon.rada.gov.ua/laws/show/2947-14',
             'https://zakon.rada.gov.ua/laws/show/2947-14');
     raise notice 'FAIL 1. one article was entered into the register twice (§9.3)';
@@ -102,13 +109,13 @@ begin
   ---------------------- 1b. and the act-scoped pair, where article is null on both
   insert into public.law_norms (source, act_id, act_title, scope, act_scope_reason,
                                 source_url, canonical_url)
-  values ('zakon_rada', '435-15', 'Цивільний кодекс України', 'act',
+  values ('zakon_rada', 'test-0002', 'Тестовий кодекс Б', 'act',
           'the block rests on the act as a whole', 'https://zakon.rada.gov.ua/laws/show/435-15',
           'https://zakon.rada.gov.ua/laws/show/435-15');
   begin
     insert into public.law_norms (source, act_id, act_title, scope, act_scope_reason,
                                   source_url, canonical_url)
-    values ('zakon_rada', '435-15', 'Цивільний кодекс України', 'act',
+    values ('zakon_rada', 'test-0002', 'Тестовий кодекс Б', 'act',
             'a second opinion about the same act', 'https://zakon.rada.gov.ua/laws/show/435-15',
             'https://zakon.rada.gov.ua/laws/show/435-15');
     raise notice 'FAIL 1b. two act-level rows for one act — `nulls not distinct` is not doing its job';
@@ -118,12 +125,12 @@ begin
 
   ------------------------------ 1c. a different article of the same act is a norm
   insert into public.law_norms (id, source, act_id, act_title, article, source_url, canonical_url)
-  values ('00000000-0000-0000-0000-0000000fc002', 'zakon_rada', '2947-14',
-          'Сімейний кодекс України', '112',
+  values ('00000000-0000-0000-0000-0000000fc002', 'zakon_rada', 'test-0001',
+          'Тестовий кодекс А', '112',
           'https://zakon.rada.gov.ua/laws/show/2947-14',
           'https://zakon.rada.gov.ua/laws/show/2947-14');
   select count(*) into n from public.law_norms
-  where act_id = '2947-14' and id::text like '00000000-%';
+  where act_id = 'test-0001' and id::text like '00000000-%';
   raise notice '% 1c. two articles of one act are two norms (%)',
     case when n = 2 then 'PASS' else 'FAIL' end, n;
 
@@ -411,7 +418,7 @@ begin
 
   --------------------------------- 23. the assigned lawyer may
   set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000f001b","app_metadata":{"role":"lawyer"}}';
-  update public.law_norms set act_title = 'Сімейний кодекс України (ред.)'
+  update public.law_norms set act_title = 'Тестовий кодекс А (ред.)'
   where id = '00000000-0000-0000-0000-0000000fc001';
   get diagnostics n = row_count;
   raise notice '% 23. a lawyer assigned to a service depending on the norm may edit it (% rows)',

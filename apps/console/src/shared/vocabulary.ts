@@ -20,7 +20,10 @@ import type {
   LawNormState,
   LawSource,
   OrderStatus,
+  PersonalDataBasis,
+  QuestionnaireFieldType,
   ReviewMode,
+  SpecialCategoryBasis,
   ServiceStatus,
 } from "@legal-ai/db";
 import type { TranslationKey } from "@legal-ai/i18n";
@@ -120,4 +123,53 @@ export const orderStatusKey: Record<OrderStatus, TranslationKey> = {
   delivered: "order.status.delivered",
   cancelled: "order.status.cancelled",
   abandoned: "order.status.abandoned",
+};
+
+/**
+ * What a questionnaire field asks for (§4.4). A real enum, so a type added to
+ * `questionnaire_field_type` in a migration fails to compile here until it also
+ * has a word — which matters on this one because the type decides whether the
+ * field carries options at all.
+ */
+export const fieldTypeKey: Record<QuestionnaireFieldType, TranslationKey> = {
+  text: "field.type.text",
+  long_text: "field.type.long_text",
+  number: "field.type.number",
+  date: "field.type.date",
+  boolean: "field.type.boolean",
+  select: "field.type.select",
+  multi_select: "field.type.multi_select",
+};
+
+/**
+ * GDPR Art. 6(1)(a)-(f), by name rather than by letter — the migration made the
+ * same choice for the same reason: `contract` survives being read in two years,
+ * `(b)` does not. A lawyer picks from these, so the word on screen has to be the
+ * one they would say out loud.
+ */
+export const personalDataBasisKey: Record<PersonalDataBasis, TranslationKey> = {
+  consent: "gdpr.basis.consent",
+  contract: "gdpr.basis.contract",
+  legal_obligation: "gdpr.basis.legal_obligation",
+  vital_interests: "gdpr.basis.vital_interests",
+  public_task: "gdpr.basis.public_task",
+  legitimate_interests: "gdpr.basis.legitimate_interests",
+};
+
+/**
+ * GDPR Art. 9(2)(a)-(j). A separate statement from the Art. 6 basis above and
+ * never a replacement for it (ADR-0013), which is why there are two maps and not
+ * one with ten more entries.
+ */
+export const specialCategoryBasisKey: Record<SpecialCategoryBasis, TranslationKey> = {
+  explicit_consent: "gdpr.specialBasis.explicit_consent",
+  employment_social_security: "gdpr.specialBasis.employment_social_security",
+  vital_interests: "gdpr.specialBasis.vital_interests",
+  not_for_profit_body: "gdpr.specialBasis.not_for_profit_body",
+  made_public_by_subject: "gdpr.specialBasis.made_public_by_subject",
+  legal_claims: "gdpr.specialBasis.legal_claims",
+  substantial_public_interest: "gdpr.specialBasis.substantial_public_interest",
+  health_care: "gdpr.specialBasis.health_care",
+  public_health: "gdpr.specialBasis.public_health",
+  archiving_research: "gdpr.specialBasis.archiving_research",
 };

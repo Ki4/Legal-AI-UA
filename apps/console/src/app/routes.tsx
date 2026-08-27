@@ -5,6 +5,7 @@ import { ordersRoutes } from "../features/orders";
 import { designKitRoutes } from "../features/design-kit";
 import { lawRoutes } from "../features/law";
 import { serviceDetailRoutes } from "../features/service-detail";
+import { serviceFieldsRoutes } from "../features/service-fields";
 import { serviceHistoryRoutes } from "../features/service-history";
 import { servicesRoutes } from "../features/services";
 import { teamRoutes } from "../features/team";
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/services" replace /> },
       ...servicesRoutes,
       ...serviceDetailRoutes,
+      ...serviceFieldsRoutes,
       ...serviceHistoryRoutes,
       ...ordersRoutes,
       ...lawRoutes,

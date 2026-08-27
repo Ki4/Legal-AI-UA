@@ -10,6 +10,28 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the field dictionary (2026-08-27)
+
+**ADM-18 and ADM-19** — `/services/:id/fields`, the questionnaire a service asks a client and what
+the platform may do with each answer. Four things worth carrying forward:
+
+- **The union beat the nullable columns.** `questionnaire_fields_gdpr_triad` refuses a row whose
+  personal-data flag is set and whose basis or retention is missing. Modelled as five nullable
+  fields, the screen can hold every state Postgres rejects and finds out on save; modelled as three
+  shapes, those states cannot be constructed. The half-filled form keeps its own draft type, and one
+  function is the door between them.
+- **Five primitives landed first, and that was the cheaper order.** Checkbox, Radio + RadioGroup,
+  Switch, Dialog, ConfirmModal + `useConfirm()`. The DoD already said a missing primitive is
+  design-system work rather than a local one-off; this is the first time the bill was paid rather
+  than deferred, and ADM-10's missing dropdown is what deferring looks like.
+- **Two departures from §4.4, both written into the spec.** Reordering is buttons, not drag — a list
+  reorderable only by dragging is not reorderable by keyboard at all. The field map is absent; it
+  needs ADM-20's block ↔ field links, and without them its three colours would be guesses.
+- **The seed and the verification scripts were coupled and nothing said so.** `law_norms_watched_once`
+  is unique on (source, act_id, article) and knows nothing about an id prefix, so `verify_law_refs.sql`
+  died loading its fixtures the moment `seed.sql` gained real norms. Fixtures now use synthetic act
+  ids. `pnpm verify:sql` is what found it; CI would have too, on the PR.
+
 ## Done — the norm register (2026-08-15)
 
 ADM-21 in one PR (#54), with the offline halves of ADM-41 and ADM-43. §8 has sold a promise about
@@ -83,9 +105,13 @@ ADM-66 in two PRs (#52, #53). `/orders` and `/orders/:id`, reading `orders`, `en
 
 1. ~~Select~~ (shipped — native, deliberately: the popover a custom listbox needs is item 2, and
    building it as a side effect of wanting a dropdown is how a shared primitive ends up shaped by
-   the first screen that needed one) · Checkbox · Radio · Switch (form controls to match FormField).
+   the first screen that needed one) · ~~Checkbox · Radio · Switch~~ (shipped with ADM-18, which is
+   what needed them — the DoD's rule about stopping to build the primitive rather than inlining it,
+   paid for the first time).
 2. Popover infrastructure → Tooltip · DropdownMenu; then Citation gains its §8.3 popover.
-3. Dialog · Sheet · ConfirmModal + `useConfirm()`.
+3. ~~Dialog~~ · Sheet · ~~ConfirmModal + `useConfirm()`~~ — shipped on the native `<dialog>`, which
+   brings the focus trap, Esc and the top layer with it and needs no popover infrastructure, so this
+   item did not wait for item 2. Sheet remains.
 4. Toast · Alert · ProgressBar (first animated components — must land with the
    `prefers-reduced-motion` behavior intact).
 5. Tabs · Accordion · Pagination · table sorting.
@@ -121,8 +147,8 @@ console happens to own.
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
   into a claim the firm makes about a person, with a retention question attached.
-- Component tests for the screens that do not have one. The environment exists and the catalogue is
-  covered (see below); every other screen's rendering is still a claim somebody made by looking.
+- Component tests for the screens that do not have one. Seven of twelve are covered; the five
+  without are `AccountPage`, `AnatomyPage`, `DesignKitPage`, `ServiceDetailPage` and `TeamPage`.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.
 - Core: LangGraph pipeline behind the frozen contract (the core zone).
 

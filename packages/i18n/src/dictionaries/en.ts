@@ -401,6 +401,133 @@ export const en: Dictionary = {
     "A reference is added by an admin, or by a lawyer assigned to this service.",
   "serviceLaw.add.error.network": "Could not reach the server. The entry was not added.",
   "serviceLaw.add.error.save": "Could not add the reference.",
+  // Questionnaire fields — §4.4 ------------------------------------------------
+  "card.fields": "Questionnaire fields",
+  "serviceFields.title": "Questionnaire fields",
+  "serviceFields.subtitle":
+    "What the service asks a client. The key is immutable — template blocks reference it.",
+  "serviceFields.backToService": "Back to the service",
+  "serviceFields.loading": "Loading the fields",
+  "serviceFields.empty.title": "The questionnaire is empty",
+  "serviceFields.empty.hint": "Add the first field — this is what the template will reference.",
+  "serviceFields.failed.title": "The fields did not load",
+  "serviceFields.failed.hint":
+    "This does not mean the questionnaire is empty — the request never arrived.",
+  "serviceFields.notFound.title": "No such service",
+  "serviceFields.notFound.hint":
+    "Check the address. The service may have been deleted, or may not be yours.",
+  "serviceFields.error.load": "Could not load the questionnaire fields.",
+  "serviceFields.error.forbidden": "Questionnaires are read by the firm's staff only.",
+  "serviceFields.error.network": "Could not reach the server. Check your connection and try again.",
+
+  "serviceFields.column.field": "Field",
+  "serviceFields.column.type": "Type",
+  "serviceFields.column.gdpr": "Data protection",
+  "serviceFields.column.order": "Order",
+  "serviceFields.column.actions": "Actions",
+  "serviceFields.required": "Required",
+  "serviceFields.optional": "Optional",
+  "serviceFields.personalData": "Personal data",
+  "serviceFields.specialCategory": "Special category",
+  "serviceFields.noPersonalData": "Not personal",
+  "serviceFields.moveUp": "Move up",
+  "serviceFields.moveDown": "Move down",
+  "serviceFields.edit": "Edit",
+  "serviceFields.delete": "Delete",
+  "serviceFields.add": "Add a field",
+  "serviceFields.moving": "Reordering",
+  "serviceFields.move.error": "Could not change the order.",
+
+  "serviceFields.delete.title": "Delete the field “{label}”?",
+  "serviceFields.delete.description":
+    "Template blocks referencing this key will be left without a value. The key is not freed — a published version still references it.",
+  "serviceFields.delete.confirm": "Delete field",
+  "serviceFields.delete.cancel": "Keep it",
+  "serviceFields.delete.error": "Could not delete the field.",
+  "serviceFields.delete.forbidden":
+    "The questionnaire is edited by an admin or this service's lawyer.",
+
+  "serviceFields.editor.createTitle": "New field",
+  "serviceFields.editor.editTitle": "Field “{label}”",
+  "serviceFields.editor.close": "Close",
+  "serviceFields.editor.save": "Save",
+  "serviceFields.editor.saving": "Saving",
+  "serviceFields.editor.cancel": "Cancel",
+  "serviceFields.editor.key": "Key",
+  "serviceFields.editor.keyHint": "Lowercase letters, digits and underscores: applicant_name.",
+  "serviceFields.editor.keyImmutable":
+    "The key never changes: blocks and frozen template versions reference it. Change the label instead.",
+  "serviceFields.editor.label": "Label the client sees",
+  "serviceFields.editor.labelHint": "What a person reads above the input.",
+  "serviceFields.editor.helpText": "Help text",
+  "serviceFields.editor.helpTextHint": "Optional. One line under the input.",
+  "serviceFields.editor.type": "Type",
+  "serviceFields.editor.required": "Required field",
+  "serviceFields.editor.requiredHint": "The client cannot submit the questionnaire without it.",
+  "serviceFields.editor.options": "Choices",
+  "serviceFields.editor.optionsHint": "At least one choice is needed.",
+  "serviceFields.editor.optionAdd": "Add a choice",
+  "serviceFields.editor.optionRemove": "Remove the choice",
+  "serviceFields.editor.optionPlaceholder": "Choice",
+  "serviceFields.editor.gdprSection": "Personal data",
+  "serviceFields.editor.personalData": "This is personal data",
+  "serviceFields.editor.personalDataHint":
+    "Then a basis and a retention period are required — the field will not save without both.",
+  "serviceFields.editor.basis": "Legal basis (GDPR Art. 6)",
+  "serviceFields.editor.retention": "Retention, days",
+  "serviceFields.editor.retentionHint": "A whole number of days, greater than zero.",
+  "serviceFields.editor.specialCategory": "Special category (GDPR Art. 9)",
+  "serviceFields.editor.specialCategoryHint":
+    "Health, religion, criminal matters. An addition to the basis above, never a replacement for it.",
+  "serviceFields.editor.specialBasis": "Art. 9(2) basis",
+
+  "serviceFields.reject.key_shape":
+    "A key starts with a lowercase letter and holds only letters, digits and underscores.",
+  "serviceFields.reject.key_taken": "This service already has a field with that key.",
+  "serviceFields.reject.label_empty": "Write the label the client will read.",
+  "serviceFields.reject.missing_basis": "Choose a legal basis.",
+  "serviceFields.reject.missing_retention": "State a retention period.",
+  "serviceFields.reject.retention_not_positive":
+    "Retention is a whole number of days, greater than zero.",
+  "serviceFields.reject.missing_special_basis": "Choose an Art. 9(2) basis.",
+  "serviceFields.reject.options_required": "Add at least one choice.",
+  "serviceFields.reject.options_not_allowed": "Only a choice field carries choices.",
+  "serviceFields.save.error.save": "Could not save the field.",
+  "serviceFields.save.error.validation": "Not saved: the record does not satisfy the rules.",
+  "serviceFields.save.error.forbidden":
+    "The questionnaire is edited by an admin or this service's lawyer.",
+  "serviceFields.save.error.conflict": "Someone changed this field first. Reload the page.",
+  "serviceFields.save.error.network":
+    "Could not reach the server. Check your connection and try again.",
+
+  // Field types — a schema enum, so they go through vocabulary.ts
+  "field.type.text": "Line",
+  "field.type.long_text": "Text",
+  "field.type.number": "Number",
+  "field.type.date": "Date",
+  "field.type.boolean": "Yes or no",
+  "field.type.select": "One of several",
+  "field.type.multi_select": "Several of several",
+
+  // GDPR Art. 6(1) bases — named rather than lettered
+  "gdpr.basis.consent": "Consent",
+  "gdpr.basis.contract": "Performance of a contract",
+  "gdpr.basis.legal_obligation": "Legal obligation",
+  "gdpr.basis.vital_interests": "Vital interests",
+  "gdpr.basis.public_task": "Public task",
+  "gdpr.basis.legitimate_interests": "Legitimate interests",
+
+  // GDPR Art. 9(2) bases
+  "gdpr.specialBasis.explicit_consent": "Explicit consent",
+  "gdpr.specialBasis.employment_social_security": "Employment and social security",
+  "gdpr.specialBasis.vital_interests": "Vital interests",
+  "gdpr.specialBasis.not_for_profit_body": "Not-for-profit body",
+  "gdpr.specialBasis.made_public_by_subject": "Made public by the subject",
+  "gdpr.specialBasis.legal_claims": "Legal claims",
+  "gdpr.specialBasis.substantial_public_interest": "Substantial public interest",
+  "gdpr.specialBasis.health_care": "Health care",
+  "gdpr.specialBasis.public_health": "Public health",
+  "gdpr.specialBasis.archiving_research": "Archiving and research",
 };
 
 /**
@@ -436,5 +563,17 @@ export const enPlurals: PluralDictionary = {
   "law.cadence.everyDays": {
     one: "every day",
     other: "every {count} days",
+  },
+  "serviceFields.count": {
+    one: "{count} field",
+    other: "{count} fields",
+  },
+  "serviceFields.retentionDays": {
+    one: "kept for {count} day",
+    other: "kept for {count} days",
+  },
+  "serviceFields.optionsCount": {
+    one: "{count} choice",
+    other: "{count} choices",
   },
 };

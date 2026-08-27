@@ -222,3 +222,165 @@ set instance_id = '00000000-0000-0000-0000-000000000000',
   phone_change_token = '',
   reauthentication_token = ''
 where id = '10000000-0000-0000-0000-000000000001';
+
+-- Law norm register (ADM-46). The register was the one screen a fresh sandbox
+-- could not demonstrate: the tables ship empty, so `/law` rendered its empty
+-- state and the two badges §9.10 exists for were never both on screen.
+--
+-- Timestamps are relative to `now()` rather than fixed dates, because freshness
+-- is a comparison against the clock. A seed with absolute dates demonstrates
+-- "stale" for a week and then demonstrates it for everything.
+--
+-- Inserted with the default 7-day cadence and re-timed further down, and the
+-- order is not cosmetic: `recommended_probe_interval` answers 7 days while a
+-- norm carries no references, so a 1-day interval chosen *here* would be asked
+-- for a reason it does not owe. The references come first, the recommendation
+-- moves, and only then does the cadence.
+insert into public.law_norms
+  (id, source, act_id, act_title, scope, article, act_scope_reason,
+   source_url, canonical_url, state, fingerprint,
+   last_checked_at, last_verified_at, created_at, updated_at)
+values
+  -- Verified and fresh: checked half a day ago, nothing moved.
+  ('70000000-0000-0000-0000-000000000001', 'zakon_rada', '2947-14',
+   'Сімейний кодекс України', 'article', '105', null,
+   'https://zakon.rada.gov.ua/laws/show/2947-14/ed20240101#n800',
+   'https://zakon.rada.gov.ua/laws/show/2947-14',
+   'verified', 'sha256:0f4c1b9d',
+   now() - interval '12 hours', now() - interval '12 hours',
+   now() - interval '49 days', now() - interval '12 hours'),
+
+  -- Verified and *stale*, which is the pair the whole of §9.10 is about: the
+  -- last thing we heard was "no difference", and we have not heard anything
+  -- since. A register with one badge per row would show this one green.
+  ('70000000-0000-0000-0000-000000000002', 'zakon_rada', '2947-14',
+   'Сімейний кодекс України', 'article', '180', null,
+   'https://zakon.rada.gov.ua/laws/show/2947-14',
+   'https://zakon.rada.gov.ua/laws/show/2947-14',
+   'verified', 'sha256:77ab30e1',
+   now() - interval '30 days', now() - interval '30 days',
+   now() - interval '49 days', now() - interval '30 days'),
+
+  -- Scope `act`, so the article is null and the reason is not (§9.4).
+  ('70000000-0000-0000-0000-000000000003', 'zakon_rada', '435-15',
+   'Цивільний кодекс України', 'act', null,
+   'The template rests on the act as a whole; noise expected.',
+   'https://zakon.rada.gov.ua/laws/show/435-15',
+   'https://zakon.rada.gov.ua/laws/show/435-15',
+   'unverified', null,
+   null, null, now() - interval '40 days', now() - interval '40 days'),
+
+  -- Entered and never fetched: neutral state, neutral freshness. Today this is
+  -- every norm's state, which is why the register has to render it well.
+  ('70000000-0000-0000-0000-000000000004', 'zakon_rada', '1618-15',
+   'Цивільний процесуальний кодекс України', 'article', '116', null,
+   'https://zakon.rada.gov.ua/laws/show/1618-15',
+   'https://zakon.rada.gov.ua/laws/show/1618-15',
+   'unverified', null,
+   null, null, now() - interval '17 days', now() - interval '17 days'),
+
+  -- Drifted, and deliberately *fresh*: something moved two hours ago and nobody
+  -- has read it yet. The state badge is the alarm and the freshness badge is
+  -- green — two claims, and neither one implies the other.
+  ('70000000-0000-0000-0000-000000000005', 'zakon_rada', '1404-19',
+   'Про виконавче провадження', 'article', '26', null,
+   'https://zakon.rada.gov.ua/laws/show/1404-19',
+   'https://zakon.rada.gov.ua/laws/show/1404-19',
+   'drifted', 'sha256:c31d02af',
+   now() - interval '2 hours', now() - interval '20 hours',
+   now() - interval '26 days', now() - interval '2 hours')
+on conflict (id) do nothing;
+
+-- Which service rests on which norm, and for what (§9.5.6).
+--
+-- `power-of-attorney` is deliberately absent: a service with no law references
+-- at all is the state every service is in before somebody enters the first one,
+-- and the empty tab needs a service that produces it. Article 105 carries two
+-- dependents, because §9.3's point — the register is shared, and a cadence
+-- changed on one row is changed for every service in the last column — is
+-- invisible on a register where every norm serves exactly one service.
+insert into public.service_law_refs (id, service_id, norm_id, relied_on, created_at, updated_at)
+values
+  ('80000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001',
+   '70000000-0000-0000-0000-000000000001',
+   'Grounds on which a marriage may be dissolved by a court.',
+   now() - interval '49 days', now() - interval '49 days'),
+  ('80000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001',
+   '70000000-0000-0000-0000-000000000004',
+   'Which court the application is filed with.',
+   now() - interval '17 days', now() - interval '17 days'),
+  ('80000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001',
+   '70000000-0000-0000-0000-000000000005',
+   'Enforcement of the maintenance order once the decree is granted.',
+   now() - interval '26 days', now() - interval '26 days'),
+  ('80000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000002',
+   '70000000-0000-0000-0000-000000000001',
+   'Dissolution is the ground the maintenance claim follows from.',
+   now() - interval '37 days', now() - interval '37 days'),
+  ('80000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000002',
+   '70000000-0000-0000-0000-000000000002',
+   'The parents'' duty to maintain a child until majority.',
+   now() - interval '37 days', now() - interval '37 days'),
+  ('80000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000002',
+   '70000000-0000-0000-0000-000000000003',
+   'General obligations law, relied on throughout the template.',
+   now() - interval '37 days', now() - interval '37 days')
+on conflict (id) do nothing;
+
+-- Now the cadences. Articles 105 and 26 sit behind the published divorce
+-- service, so `recommended_probe_interval` already says one day and the guard
+-- asks for no reason. Article 116 is faster than the recommendation, which is a
+-- choice, and §9.8 records a choice with its reason. The two norms left alone
+-- keep the 7-day default: nothing on sale depends on them yet.
+update public.law_norms set probe_interval = interval '1 day'
+where id in ('70000000-0000-0000-0000-000000000001', '70000000-0000-0000-0000-000000000005');
+
+update public.law_norms
+set probe_interval = interval '12 hours',
+  interval_reason = 'Amended twice during the procedural reform.'
+where id = '70000000-0000-0000-0000-000000000004';
+
+-- Questionnaire fields (ADM-18, ADM-19). Same reason the norms above are here:
+-- the tables ship empty, so `/services/:id/fields` rendered its empty state and
+-- the GDPR column — the half ADM-19 exists for — was never on screen at all.
+--
+-- Four fields on one service, chosen for the states the screen has to tell
+-- apart rather than for realism: one carrying personal data with an Art. 6
+-- basis, one carrying nothing, one `select` with its choices, and one carrying
+-- an Art. 9 special category on top of the Art. 6 basis. The second service
+-- keeps a single field so the "one field" plural form is reachable, and
+-- power-of-attorney keeps none, so the honest empty state is still reachable
+-- too.
+--
+-- Every row satisfies the triad in both directions, because a seed that held a
+-- flag without its basis would not be a seed — Postgres would refuse it.
+insert into public.questionnaire_fields
+  (id, service_id, key, label, help_text, field_type, required, position, options,
+   is_personal_data, legal_basis, retention_days,
+   is_special_category, special_category_basis)
+values
+  ('40000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001',
+   'applicant_name', 'Прізвище, імʼя та по батькові позивача',
+   'Так, як записано в паспорті.', 'text', true, 0, null,
+   true, 'contract', 1095, false, null),
+
+  ('40000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001',
+   'marriage_date', 'Дата реєстрації шлюбу', null, 'date', true, 1, null,
+   false, null, null, false, null),
+
+  ('40000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001',
+   'court_region', 'Область суду', null, 'select', true, 2,
+   '["Київська", "Львівська", "Одеська"]'::jsonb,
+   false, null, null, false, null),
+
+  -- The Art. 9 row. `legal_claims` is the basis that carries most of the weight
+  -- on this platform, and the point of seeding it is that the screen renders
+  -- two badges here rather than one.
+  ('40000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000001',
+   'health_grounds', 'Обставини здоровʼя, на які спирається позов',
+   'Лише якщо позов справді на них спирається.', 'long_text', false, 3, null,
+   true, 'legitimate_interests', 1095, true, 'legal_claims'),
+
+  ('40000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000002',
+   'monthly_amount', 'Щомісячна сума, яку стягують', null, 'number', true, 0, null,
+   false, null, null, false, null);

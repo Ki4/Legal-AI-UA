@@ -15,6 +15,7 @@ import type {
   OrderRow,
   PracticeAreaRow,
   ProfileRow,
+  QuestionnaireFieldRow,
   ServiceAssignmentRow,
   ServiceLawRefRow,
   ServiceRow,
@@ -121,6 +122,109 @@ export const mockServices: ServiceRow[] = [
 // Olena is accountable for the divorce service and Taras covers it — the
 // arrangement the assignment table exists for. svc-poa has nobody, so the list
 // has an unassigned row to render.
+// The questionnaire dictionary of one service (§4.4). Three fields rather than
+// twelve, chosen for the states the screen has to tell apart rather than for
+// realism: one ordinary, one carrying personal data with its Art. 6 basis and a
+// retention period, one carrying an Art. 9 special category on top of that. The
+// fourth interesting shape — a `select` with its options — is `court_region`.
+//
+// The GDPR columns are filled the way the constraints demand and not one field
+// looser: a fixture that held a flag without its basis would be a row Postgres
+// refuses, and the whole point of a fixture is to be shaped exactly as the real
+// response will be (DoD §2).
+export const mockQuestionnaireFields: QuestionnaireFieldRow[] = [
+  {
+    id: "qf-applicant-name",
+    service_id: "svc-divorce",
+    key: "applicant_name",
+    label: "Applicant's full name",
+    help_text: "As written in the passport.",
+    field_type: "text",
+    required: true,
+    position: 0,
+    options: null,
+    is_personal_data: true,
+    legal_basis: "contract",
+    retention_days: 1095,
+    is_special_category: false,
+    special_category_basis: null,
+    created_at: "2026-05-12T09:25:00.000Z",
+    updated_at: "2026-07-30T14:05:00.000Z",
+  },
+  {
+    id: "qf-marriage-date",
+    service_id: "svc-divorce",
+    key: "marriage_date",
+    label: "Date of marriage",
+    help_text: null,
+    field_type: "date",
+    required: true,
+    position: 1,
+    options: null,
+    is_personal_data: false,
+    legal_basis: null,
+    retention_days: null,
+    is_special_category: false,
+    special_category_basis: null,
+    created_at: "2026-05-12T09:26:00.000Z",
+    updated_at: "2026-05-12T09:26:00.000Z",
+  },
+  {
+    id: "qf-court-region",
+    service_id: "svc-divorce",
+    key: "court_region",
+    label: "Court region",
+    help_text: null,
+    field_type: "select",
+    required: true,
+    position: 2,
+    options: ["Kyiv", "Lviv", "Odesa"],
+    is_personal_data: false,
+    legal_basis: null,
+    retention_days: null,
+    is_special_category: false,
+    special_category_basis: null,
+    created_at: "2026-05-12T09:27:00.000Z",
+    updated_at: "2026-05-12T09:27:00.000Z",
+  },
+  {
+    id: "qf-health-grounds",
+    service_id: "svc-divorce",
+    key: "health_grounds",
+    label: "Health circumstances relied on",
+    help_text: "Only if the claim rests on them.",
+    field_type: "long_text",
+    required: false,
+    position: 3,
+    options: null,
+    is_personal_data: true,
+    legal_basis: "legitimate_interests",
+    retention_days: 1095,
+    is_special_category: true,
+    special_category_basis: "legal_claims",
+    created_at: "2026-06-01T10:00:00.000Z",
+    updated_at: "2026-06-01T10:00:00.000Z",
+  },
+  {
+    id: "qf-alimony-amount",
+    service_id: "svc-alimony",
+    key: "monthly_amount",
+    label: "Monthly amount claimed",
+    help_text: null,
+    field_type: "number",
+    required: true,
+    position: 0,
+    options: null,
+    is_personal_data: false,
+    legal_basis: null,
+    retention_days: null,
+    is_special_category: false,
+    special_category_basis: null,
+    created_at: "2026-06-02T11:05:00.000Z",
+    updated_at: "2026-06-02T11:05:00.000Z",
+  },
+];
+
 export const mockServiceAssignments: ServiceAssignmentRow[] = [
   {
     service_id: "svc-divorce",

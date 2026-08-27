@@ -460,6 +460,130 @@ export const uk = {
     "Посилання додає адміністратор або юрист, призначений на цю послугу.",
   "serviceLaw.add.error.network": "Не вдалося зʼєднатися із сервером. Запис не додано.",
   "serviceLaw.add.error.save": "Не вдалося додати посилання.",
+  // Questionnaire fields — §4.4 ------------------------------------------------
+  "card.fields": "Поля анкети",
+  "serviceFields.title": "Поля анкети",
+  "serviceFields.subtitle":
+    "Що послуга запитує в клієнта. Ключ незмінний — на нього посилаються блоки шаблона.",
+  "serviceFields.backToService": "До послуги",
+  "serviceFields.loading": "Завантажуємо поля",
+  "serviceFields.empty.title": "Анкета ще порожня",
+  "serviceFields.empty.hint": "Додайте перше поле — саме на них посилатиметься шаблон.",
+  "serviceFields.failed.title": "Поля не завантажилися",
+  "serviceFields.failed.hint": "Це не означає, що анкета порожня — запит не дійшов.",
+  "serviceFields.notFound.title": "Послугу не знайдено",
+  "serviceFields.notFound.hint": "Перевірте адресу. Можливо, послугу видалено або вона не ваша.",
+  "serviceFields.error.load": "Не вдалося завантажити поля анкети.",
+  "serviceFields.error.forbidden": "Анкети послуг читають лише співробітники фірми.",
+  "serviceFields.error.network":
+    "Не вдалося зʼєднатися із сервером. Перевірте мережу та спробуйте ще раз.",
+
+  "serviceFields.column.field": "Поле",
+  "serviceFields.column.type": "Тип",
+  "serviceFields.column.gdpr": "Захист даних",
+  "serviceFields.column.order": "Порядок",
+  "serviceFields.column.actions": "Дії",
+  "serviceFields.required": "Обовʼязкове",
+  "serviceFields.optional": "Необовʼязкове",
+  "serviceFields.personalData": "Персональні дані",
+  "serviceFields.specialCategory": "Особлива категорія",
+  "serviceFields.noPersonalData": "Не персональні",
+  "serviceFields.moveUp": "Підняти вище",
+  "serviceFields.moveDown": "Опустити нижче",
+  "serviceFields.edit": "Редагувати",
+  "serviceFields.delete": "Видалити",
+  "serviceFields.add": "Додати поле",
+  "serviceFields.moving": "Змінюємо порядок",
+  "serviceFields.move.error": "Не вдалося змінити порядок.",
+
+  "serviceFields.delete.title": "Видалити поле «{label}»?",
+  "serviceFields.delete.description":
+    "Блоки шаблона, які посилаються на цей ключ, залишаться без значення. Ключ не звільниться — опублікована версія все одно на нього посилається.",
+  "serviceFields.delete.confirm": "Видалити поле",
+  "serviceFields.delete.cancel": "Залишити",
+  "serviceFields.delete.error": "Не вдалося видалити поле.",
+  "serviceFields.delete.forbidden": "Змінювати анкету може адміністратор або юрист цієї послуги.",
+
+  "serviceFields.editor.createTitle": "Нове поле",
+  "serviceFields.editor.editTitle": "Поле «{label}»",
+  "serviceFields.editor.close": "Закрити",
+  "serviceFields.editor.save": "Зберегти",
+  "serviceFields.editor.saving": "Зберігаємо",
+  "serviceFields.editor.cancel": "Скасувати",
+  "serviceFields.editor.key": "Ключ",
+  "serviceFields.editor.keyHint": "Малі латинські літери, цифри та підкреслення: applicant_name.",
+  "serviceFields.editor.keyImmutable":
+    "Ключ не змінюється: на нього посилаються блоки й заморожені версії шаблона. Змінюйте назву.",
+  "serviceFields.editor.label": "Назва для клієнта",
+  "serviceFields.editor.labelHint": "Те, що людина побачить над полем.",
+  "serviceFields.editor.helpText": "Підказка",
+  "serviceFields.editor.helpTextHint": "Необовʼязково. Один рядок під полем.",
+  "serviceFields.editor.type": "Тип",
+  "serviceFields.editor.required": "Обовʼязкове поле",
+  "serviceFields.editor.requiredHint": "Без нього клієнт не надішле анкету.",
+  "serviceFields.editor.options": "Варіанти вибору",
+  "serviceFields.editor.optionsHint": "Потрібен щонайменше один варіант.",
+  "serviceFields.editor.optionAdd": "Додати варіант",
+  "serviceFields.editor.optionRemove": "Прибрати варіант",
+  "serviceFields.editor.optionPlaceholder": "Варіант",
+  "serviceFields.editor.gdprSection": "Персональні дані",
+  "serviceFields.editor.personalData": "Це персональні дані",
+  "serviceFields.editor.personalDataHint":
+    "Тоді потрібні підстава та строк зберігання — без них поле не збережеться.",
+  "serviceFields.editor.basis": "Правова підстава (ст. 6 GDPR)",
+  "serviceFields.editor.retention": "Строк зберігання, днів",
+  "serviceFields.editor.retentionHint": "Ціле число днів, більше нуля.",
+  "serviceFields.editor.specialCategory": "Особлива категорія (ст. 9 GDPR)",
+  "serviceFields.editor.specialCategoryHint":
+    "Здоровʼя, релігія, судимість. Це доповнення до підстави вище, а не заміна їй.",
+  "serviceFields.editor.specialBasis": "Підстава за ст. 9(2)",
+
+  "serviceFields.reject.key_shape":
+    "Ключ має починатися з малої латинської літери й містити лише літери, цифри та підкреслення.",
+  "serviceFields.reject.key_taken": "Поле з таким ключем у цій послузі вже є.",
+  "serviceFields.reject.label_empty": "Напишіть назву, яку побачить клієнт.",
+  "serviceFields.reject.missing_basis": "Оберіть правову підставу.",
+  "serviceFields.reject.missing_retention": "Вкажіть строк зберігання.",
+  "serviceFields.reject.retention_not_positive": "Строк зберігання — ціле число днів, більше нуля.",
+  "serviceFields.reject.missing_special_basis": "Оберіть підставу за ст. 9(2).",
+  "serviceFields.reject.options_required": "Додайте щонайменше один варіант вибору.",
+  "serviceFields.reject.options_not_allowed": "Варіанти вибору бувають лише в полів вибору.",
+  "serviceFields.save.error.save": "Не вдалося зберегти поле.",
+  "serviceFields.save.error.validation": "Поле не збережено: запис не відповідає правилам.",
+  "serviceFields.save.error.forbidden":
+    "Змінювати анкету може адміністратор або юрист цієї послуги.",
+  "serviceFields.save.error.conflict": "Хтось змінив це поле раніше. Оновіть сторінку.",
+  "serviceFields.save.error.network":
+    "Не вдалося зʼєднатися із сервером. Перевірте мережу та спробуйте ще раз.",
+
+  // Типи полів — enum схеми, тому через vocabulary.ts
+  "field.type.text": "Рядок",
+  "field.type.long_text": "Текст",
+  "field.type.number": "Число",
+  "field.type.date": "Дата",
+  "field.type.boolean": "Так або ні",
+  "field.type.select": "Один із варіантів",
+  "field.type.multi_select": "Кілька з варіантів",
+
+  // Підстави за ст. 6(1) GDPR — назвами, а не літерами
+  "gdpr.basis.consent": "Згода",
+  "gdpr.basis.contract": "Виконання договору",
+  "gdpr.basis.legal_obligation": "Юридичний обовʼязок",
+  "gdpr.basis.vital_interests": "Життєво важливі інтереси",
+  "gdpr.basis.public_task": "Публічний інтерес",
+  "gdpr.basis.legitimate_interests": "Законний інтерес",
+
+  // Підстави за ст. 9(2) GDPR
+  "gdpr.specialBasis.explicit_consent": "Явна згода",
+  "gdpr.specialBasis.employment_social_security": "Трудове право та соцзахист",
+  "gdpr.specialBasis.vital_interests": "Життєво важливі інтереси",
+  "gdpr.specialBasis.not_for_profit_body": "Неприбуткова організація",
+  "gdpr.specialBasis.made_public_by_subject": "Оприлюднено самою особою",
+  "gdpr.specialBasis.legal_claims": "Захист правових вимог",
+  "gdpr.specialBasis.substantial_public_interest": "Істотний публічний інтерес",
+  "gdpr.specialBasis.health_care": "Медична допомога",
+  "gdpr.specialBasis.public_health": "Громадське здоровʼя",
+  "gdpr.specialBasis.archiving_research": "Архівування та дослідження",
 } as const satisfies Record<string, string>;
 
 /**
@@ -526,6 +650,26 @@ export const ukPlurals = {
     few: "кожні {count} дні",
     many: "кожні {count} днів",
     other: "кожні {count} днів",
+  },
+  // Скільки полів в анкеті. 1 поле, 3 поля, 5 полів — і знову з 21.
+  "serviceFields.count": {
+    one: "{count} поле",
+    few: "{count} поля",
+    many: "{count} полів",
+    other: "{count} полів",
+  },
+  // Строк зберігання відповіді. 1 день, 3 дні, 5 днів.
+  "serviceFields.retentionDays": {
+    one: "зберігаємо {count} день",
+    few: "зберігаємо {count} дні",
+    many: "зберігаємо {count} днів",
+    other: "зберігаємо {count} днів",
+  },
+  "serviceFields.optionsCount": {
+    one: "{count} варіант",
+    few: "{count} варіанти",
+    many: "{count} варіантів",
+    other: "{count} варіантів",
   },
 } as const satisfies PluralDictionaryShape;
 

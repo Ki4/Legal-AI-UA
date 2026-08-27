@@ -13,6 +13,8 @@
     "docs:check": "node scripts/check-docs.mjs",
     "check:sql": "node scripts/check-sql.mjs",
     "check:copy": "node scripts/check-copy.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "probes": "node scripts/run-probes.mjs",
     "verify:sql": "node scripts/run-sql-verification.mjs",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",

@@ -210,4 +210,59 @@ begin
 end;
 $$;
 
+-- What `anon` may touch, swept rather than sampled -----------------------------
+--
+-- ADR-0007 turned off "automatically expose new tables" and stripped the default
+-- privileges, so a new table is unreachable until its migration says otherwise.
+-- That is a promise about every table, and until 2026-08-27 it was checked one
+-- table at a time by whoever remembered — which is a promise about the tables
+-- somebody thought of.
+--
+-- `has_table_privilege` is asked rather than `relacl` read, because a privilege
+-- can arrive three ways: granted to `anon` directly, granted to `PUBLIC`, or
+-- inherited through a role `anon` is a member of. Reading the ACL column sees
+-- only the first, and would report a clean sweep while `grant select on all
+-- tables to public` sat one migration away.
+do $$
+declare
+  reachable text;
+begin
+  set local role postgres;
+
+  ------------------------------------ 7. anon holds no privilege on any table
+  select string_agg(format('%s (%s)', c.relname, p.privilege), ', ' order by c.relname, p.privilege)
+    into reachable
+  from pg_class c
+  cross join lateral (
+    values ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'), ('REFERENCES'), ('TRIGGER')
+  ) as p (privilege)
+  where c.relnamespace = 'public'::regnamespace
+    and c.relkind = 'r'
+    and has_table_privilege('anon', c.oid, p.privilege);
+
+  raise notice '% 7. anon holds no privilege on any table in public (%)',
+    case when reachable is null then 'PASS' else 'FAIL' end,
+    coalesce(reachable, 'none reachable');
+
+  -------------------------------------- 7b. nor on any sequence behind them
+  -- A sequence is the half that gets forgotten: `grant insert` without
+  -- `usage` on the sequence fails at runtime, so the fix is remembered — the
+  -- reverse, a sequence left reachable, fails nothing and is noticed by nobody.
+  select string_agg(format('%s (%s)', c.relname, p.privilege), ', ' order by c.relname, p.privilege)
+    into reachable
+  from pg_class c
+  cross join lateral (values ('SELECT'), ('UPDATE'), ('USAGE')) as p (privilege)
+  where c.relnamespace = 'public'::regnamespace
+    and c.relkind = 'S'
+    and has_sequence_privilege('anon', c.oid, p.privilege);
+
+  raise notice '% 7b. anon holds no privilege on any sequence in public (%)',
+    case when reachable is null then 'PASS' else 'FAIL' end,
+    coalesce(reachable, 'none reachable');
+
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+end;
+$$;
+
 rollback;

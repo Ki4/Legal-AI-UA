@@ -21,10 +21,17 @@
   --ui-line-strong: #e0dcd2;
   --ui-ink: #1f1e1b;
   --ui-ink-soft: #6b6862;
-  --ui-ink-mute: #9b978e;
+  /* Measured, not chosen. The previous #9B978E read 2.9:1 on paper and 2.8:1 on
+   * canvas — meta text at 12px, which AA holds to 4.5:1. See `pnpm check:contrast`. */
+  --ui-ink-mute: #73706a;
 
   /* §1.2 accent — the only one */
   --ui-brand: #2563eb;
+  /* What goes ON the accent, as opposed to what the accent says on paper. The
+   * two are different questions and used to share one answer: `text-white`,
+   * correct on the light theme's #2563EB at 5.2:1 and 2.5:1 on the dark theme's
+   * lighter #60A5FA. Every primary button, on every screen. */
+  --ui-on-brand: #ffffff;
 
   /* §1.3 status semantics */
   --ui-ok: #2e7d5b;
@@ -67,9 +74,11 @@
   --ui-line-strong: #293548;
   --ui-ink: #e2e8f0;
   --ui-ink-soft: #94a3b8;
-  --ui-ink-mute: #64748b;
+  --ui-ink-mute: #7487a1;
 
   --ui-brand: #60a5fa;
+  /* Dark ink on a light accent, which is the pairing that reads. 7.9:1. */
+  --ui-on-brand: #020617;
 
   --ui-ok: #4ade80;
   --ui-warn: #fbbf24;
@@ -93,6 +102,7 @@
   --color-inkSoft: var(--ui-ink-soft);
   --color-inkMute: var(--ui-ink-mute);
   --color-brand: var(--ui-brand);
+  --color-onBrand: var(--ui-on-brand);
   --color-ok: var(--ui-ok);
   --color-warn: var(--ui-warn);
   --color-danger: var(--ui-danger);

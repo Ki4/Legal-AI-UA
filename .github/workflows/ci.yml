@@ -46,5 +46,13 @@ jobs:
       - name: Copy conventions
         run: pnpm check:copy
 
+      # The other half of DoD §6, and the half that had no instrument until
+      # 2026-08-27: whether the tokens a screen used are legible against each
+      # other. jsdom applies no stylesheet, so a component test proves a token
+      # was used and never that the result can be read — which is how the primary
+      # button spent weeks at 2.5:1 in the dark theme with every gate green.
+      - name: Contrast
+        run: pnpm check:contrast
+
       - name: Build
         run: pnpm build

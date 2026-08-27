@@ -175,5 +175,60 @@ export function checkDocs(root) {
     }
   }
 
+  // 7. A backlog row does not depend on itself, and the dependencies do not
+  //    form a cycle.
+  //
+  //    The `Depends` column is read to decide what is buildable next, and by
+  //    2026-08-27 two rows in it were wrong — an entitlement built on the
+  //    document-metadata schema rather than on client identity, and one more
+  //    beside it. Neither was catchable: whether ADM-40 *should* depend on
+  //    ADM-12 is a judgement about the work, and no script has an opinion about
+  //    that.
+  //
+  //    Two things in that column are not judgements, though. A row that depends
+  //    on itself is never buildable, and neither is a cycle — and both look
+  //    exactly like ordinary rows to a reader scanning for what to pick up. So
+  //    this covers the decidable half and leaves the other half where it was:
+  //    with whoever writes the row.
+  for (const [file, text] of contents) {
+    const dependsOn = new Map();
+
+    for (const [, id, cell] of text.matchAll(/^\|\s*ADM-(\d+)\s*\|[^|]*\|([^|]*)\|/gm)) {
+      dependsOn.set(
+        id,
+        [...cell.matchAll(/ADM-(\d+)/g)].map((m) => m[1]),
+      );
+    }
+    if (dependsOn.size === 0) continue;
+
+    for (const [id, deps] of dependsOn) {
+      if (deps.includes(id)) fail(file, `ADM-${id} lists itself as its own dependency`);
+    }
+
+    // Depth-first, tracking the path rather than a bare "seen" set: the path is
+    // what lets the message name the cycle, and a cycle nobody can name is one
+    // nobody fixes.
+    const state = new Map();
+    const reported = new Set();
+
+    const walk = (id, path) => {
+      if (state.get(id) === "done") return;
+      if (state.get(id) === "open") {
+        const cycle = [...path.slice(path.indexOf(id)), id].map((n) => `ADM-${n}`).join(" → ");
+        if (!reported.has(cycle)) {
+          reported.add(cycle);
+          fail(file, `the Depends column forms a cycle: ${cycle}`);
+        }
+        return;
+      }
+
+      state.set(id, "open");
+      for (const dep of dependsOn.get(id) ?? []) walk(dep, [...path, id]);
+      state.set(id, "done");
+    };
+
+    for (const id of dependsOn.keys()) walk(id, []);
+  }
+
   return { problems, notes, fileCount: files.length };
 }

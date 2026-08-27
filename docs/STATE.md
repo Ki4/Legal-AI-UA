@@ -1,6 +1,6 @@
-# State — 2026-08-27, the field dictionary and the primitives under it
+# State — 2026-08-27, the debts get mechanisms
 
-Written at `307ced8` on `main`. If `git log` shows commits after it, this file is behind: say so in
+Written at `5099675` on `main`. If `git log` shows commits after it, this file is behind: say so in
 one line and let the git history win. A briefing from a stale state file reads as current.
 
 Tier 1: **the only document a session reads to orient.** ROADMAP, the specs and the DoD are read
@@ -9,41 +9,34 @@ it does not fit means something has to close or move to the backlog, and that pr
 
 ## Wave
 
-Wave 1. ADM-18 and ADM-19 landed with the five form primitives they needed, in that order — the
-DoD's "a missing primitive is design-system work, not a local one-off" paid for the first time. The
-intake path (ADM-54, then ADM-64) is unblocked.
+Wave 1. ADM-18 and ADM-19 landed with the five form primitives they needed, unblocking ADM-54. Then
+eight of the nine debts closed — most were gates nobody had tried to write, which is what a debt
+phrased as a diagnosis does to the next reader.
 
 ## In flight
 
-- Nothing open. `sergey/field-dictionary` merged: the primitives, `service-fields`, seed data for
-  the dictionary, `verify_questionnaire_fields.sql`, i18n in both dictionaries.
+- Nothing open. Two branches merged: the field dictionary, and the debt work — `check:contrast`,
+  `pnpm probes`, tests for the two untested checkers, ADM-38, and the `anon` sweep.
 
 ## Blocking — the question, and what it stops
 
-- **Q22–Q24** are commercial: consultation money, an employee's controller, and whether the proof of
-  concept charges at all — the last decides if `entitlements` is on the MVP's critical path.
+- **Q22–Q24** are commercial. The last — does the proof of concept charge at all — decides whether
+  `entitlements` is on the MVP's critical path.
 - **Q25** → whether a lawyer can also be an admin. 75 sites read `jwt_role()` as a single value.
 - **Q20** → ADM-60's shape: a competence is the shop window, so its evidence is a public claim.
-- **Q15** → the MVP answers it in practice (tier 1 is `template` + `auto`); §14 has not closed it.
+- **Q15** → answered in practice by the MVP (tier 1 is `template` + `auto`); §14 has not closed it.
 - **Q9** → the hryvnia amounts. §8's annual-versus-monthly ambiguity is two facts, not one.
 - **Q5–Q8** stop triage (ADM-46 onward), not the fetcher.
 
 ## Debts — carried since
 
-- `2026-08-04` Access-control migrations owe a review — **23 days**. The substitute arrives with the
-  second developer; name them, or write down that the rule is suspended.
-- `2026-08-13` `TeamPage` has no empty state and no skeleton (ADM-38).
-- `2026-08-14` `check-docs.mjs` and `check-sql.mjs` have no tests.
-- `2026-08-14` Nothing checks an **RPC-shaped** fixture still agrees with its schema.
-- `2026-08-14` The probes proving a test can fail are named in PRs and re-runnable by nothing.
-- `2026-08-14` **Both themes have an instrument now and no gate.** Docker + `supabase start` +
-  Playwright showed two screens in both themes this session; the recipe is in the journal, and
-  nothing re-runs it. The debt changed shape rather than closing.
-- `2026-08-15` Nothing asserts `anon` holds no table privilege in `public`. One table has it now
-  (`verify_questionnaire_fields.sql`, scenario 17); the sweep across the rest does not exist.
-- `2026-08-27` A `Depends` column can be wrong and no gate can read one. Two were.
-- `2026-08-27` **`Button` primary fails AA in dark: white on `--ui-brand` measures 2.54:1** against a
-  4.5:1 floor. Every screen, found the hour the first one was looked at. Nothing measures contrast.
+- `2026-08-04` **Access-control migrations owe a review — 23 days, and it is now a booked handover
+  rather than a worry.** `CONTRIBUTING.md` lists the thirteen, what each decides, its verification
+  script, and the order to read them in. The substitute is doing its job — 252 scenarios — and a
+  script cannot ask the question a reviewer asks. Closes when the second developer reads them.
+
+Eight more were carried into this session and closed on `2026-08-27`, each into something that
+runs. What each became is in ROADMAP's Done section, which is where finished work belongs.
 
 ## Next candidates
 

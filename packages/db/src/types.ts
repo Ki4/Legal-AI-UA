@@ -20,6 +20,21 @@ import type { Database } from "./database.types";
 
 type Tables = Database["public"]["Tables"];
 type Enums = Database["public"]["Enums"];
+type Functions = Database["public"]["Functions"];
+
+/**
+ * The name of every function the schema exposes over PostgREST.
+ *
+ * Exported so a fixture standing in for an RPC can be tied to the real
+ * signature. A row-shaped fixture is typed against a generated `Row` and so
+ * cannot drift; an RPC-shaped one had nothing holding it, which is how
+ * `team.mock.ts` could go on simulating `approve_user` after the function it
+ * simulates had changed its mind.
+ */
+export type DbFunctionName = keyof Functions;
+
+export type DbFunctionArgs<Name extends DbFunctionName> = Functions[Name]["Args"];
+export type DbFunctionReturns<Name extends DbFunctionName> = Functions[Name]["Returns"];
 
 export type ServiceStatus = Enums["service_status"];
 export type GenerationMode = Enums["generation_mode"];

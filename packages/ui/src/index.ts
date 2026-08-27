@@ -31,6 +31,9 @@ export type { SwitchProps } from "./components/Switch";
 export { FormField } from "./components/FormField";
 export type { FormFieldProps } from "./components/FormField";
 
+export { Skeleton } from "./components/Skeleton";
+export type { SkeletonProps } from "./components/Skeleton";
+
 export { Spinner } from "./components/Spinner";
 export type { SpinnerProps } from "./components/Spinner";
 

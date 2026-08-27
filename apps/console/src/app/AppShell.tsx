@@ -33,7 +33,7 @@ export function AppShell() {
               to={item.to}
               className={({ isActive }) =>
                 `rounded-md px-3 py-2 text-sm ${
-                  isActive ? "bg-brand text-white" : "text-inkSoft hover:bg-canvas"
+                  isActive ? "bg-brand text-onBrand" : "text-inkSoft hover:bg-canvas"
                 }`
               }
             >

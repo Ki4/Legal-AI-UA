@@ -1,0 +1,123 @@
+{
+  "comment": "The other half of the both-halves rule (root CLAUDE.md). One case per constraint the schema claims to enforce, not one per type: a validator that rejects everything and one that rejects nothing are equally useless, and only a case per rule tells them apart. Each `value` is a whole GenerationTrace that must fail, and `constraint` names the keyword that must be the one to catch it.",
+  "cases": [
+    {
+      "name": "unknown property on the trace",
+      "constraint": "additionalProperties",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "blocks": [],
+        "generated_by": "core@1.0.0"
+      }
+    },
+    {
+      "name": "unknown property on a block",
+      "constraint": "additionalProperties",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "blocks": [
+          {
+            "id": "blk-header",
+            "title": "Court header",
+            "trust": "template",
+            "needs_attention": false,
+            "law_refs": [],
+            "questionnaire_fields": [],
+            "confidence": 0.9
+          }
+        ]
+      }
+    },
+    {
+      "name": "missing property on a block",
+      "constraint": "required",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "blocks": [
+          {
+            "id": "blk-header",
+            "title": "Court header",
+            "trust": "template",
+            "needs_attention": false,
+            "law_refs": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a trust value the contract does not define",
+      "constraint": "enum",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "blocks": [
+          {
+            "id": "blk-header",
+            "title": "Court header",
+            "trust": "imported",
+            "needs_attention": false,
+            "law_refs": [],
+            "questionnaire_fields": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "a trace version this reader cannot claim to understand",
+      "constraint": "const",
+      "value": {
+        "trace_version": 2,
+        "service_id": "svc-divorce",
+        "blocks": []
+      }
+    },
+    {
+      "name": "needs_attention as a string, the way a loose serialiser would send it",
+      "constraint": "type",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "blocks": [
+          {
+            "id": "blk-header",
+            "title": "Court header",
+            "trust": "template",
+            "needs_attention": "false",
+            "law_refs": [],
+            "questionnaire_fields": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "an empty block id, which is not a stable id",
+      "constraint": "minLength",
+      "value": {
+        "trace_version": 1,
+        "service_id": "svc-divorce",
+        "blocks": [
+          {
+            "id": "",
+            "title": "Court header",
+            "trust": "template",
+            "needs_attention": false,
+            "law_refs": [],
+            "questionnaire_fields": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "null where a value is required, not the same as absent",
+      "constraint": "type",
+      "value": {
+        "trace_version": 1,
+        "service_id": null,
+        "blocks": []
+      }
+    }
+  ]
+}

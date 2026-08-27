@@ -13,8 +13,13 @@ Read this before any change. Zone files add detail; this file is the map.
   Written in **Python** (`docs/adr/0016-core-in-python.md`) — the one package in this repository
   that is not TypeScript, and therefore the one that carries its own lint, format and test lane
   rather than the root `pnpm` scripts.
-- `packages/core-client` (planned, not yet created) — typed HTTP contract + mocks for the core, so
-  frontend work proceeds before the core exists.
+- `packages/core-client` — the contract with the core, so frontend work proceeds before the core
+  exists. The authority is `schema/*.schema.json`, not this package's TypeScript and not the core's
+  Python: three runtimes have to agree about one payload and none of them can outrank the other two
+  (ADR-0016). The hand-written types are held to the schema by the bridge constants beside them and
+  the test that compares the two — see `docs/adr/0021-core-contract-is-json-schema-with-bridge-tests.md`,
+  which also records why the drift argument that looks sufficient is not. Dependency-free at
+  runtime, like `packages/law-refs` and for the same reason: the Deno gateway will import it.
 - `packages/ui` — the design system (the design-system zone). Console features consume
   it; it never imports from `apps/*`.
 - `packages/db` — mock data + shared types, standing in for Supabase queries until wired.

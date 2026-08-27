@@ -1,0 +1,38 @@
+{
+  "trace_version": 1,
+  "service_id": "svc-divorce",
+  "blocks": [
+    {
+      "id": "blk-header",
+      "title": "Court header and parties",
+      "trust": "template",
+      "needs_attention": false,
+      "law_refs": [],
+      "questionnaire_fields": ["applicant_name", "respondent_name", "court_region"]
+    },
+    {
+      "id": "blk-circumstances",
+      "title": "Circumstances of the marriage",
+      "trust": "ai_generated",
+      "needs_attention": true,
+      "law_refs": [],
+      "questionnaire_fields": ["marriage_date", "children", "separation_reason"]
+    },
+    {
+      "id": "blk-legal-grounds",
+      "title": "Legal grounds",
+      "trust": "ai_generated",
+      "needs_attention": false,
+      "law_refs": ["Family Code of Ukraine, art. 112"],
+      "questionnaire_fields": []
+    },
+    {
+      "id": "blk-request",
+      "title": "Request to the court",
+      "trust": "lawyer_edited",
+      "needs_attention": false,
+      "law_refs": [],
+      "questionnaire_fields": ["applicant_name"]
+    }
+  ]
+}

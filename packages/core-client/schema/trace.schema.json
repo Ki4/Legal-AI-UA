@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://legal-ai.ua/schema/trace.schema.json",
+  "title": "GenerationTrace",
+  "description": "The per-block record of what produced a generated document and why. Produced by the core, read by the lawyer review screen and by the client-facing anatomy view.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["trace_version", "service_id", "blocks"],
+  "properties": {
+    "trace_version": {
+      "description": "The shape of this document. Incremented when a field is added or removed, so a trace archived years ago can still be read.",
+      "const": 1
+    },
+    "service_id": {
+      "description": "The service this document was generated for.",
+      "type": "string",
+      "minLength": 1
+    },
+    "blocks": {
+      "description": "One entry per block that entered the document, in document order.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/TraceBlock" }
+    }
+  },
+  "$defs": {
+    "BlockTrust": {
+      "description": "Who wrote the text of a block. `template` is deterministic fill-in of lawyer-authored text, `ai_generated` was produced by the model, `lawyer_edited` was produced by the model and then corrected by a human.",
+      "type": "string",
+      "enum": ["template", "ai_generated", "lawyer_edited"]
+    },
+    "TraceBlock": {
+      "description": "One block of the generated document, and the account of what produced it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "trust", "needs_attention", "law_refs", "questionnaire_fields"],
+      "properties": {
+        "id": {
+          "description": "Stable across regenerations, so a re-run updates the trace rather than scrambling it.",
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "description": "The block's heading, as the template names it.",
+          "type": "string",
+          "minLength": 1
+        },
+        "trust": { "$ref": "#/$defs/BlockTrust" },
+        "needs_attention": {
+          "description": "The core is not confident in this block and a human should read it.",
+          "type": "boolean"
+        },
+        "law_refs": {
+          "description": "The norms this block implements.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "questionnaire_fields": {
+          "description": "Field keys of the client answers that fed this block. Keys only, never values.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

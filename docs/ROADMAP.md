@@ -10,6 +10,38 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the debts get mechanisms (2026-08-27)
+
+Eight of the nine debts in STATE closed in one session, which is less a burst of virtue than a
+finding: most were phrased as diagnoses — "no instrument", "nothing checks" — and a diagnosis is
+inherited by the next reader instead of re-examined. Rephrased as "what is missing", four of them
+were a gate somebody could have written in an afternoon.
+
+- **`pnpm check:contrast`** — 36 token pairs over both themes, no browser. Written after the
+  both-themes debt was finally acted on and the first look found `Button` primary at 2.5:1 in dark,
+  on every screen. `--ui-ink-mute` and a new `--ui-on-brand` moved to clear AA; nothing was accepted
+  as a known failure. The lesson the gate carries: jsdom applies no stylesheet, so a component test
+  can prove a token was used and never that the result is legible.
+- **`pnpm probes`** — ten probes, each a one-line change to real source that a named test must
+  catch. The old habit was a sentence in a PR description, which works exactly once. Rot is a
+  failure, not a skip; the first run proved it by reporting a probe Prettier had reformatted out
+  from under.
+- **Tests for `check-docs` and `check-sql`** — the two oldest gates were the ones nothing executed,
+  which is the defect they were written to catch. `check-sql` gained an exported core on the way.
+- **`verify_grants.sql` sweeps `anon`** rather than sampling it, via `has_table_privilege` — which
+  sees a privilege arriving through `PUBLIC` or role membership, where reading `relacl` does not.
+- **ADM-38** — `TeamPage` gets a skeleton, an empty state distinct from the error state, and the
+  component test it never had. The `Skeleton` primitive is design-system work, per the DoD.
+- **The RPC-shaped fixture is anchored** to the generated signature, so a renamed argument fails
+  typecheck instead of leaving a mock simulating a call that no longer exists.
+- **`check-docs` reads the `Depends` column** for the half that is decidable: self-dependency and
+  cycles. Whether a dependency is the _right_ one is judgement, and a test says so.
+
+The ninth is not work and did not close: the access-control migrations still owe a human review.
+What changed is that `CONTRIBUTING.md` now carries the queue — thirteen migrations, what each
+decides, its verification script, and the order to read them in — so the day the second developer
+arrives it is a checklist rather than an invitation to read everything.
+
 ## Done — the field dictionary (2026-08-27)
 
 **ADM-18 and ADM-19** — `/services/:id/fields`, the questionnaire a service asks a client and what
@@ -59,45 +91,6 @@ article)`, where the `nulls not distinct` is the load-bearing half: two act-scop
 - **The feature was complete, tested and unreachable.** `/law` had no link anywhere while every gate
   was green. DoD §1 gained a line; no script can see an orphaned route.
 - Five probes, each reddening exactly the tests written for it.
-
-## Done — the first screens over client data (2026-08-15)
-
-ADM-66 in two PRs (#52, #53). `/orders` and `/orders/:id`, reading `orders`, `entitlements` and
-`audit_events` through the policies rather than through fixtures.
-
-- **The spec gained the route before the code did.** §3's map predated orders entirely; it now has
-  two entries and §4.15/§4.16 say what each screen is for. Orders are top level rather than a tab on
-  the service card: an order belongs to a client and pins a version, and filing it under the service
-  would file a client's matter under the product they bought. The new sections sit at the end of §4
-  because renumbering §4.13/§4.14 would break references to answer a question about reading order.
-- **Three states share an empty array and none share a sentence:** there are no orders, none of
-  these are yours, the request broke. The middle one is what `hasAnyAssignment` exists for. The
-  first is the _expected_ answer today, since nothing writes orders until the gateway does — which
-  is what makes the mix-up likely rather than hypothetical.
-- **A purchase that is recorded and not readable is its own state.** ADR-0019's silent refusal,
-  arriving on a screen: a lawyer reads `entitlement_id` and cannot read the row it points at, and
-  PostgREST answers both with null. Verified as both readers on one URL — an admin sees "One-off
-  purchase, valid until the law changes", the attached lawyer sees "recorded, an admin can read it".
-  No mock could have produced that assertion.
-- **The timeline is a read of the log, not a second history.** §6.1's projection made literal: an
-  event that moved the order names the state it moved it to, so the badge on the timeline and the
-  badge on the card are one fact from two ends. It selects `after->>status` and never the payload.
-- **The actor resolution moved to `shared/`,** because two features now read the same log. Split in
-  two — pure rules in `shared/audit.ts`, the `profiles` query in `shared/api/actor-names.ts` —
-  because a fixture implementation imports the rules and `app/supabase` throws at import time
-  without env vars. One import took every `*.mock.ts` test down before the split.
-- **Four things were already stale and nobody had noticed.** `AUDITED_TABLES` did not know
-  `plan_services` or `orders`, so the history screen rendered raw table names; `seed.sql` had no
-  orders and no way to sign in at all; and three verification scripts counted whole tables, so they
-  went red the moment the seed held rows of their kind. They count their own fixtures now.
-- **Hand-inserted `auth.users` rows fail in two opaque ways**, and both cost a debugging pass:
-  `Database error querying schema` for null token columns — and equally for null
-  `raw_user_meta_data`, `created_at` or `updated_at` — and `wrong email or password` for a null
-  `instance_id`. All are scans into non-nullable Go values; none says so.
-- **The generated types are optimistic about RLS.** `db:types` writes to-one embeds as non-nullable
-  because the foreign keys are — everything referential integrity knows, nothing about policies. So
-  the fallbacks guard a state the type system cannot express.
-- Seven probes across the two PRs, each reddening exactly the test written for it.
 
 ## Now — wave 1 (parallel, no file overlap)
 

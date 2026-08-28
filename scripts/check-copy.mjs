@@ -38,7 +38,6 @@ const consoleSrc = resolve(root, "apps/console/src");
 // Excluded from the scan, and why — the next exclusion has to earn a line here too.
 const EXCLUDED_FEATURES = {
   "design-kit": "the gallery documents design-system components for developers, not lawyers.",
-  anatomy: "renders a hardcoded fixture trace; the text on screen is fixture content, not copy.",
 };
 
 // --- File discovery ----------------------------------------------------------

@@ -589,6 +589,40 @@ export const uk = {
   "gdpr.specialBasis.health_care": "Медична допомога",
   "gdpr.specialBasis.public_health": "Громадське здоровʼя",
   "gdpr.specialBasis.archiving_research": "Архівування та дослідження",
+
+  // Document anatomy (§8) ------------------------------------------------------
+  //
+  // The screen renders a generation trace: which blocks a document is made of,
+  // what each one rests on, and who stands behind it. The trace itself is
+  // fixture data today (`features/anatomy/api`) — that is a fact about the data
+  // source, not about the reader, so the copy is written for the lawyer who
+  // will read the real one.
+  "anatomy.title": "Анатомія документа",
+  "anatomy.subtitle":
+    "Послуга {service} — з яких блоків складено документ і на що спирається кожен.",
+  "anatomy.loading": "Завантажуємо анатомію документа",
+  "anatomy.empty": "Для цієї послуги ще немає згенерованого документа.",
+  "anatomy.questionnaireFields": "Поля анкети: {fields}",
+
+  // §8.2 — дві позначки, ніколи не відсоток. Впевнений блок мовчить.
+  "anatomy.needsReview": "Варто перевірити",
+
+  // §8.1 — звідки взявся блок. Слова навмисне повторюють ті, що були в
+  // `Provenance` за замовчуванням: цей крок перекладає екран, а не переглядає
+  // формулювання. Чи справді `template` читається як «підтверджено юристом»,
+  // вирішує юрист — це окреме питання, і воно досі відкрите.
+  "anatomy.trust.template": "Підтверджено юристом",
+  "anatomy.trust.ai_generated": "Згенеровано ШІ",
+  "anatomy.trust.lawyer_edited": "Відредаговано юристом",
+
+  // Ключ на кожен код помилки — той самий підхід, що й у каталозі: сюди
+  // приходить `AppError.code`, а не `error.message`.
+  "anatomy.error.forbidden": "У вас немає доступу до цього документа.",
+  "anatomy.error.notFound": "Для цієї послуги немає збереженої анатомії.",
+  "anatomy.error.validation": "Запит відхилено — перевірте посилання, за яким ви прийшли.",
+  "anatomy.error.conflict": "Документ змінився, поки ми його читали. Оновіть сторінку.",
+  "anatomy.error.network": "Не вдалося зв’язатися із сервером. Перевірте з’єднання.",
+  "anatomy.error.unknown": "Щось пішло не так під час завантаження анатомії документа.",
 } as const satisfies Record<string, string>;
 
 /**

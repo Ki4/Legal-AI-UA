@@ -528,4 +528,34 @@ export const PROBES = [
     to: `    return ((globalThis as { __probeView?: GenerationTraceView }).__probeView ??=
       toTraceView(fixtureTrace));`,
   },
+  {
+    id: "anatomy-trust-falls-back-to-english",
+    what: "drops the label, so a lawyer reads the design system's English default",
+    file: "apps/console/src/features/anatomy/components/AnatomyPage.tsx",
+    test: "apps/console/src/features/anatomy/components/AnatomyPage.test.tsx",
+    from: `                  <Provenance
+                    state={trustBadge[block.trust].state}
+                    label={t(trustBadge[block.trust].key)}
+                  />`,
+    to: `                  <Provenance state={trustBadge[block.trust].state} />`,
+  },
+  {
+    id: "anatomy-failure-renders-as-empty",
+    what: "swallows the failure, so a document nobody may see reads as one nobody generated",
+    file: "apps/console/src/features/anatomy/hooks/useTrace.ts",
+    test: "apps/console/src/features/anatomy/components/AnatomyPage.test.tsx",
+    from: `        setErrorKey(messageKeyFor(error));
+        setTrace(null);`,
+    to: `        setTrace(null);`,
+  },
+  {
+    id: "anatomy-failure-loses-its-code",
+    what: "reads a refused read as a generic fault, losing the one sentence that says why",
+    file: "apps/console/src/features/anatomy/hooks/useTrace.ts",
+    test: "apps/console/src/features/anatomy/components/AnatomyPage.test.tsx",
+    from: `      case "forbidden":
+        return "anatomy.error.forbidden";`,
+    to: `      case "forbidden":
+        return "anatomy.error.unknown";`,
+  },
 ];

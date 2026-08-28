@@ -123,9 +123,11 @@ this says how it is called and ships something that answers.
    product speaks.
 
 **Data layer** (PO): the catalogue and client halves have both shipped, and so has the law-reference
-register (ADM-21) — see the sections above. What remains is `document_blocks`, which waited on the
-trace schema below because the two constrain each other's shape; that shape was frozen on
-2026-08-28, so it now waits on nothing. Nothing in the client half gets an event
+register (ADM-21) — see the sections above. `document_blocks` has landed: the blocks a lawyer authors
+on a version, mirroring `TraceBlock` column for column and frozen with the version carrying them —
+which is what it waited on the trace schema for. What remains of it is the two link tables, a block's
+fields (ADM-20) and its law dependencies (ADM-22), which are the trace's `questionnaire_fields` and
+`law_ref_ids`. Nothing in the client half gets an event
 table of its own: `audit_events` is the log, and a new domain table joins it by gaining an entity
 mapping in `audit_change` — which raises rather than logging a null service, so the mapping cannot
 be forgotten.

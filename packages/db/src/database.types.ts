@@ -129,6 +129,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      document_blocks: {
+        Row: {
+          body: string;
+          condition_expression: string | null;
+          created_at: string;
+          id: string;
+          key: string;
+          needs_attention: boolean;
+          position: number;
+          service_version_id: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          body: string;
+          condition_expression?: string | null;
+          created_at?: string;
+          id?: string;
+          key: string;
+          needs_attention?: boolean;
+          position?: number;
+          service_version_id: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          condition_expression?: string | null;
+          created_at?: string;
+          id?: string;
+          key?: string;
+          needs_attention?: boolean;
+          position?: number;
+          service_version_id?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_blocks_service_version_id_fkey";
+            columns: ["service_version_id"];
+            isOneToOne: false;
+            referencedRelation: "service_versions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       entitlement_services: {
         Row: {
           entitlement_id: string;
@@ -767,6 +814,7 @@ export type Database = {
         Args: { new_lawyer: string; target_service: string };
         Returns: undefined;
       };
+      version_is_frozen: { Args: { target_version: string }; Returns: boolean };
       version_service: { Args: { target_version: string }; Returns: string };
     };
     Enums: {

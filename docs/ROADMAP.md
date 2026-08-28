@@ -10,6 +10,24 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — a template version's blocks (2026-08-28)
+
+**`document_blocks` landed as PR #63**, and the cloud's migration ledger turned out to be two weeks
+behind.
+
+- **The block tree is MVP work, not tier-2 groundwork.** ADR-0013 makes the bot's question order a
+  projection of block conditions, so the table that looked like preparation for `block_assembly` is
+  what drives the tier-1 intake `VISION.md` puts the proof of concept at.
+- **A freeze that guards the version row and leaves its blocks writable is a freeze in name.** The
+  guard is a trigger rather than a policy, because the writer that matters most holds `service_role`
+  and RLS does not apply to it at all.
+- **`version_is_frozen` raises for a version that is not there.** Without `security definer` the
+  lookup returns null for an invisible row, the check reads "not frozen", and the write goes through
+  — a freeze that fails open while reading as protection.
+- **An instruction can be safe under its premise and harmful under the facts.** "Run the ledger
+  repair, the line is already there" was correct for one migration; the cloud was missing five, with
+  the schema state unknown. Marking those applied would have made `db push` skip them forever.
+
 ## Done — the anatomy screen stops overclaiming (2026-08-28)
 
 **Its three findings closed together, as PR #61.** The screen had been written in English, printing
@@ -75,31 +93,6 @@ this says how it is called and ships something that answers.
   three were called inexpressible and were not: two needed a second watcher — a probe may name a
   package and be run against its `tsc` — and the third's patch reaches `globalThis`. Closing this
   session found the hole underneath: nothing runs `pnpm probes`. Both closed on 2026-08-28.
-
-## Done — the gate on the gates (2026-08-28)
-
-**The probe suite got something that runs it, and the by-hand drift list emptied.** PR #59.
-
-- **A suite about unattended decay cannot itself be run by remembering.** `pnpm probes` is the only
-  thing checking that the tests can fail, and it ran when somebody thought of it. It has its own CI
-  job now, parallel to `verify` — 1m30s against `verify`'s 51s, so the wall clock a human waits for
-  did not move. A nightly run reports hours after the change that caused it, against a `main` that
-  has moved; a path filter has to name `probes.mjs` itself or it stops running exactly when a probe
-  is edited.
-- **"Inexpressible" was a claim nobody re-tested.** Three cases were recorded in the `core-client`
-  README as impossible to probe. Two needed a second watcher rather than a different case: the
-  `…AreExhaustive` bridges are types, Vitest transpiles types away, so a probe may now name a
-  package in `typecheck` and be watched by that package's `tsc`. The third's patch reaches
-  `globalThis` and needed no new declaration at all.
-- **A probe names a test file, not an assertion.** Several assertions share `schema.test.ts`, so
-  these probes prove the file notices and not which `it` did — weaker than the claim `probes.mjs`
-  opens with, and written into the file rather than left for a reader to discover.
-- **A debt stated as a count is not actionable.** "Twenty-nine drift cases" named no members, and
-  reconstructing them took the ROADMAP and a package README because no list existed anywhere. Ten
-  probes to fifty-two.
-- **The prober got the treatment it gives.** Its restores were a claim checked by running
-  `git status` and looking; the run reports now, and the report was verified in both halves — green
-  on a good run, `NOT RESTORED` with the `finally` write replaced by a no-op (#60).
 
 ## Now — wave 1 (parallel, no file overlap)
 

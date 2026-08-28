@@ -155,6 +155,20 @@ function main() {
     `\nprobes: ${probes.length} run, ${probes.length - failures.length} caught by the test that names them.`,
   );
 
+  // The other end of the clean-tree check at the top, and it earns its place
+  // locally rather than in CI: CI checks out fresh every run, so a patch that
+  // was not put back is invisible there and lands on a developer's working copy
+  // instead. Every restore happens in a `finally`, which is exactly the kind of
+  // claim that stays true until it does not — a crash between the two writes,
+  // or a `to` that a later `finally` rewrites over. This is what would notice.
+  if (workingTreeIsClean() === false) {
+    failures.push(
+      "the working tree is dirty after the run: at least one patch was not put back. " +
+        "`git diff` shows what is still applied, and `git checkout .` is the recovery.",
+    );
+    console.error("NOT RESTORED  the working tree did not come back clean");
+  }
+
   if (failures.length > 0) {
     console.error("");
     for (const failure of failures) console.error(`ERROR  ${failure}`);

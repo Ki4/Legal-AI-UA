@@ -89,7 +89,8 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
 - The checkers under `scripts/` are collected too, as `scripts/**/*.test.mjs`. A gate nothing runs
   is the exact defect they were written to catch. Each one exports its core and runs its CLI only
   when invoked as one, so a test can call it without walking the repository or exiting the runner.
-  `check-copy.mjs` and `py-lane.mjs` are covered; `check-docs.mjs` and `check-sql.mjs` are not yet.
+  `check-copy.mjs`, `py-lane.mjs`, `check-contrast.mjs`, `check-docs.mjs` and `check-sql.mjs`
+  carry tests; the runners — `run-probes.mjs`, `run-sql-verification.mjs` — do not.
   A checker's rule is asserted in **both halves**: a source that must trip it, and the source one
   line away that must not. A checker that flags everything and one that flags nothing are equally
   useless, and only the pair tells them apart.

@@ -1,6 +1,6 @@
-# State — 2026-08-28, the contract is frozen and has a consumer
+# State — 2026-08-28, ADM-3 is closed and the contract can be called
 
-Written at `50c92a4` on `main`. If `git log` shows commits after it, this file is behind: say so in
+Written at `905e689` on `main`. If `git log` shows commits after it, this file is behind: say so in
 one line and let the git history win. A briefing from a stale state file reads as current.
 
 Tier 1: **the only document a session reads to orient.** ROADMAP, the specs and the DoD are read
@@ -9,13 +9,13 @@ it does not fit means something has to close or move to the backlog, and that pr
 
 ## Wave
 
-Wave 1. ADM-3 is three passes into five: the schema language settled (ADR-0021), the trace moved out
-of `packages/db` into `packages/core-client`, and the field list is frozen against VISION's six.
+Wave 1. **ADM-3 is done**, five passes of five: the schema language (ADR-0021), the trace's move
+into `packages/core-client`, the frozen field list, the job protocol (ADR-0022), and the fixture
+client. A console screen can now be built against a core that does not exist.
 
 ## In flight
 
-- Nothing. `main` is clean, no open PRs; #55, #56 and #57 all merged today. Two of ADM-3's five
-  passes remain — the job protocol and the fixture client — and both are in the candidates below.
+- Nothing. `main` is clean, no open PRs; #58 merged today and its branch is gone.
 
 ## Blocking — the question, and what it stops
 
@@ -33,26 +33,26 @@ of `packages/db` into `packages/core-client`, and the field list is frozen again
   is left to `docs:check`, which prints it. `CONTRIBUTING.md` lists the thirteen, what each decides
   and its verification script. The substitute works — 252 scenarios — but cannot ask the question a
   reviewer asks. Closes when the second developer reads them.
-- `2026-08-27` **The drift cases are re-run by hand and nothing re-runs them.** Four then,
-  twenty-nine now across `core-client` and `features/anatomy` — each named in a PR description and
-  executable by none. `pnpm probes` is the mechanism built for exactly this; no probe reaches here.
-- `2026-08-28` **The trace fixture exists twice and nothing compares the two.** The same data is in
-  `packages/core-client/fixtures/trace.valid.json`, where ajv validates it, and in
-  `features/anatomy/api/anatomy.mock.ts`, where nothing does. The fifth pass collapses them; dated
-  anyway, because "the next pass" slips.
-- `2026-08-28` **The anatomy screen has not been looked at through two merged PRs.** DoD §8 asks for
-  it in both themes with a clean console. It is behind `RequireAuth` — Playwright confirmed the
-  redirect and a clean console, so this needs a signed-in human, not a better tool.
+- `2026-08-27` **Twenty-nine drift cases are still re-run by hand and nothing re-runs them.** The
+  trace-schema and anatomy-mapper injections. The mechanism is no longer missing — `pnpm probes`
+  grew from ten to twenty-six today — so this is one file's work rather than a decision. Three of
+  this session's nineteen stay manual because no probe can express them; the README names which.
+- `2026-08-28` **`pnpm probes` is the gate nothing runs**, found while closing this session. CI runs
+  eight checks and the hook runs one; the probe suite — the only thing checking that the tests can
+  fail — runs when somebody remembers. A nightly job or a path-filtered one are the shapes to cost.
+- `2026-08-28` **The anatomy screen has still not been looked at, and today its data path moved.**
+  DoD §8 asks for both themes and a clean console; it is behind `RequireAuth`, so this needs a
+  signed-in human. The mapper now reads `fixtureTrace` from the package instead of a local copy —
+  13 tests pass, and nobody has seen the screen since.
 
 ## Next candidates
 
-1. **ADM-3 pass four — the job protocol.** `CoreClient`, `schema/operations.json`, and the test
-   asserting its operation set equals the interface's keys. Two decisions open: synchronous call
-   versus job-plus-poll, and what an error looks like on the wire.
-2. **Turn the twenty-nine injections into probes.** Closes the 2026-08-27 debt with the runner that
-   already exists, and stops this session's evidence expiring the way the first four did.
-3. **`document_blocks` (ADM-1's remainder) is unblocked.** It waited on the trace schema because the
-   two constrain each other's shape; the shape is frozen.
+1. **Put `pnpm probes` somewhere that runs it**, and fold the twenty-nine into it. The two debts
+   above are one piece of work, and doing the second without the first buys nothing.
+2. **`document_blocks` (ADM-1's remainder).** It waited on the trace schema because the two
+   constrain each other's shape; that shape has been frozen since 2026-08-28.
+3. **The Edge Function gateway skeleton (ADM-5).** JWT → rights → audit → core call — what the job
+   protocol was written for, and what turns ADR-0021 §8's Deno claim into a verified fact.
 
 ## Detail lives in
 

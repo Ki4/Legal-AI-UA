@@ -10,38 +10,6 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
-## Done — the debts get mechanisms (2026-08-27)
-
-Eight of the nine debts in STATE closed in one session, which is less a burst of virtue than a
-finding: most were phrased as diagnoses — "no instrument", "nothing checks" — and a diagnosis is
-inherited by the next reader instead of re-examined. Rephrased as "what is missing", four of them
-were a gate somebody could have written in an afternoon.
-
-- **`pnpm check:contrast`** — 36 token pairs over both themes, no browser. Written after the
-  both-themes debt was finally acted on and the first look found `Button` primary at 2.5:1 in dark,
-  on every screen. `--ui-ink-mute` and a new `--ui-on-brand` moved to clear AA; nothing was accepted
-  as a known failure. The lesson the gate carries: jsdom applies no stylesheet, so a component test
-  can prove a token was used and never that the result is legible.
-- **`pnpm probes`** — ten probes, each a one-line change to real source that a named test must
-  catch. The old habit was a sentence in a PR description, which works exactly once. Rot is a
-  failure, not a skip; the first run proved it by reporting a probe Prettier had reformatted out
-  from under.
-- **Tests for `check-docs` and `check-sql`** — the two oldest gates were the ones nothing executed,
-  which is the defect they were written to catch. `check-sql` gained an exported core on the way.
-- **`verify_grants.sql` sweeps `anon`** rather than sampling it, via `has_table_privilege` — which
-  sees a privilege arriving through `PUBLIC` or role membership, where reading `relacl` does not.
-- **ADM-38** — `TeamPage` gets a skeleton, an empty state distinct from the error state, and the
-  component test it never had. The `Skeleton` primitive is design-system work, per the DoD.
-- **The RPC-shaped fixture is anchored** to the generated signature, so a renamed argument fails
-  typecheck instead of leaving a mock simulating a call that no longer exists.
-- **`check-docs` reads the `Depends` column** for the half that is decidable: self-dependency and
-  cycles. Whether a dependency is the _right_ one is judgement, and a test says so.
-
-The ninth is not work and did not close: the access-control migrations still owe a human review.
-What changed is that `CONTRIBUTING.md` now carries the queue — thirteen migrations, what each
-decides, its verification script, and the order to read them in — so the day the second developer
-arrives it is a checklist rather than an invitation to read everything.
-
 ## Done — the field dictionary (2026-08-27)
 
 **ADM-18 and ADM-19** — `/services/:id/fields`, the questionnaire a service asks a client and what
@@ -95,7 +63,40 @@ PR; it merged, the trace stopped existing in two places, and the field list is f
   keywords to check for. It counts by exclusion now. The same shape had already appeared once that
   day in a degenerate test fixture, which is why it has a journal entry rather than a PR line.
 - **The evidence is still in transcripts.** Twenty-nine injections, no probe. `pnpm probes` exists
-  precisely for this and reaches neither file; STATE carries it as the 2026-08-27 debt, grown.
+  precisely for this and reached neither file; the next day it reaches the package but not these
+  twenty-nine, which STATE still carries as the 2026-08-27 debt.
+
+## Done — the contract learns to be called (2026-08-28)
+
+ADM-3's last two passes, as PR #58, and the item is closed. The trace said what the core sends;
+this says how it is called and ships something that answers.
+
+- **A call is accepted, not awaited (ADR-0022).** `startGeneration` answers `202` with the job it
+  created; `getGenerationJob` returns that same object until it is terminal. ADR-0004's own sentence
+  decides it — generation runs long and the gateway is an Edge Function with a wall-clock limit — so
+  a synchronous call is the one that passes every fixture and fails on the first real document. The
+  hybrid was rejected for a smaller reason worth keeping: the flag saying which operations are
+  synchronous is a fact stated in `operations.json` and again at every call site.
+- **A failure is a typed envelope, and the HTTP status stays.** `code` is a closed set of five, so a
+  caller branches on it rather than on prose. No `details` bag — that is where a client answer would
+  sit — and no `retriable`, which is derivable from `code`. RFC 9457 lost because its `type` is a
+  URI: nothing for a bridge to grip, so the closed set would be layered on top anyway.
+- **`operations.json` is what ADR-0021 §1 promised in place of OpenAPI, and it is checked.** Its
+  operation set must equal `CoreClient`'s keys, every `$ref` must resolve through ajv's registry,
+  every error code must have exactly one home, and the submission must answer `202`. That last one
+  is the ADR made falsifiable: the decision is a line a test fails on, not a paragraph to remember.
+- **The trace stopped existing three times.** The console's `anatomy.mock.ts` held a copy no schema
+  and no test reached; it now holds a mapper and no data. A runtime copy is unavoidable — ADR-0021
+  §8 forbids reading a file from that graph — but an unwatched one was not, and a test compares the
+  constant against the file ajv validates. The 2026-08-28 debt closed the day after it opened.
+- **A test read stronger than it was, and only an injection said so.** "Produces the same job twice"
+  compares two runs inside one process, which a module-level `Date.now()` satisfies: the epoch is
+  read once and both runs share it. Nineteen injections, eighteen red, that one green. The timeline
+  is asserted against written-down instants now — a determinism claim is only as strong as a value
+  written down, because a second run is not an independent witness.
+- **Sixteen of the nineteen became probes**, `pnpm probes` going from ten to twenty-six. The other
+  three are named in the package README: two only `tsc` can see, one needs a patch that declares
+  something. Closing this session found the hole underneath: nothing runs `pnpm probes`.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -138,9 +139,9 @@ type the console happens to own.
 rather than OpenAPI, TypeScript hand-written rather than generated, and drift closed by bridge
 constants compared against the schema in a test. It also overrules the "MSW mocks" wording above —
 there is no HTTP client to intercept until the gateway (ADM-5), so the package ships a `CoreClient`
-interface and a fixture implementation instead. Three passes have landed — the package and its
-drift mechanism, the trace's move out of `packages/db`, and the frozen field list. The job protocol
-and the fixture client remain.
+interface and a fixture implementation instead. All five passes have landed — the package and its
+drift mechanism, the trace's move out of `packages/db`, the frozen field list, the job protocol
+(ADR-0022) and the fixture client. ADM-3 is closed.
 
 ## Next — wave 2
 

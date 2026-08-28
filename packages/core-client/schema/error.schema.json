@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://legal-ai.ua/schema/error.schema.json",
+  "title": "ErrorResponse",
+  "description": "The body of every failed call. The HTTP status says how the transport failed; `error.code` says what the core refused and is what a caller branches on.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["error"],
+  "properties": {
+    "error": { "$ref": "#/$defs/CoreError" }
+  },
+  "$defs": {
+    "CoreErrorCode": {
+      "description": "What went wrong, as a closed set. `invalid_request` is a payload the core would not accept, `not_found` an identifier that resolves to nothing, `rate_limited` a caller asked to wait, `internal` a fault the core does not explain further, and `generation_failed` a job that started and could not finish — the only code that never appears as an HTTP response, because by then the call has already been answered.",
+      "type": "string",
+      "enum": ["invalid_request", "not_found", "rate_limited", "internal", "generation_failed"]
+    },
+    "CoreError": {
+      "description": "One failure, as the core reports it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "$ref": "#/$defs/CoreErrorCode" },
+        "message": {
+          "description": "English, for a log and an audit record. Never rendered to a user: what a user reads is chosen by the caller from `code`.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

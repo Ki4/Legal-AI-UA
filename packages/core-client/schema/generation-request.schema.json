@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://legal-ai.ua/schema/generation-request.schema.json",
+  "title": "GenerationRequest",
+  "description": "What the gateway sends to start a generation. Two pointers and nothing else: the service version to generate against, and the order whose answers are the input.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["service_version_id", "order_id"],
+  "properties": {
+    "service_version_id": {
+      "description": "The published service version to generate against. A version rather than a service, because an issued document pins the version it was produced from.",
+      "type": "string",
+      "minLength": 1
+    },
+    "order_id": {
+      "description": "The order this generation is for. The client's answers are read against it.",
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

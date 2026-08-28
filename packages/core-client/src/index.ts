@@ -53,3 +53,36 @@ export type {
   TraceBlock,
   TraceBlockKeysAreExhaustive,
 } from "./trace.ts";
+
+export {
+  CORE_ERROR_CODE,
+  CORE_ERROR_KEYS,
+  CORE_OPERATIONS,
+  CoreCallError,
+  ERROR_RESPONSE_KEYS,
+  GENERATION_REQUEST_KEYS,
+  JOB_KEYS,
+  JOB_STATUS,
+} from "./protocol.ts";
+export type {
+  CoreClient,
+  CoreError,
+  CoreErrorCode,
+  CoreErrorKeysAreExhaustive,
+  CoreOperationsAreExhaustive,
+  ErrorResponse,
+  ErrorResponseKeysAreExhaustive,
+  GenerationRequest,
+  GenerationRequestKeysAreExhaustive,
+  Job,
+  JobKeysAreExhaustive,
+  JobStatus,
+} from "./protocol.ts";
+
+// The fixture implementation, exported from the same entry as the interface it
+// implements — `packages/db` ships its mocks beside its types for the same
+// reason, and a second entry point would be a boundary nothing yet needs. It is
+// tree-shaken out of anything that only imports the types.
+export { createFixtureCoreClient } from "./fixture-client.ts";
+export type { FixtureCoreClientOptions } from "./fixture-client.ts";
+export { fixtureTrace } from "./fixture-trace.ts";

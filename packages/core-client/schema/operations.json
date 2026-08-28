@@ -1,0 +1,39 @@
+{
+  "protocol_version": 1,
+  "base_path": "/v1",
+  "error_response": { "$ref": "https://legal-ai.ua/schema/error.schema.json" },
+  "job_error_codes": ["generation_failed"],
+  "operations": {
+    "startGeneration": {
+      "description": "Accepts a generation and returns the job it created. Returns immediately: generation runs for minutes and the gateway that relays this call is an Edge Function with a wall-clock limit.",
+      "method": "POST",
+      "path": "/generation",
+      "request": { "$ref": "https://legal-ai.ua/schema/generation-request.schema.json" },
+      "success": {
+        "status": 202,
+        "body": { "$ref": "https://legal-ai.ua/schema/job.schema.json" }
+      },
+      "errors": [
+        { "status": 400, "code": "invalid_request" },
+        { "status": 404, "code": "not_found" },
+        { "status": 429, "code": "rate_limited" },
+        { "status": 500, "code": "internal" }
+      ]
+    },
+    "getGenerationJob": {
+      "description": "The job as it stands. The same shape the submission returned, so a caller polls without learning a second one.",
+      "method": "GET",
+      "path": "/generation/{job_id}",
+      "request": null,
+      "success": {
+        "status": 200,
+        "body": { "$ref": "https://legal-ai.ua/schema/job.schema.json" }
+      },
+      "errors": [
+        { "status": 404, "code": "not_found" },
+        { "status": 429, "code": "rate_limited" },
+        { "status": 500, "code": "internal" }
+      ]
+    }
+  }
+}

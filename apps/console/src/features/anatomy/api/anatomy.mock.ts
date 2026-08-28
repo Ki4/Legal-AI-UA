@@ -1,120 +1,35 @@
 // Fixture implementation of AnatomyApi.
 //
-// **Why the fixture is here and not in `shared/api/fixture-store`.** That file
-// says what it is in its first line: the stand-in for the *database*, shared so
-// that a write through one feature is visible to another. A trace is not a row
-// — no table produces it, no other feature reads it, and nothing writes it —
-// so putting it in the row store would claim a relationship that does not
-// exist. It lived in `packages/db` until 2026-08-28 under a comment admitting
-// as much; ADR-0021 §5 gave it a home and this is where it landed.
+// **The trace is not here.** It is `fixtureTrace` in `packages/core-client`,
+// beside the contract it conforms to, and a test there compares it against
+// `fixtures/trace.valid.json` — the file ajv validates. This screen holds a
+// mapper and no data. Until 2026-08-28 it held a copy of that trace instead,
+// which nothing validated and nothing compared; ADM-3's fifth pass is what
+// removed it.
 //
-// **Why it is not in `packages/core-client` either, yet.** It will be: ADM-3's
-// last pass ships a `CoreClient` interface with a fixture implementation typed
-// as it, and then this file delegates instead of holding data. Putting the
-// fixture in the package before the interface exists would be putting it
-// nowhere in particular — and the package is read by a Deno gateway, so a
-// fixture there has to answer questions about import attributes that a fixture
-// here does not (ADR-0021 §8).
+// **Why the data could not simply live in the JSON file everything reads.**
+// Nothing on `core-client`'s `index.ts` graph may read a file: the Deno gateway
+// imports that barrel, and a bare `.json` import is rejected there outright
+// (ADR-0021 §8). So a runtime copy has to exist somewhere; what changed is that
+// there is now one of them and a test watching it.
 //
-// The shape is `GenerationTrace` from the contract, so it is snake_case and the
-// same data as `packages/core-client/fixtures/trace.valid.json` — which ajv
-// validates against the schema. Two copies of one trace is a real cost, paid
-// until the fixture client lands and there is one; the alternative today is
-// importing JSON into the package's graph, which is the thing ADR-0021 §8
-// forbids.
+// **Why this file does not call `createFixtureCoreClient`.** That client
+// generates a trace — it starts a job and polls it. This screen reads one that
+// already exists, which is a different question, and answering it by running a
+// generation would teach the screen a workflow it does not have. The real
+// implementation reads a stored trace; the fixture reads a stored trace.
 //
-// There is exactly one hand-written trace, seeded for `svc-divorce`, and it is
-// returned regardless of which id was asked for. Throwing `not_found` for every
-// other id would be inventing a decision nobody has made yet: the real
-// implementation, reading a trace the core actually produced for the requested
-// service, is what gets to decide what a missing one means.
+// There is exactly one trace, seeded for `svc-divorce`, and it is returned
+// regardless of which id was asked for. Throwing `not_found` for every other id
+// would be inventing a decision nobody has made yet: the real implementation,
+// reading a trace the core actually produced for the requested service, is what
+// gets to decide what a missing one means.
 
+import { fixtureTrace } from "@legal-ai/core-client";
 import type { GenerationTrace, LawRef, TraceBlock } from "@legal-ai/core-client";
 import { fixtureDelay } from "../../../shared/api/fixture-store";
 import type { AnatomyApi } from "./contract";
 import type { GenerationTraceView, LawRefView, TraceBlockView } from "./types";
-
-const fixtureTrace: GenerationTrace = {
-  trace_version: 1,
-  service_id: "svc-divorce",
-  law_refs: [
-    {
-      norm_id: "norm-family-112",
-      source: "zakon_rada",
-      act_id: "2947-14",
-      act_title: "Family Code of Ukraine",
-      article: "112",
-      relied_on: "Grounds on which a court dissolves a marriage.",
-      verified_at: "2026-08-20T06:15:00Z",
-    },
-    {
-      norm_id: "norm-family-105",
-      source: "zakon_rada",
-      act_id: "2947-14",
-      act_title: "Family Code of Ukraine",
-      article: "105",
-      relied_on: "Which body dissolves the marriage, and when it must be the court.",
-      verified_at: null,
-    },
-    {
-      norm_id: "norm-civil-procedure",
-      source: "zakon_rada",
-      act_id: "1618-15",
-      act_title: "Civil Procedure Code of Ukraine",
-      article: null,
-      relied_on: "Form and content of a claim, jurisdiction, and the schedule of court fees.",
-      verified_at: "2026-08-25T04:00:00.500Z",
-    },
-  ],
-  blocks: [
-    {
-      id: "blk-header",
-      title: "Court header and parties",
-      trust: "template",
-      needs_attention: false,
-      selected_by: null,
-      law_ref_ids: ["norm-civil-procedure"],
-      questionnaire_fields: ["applicant_name", "respondent_name", "court_region"],
-      tool_calls: [],
-    },
-    {
-      id: "blk-circumstances",
-      title: "Circumstances of the marriage",
-      trust: "ai_generated",
-      needs_attention: true,
-      selected_by: null,
-      law_ref_ids: [],
-      questionnaire_fields: ["marriage_date", "children", "separation_reason"],
-      tool_calls: [
-        { tool: "retrieve_precedent", started_at: "2026-08-26T09:41:02Z", outcome: "ok" },
-        { tool: "draft_narrative", started_at: "2026-08-26T09:41:07.250Z", outcome: "ok" },
-      ],
-    },
-    {
-      id: "blk-legal-grounds",
-      title: "Legal grounds",
-      trust: "ai_generated",
-      needs_attention: false,
-      selected_by: { expression: "children is empty", field_keys: ["children"] },
-      law_ref_ids: ["norm-family-112", "norm-family-105"],
-      questionnaire_fields: [],
-      tool_calls: [
-        { tool: "retrieve_norm_text", started_at: "2026-08-26T09:41:11Z", outcome: "error" },
-        { tool: "retrieve_norm_text", started_at: "2026-08-26T09:41:13Z", outcome: "ok" },
-      ],
-    },
-    {
-      id: "blk-request",
-      title: "Request to the court",
-      trust: "lawyer_edited",
-      needs_attention: false,
-      selected_by: { expression: "always", field_keys: [] },
-      law_ref_ids: ["norm-civil-procedure"],
-      questionnaire_fields: ["applicant_name"],
-      tool_calls: [],
-    },
-  ],
-};
 
 function toLawRefView(ref: LawRef): LawRefView {
   return { normId: ref.norm_id, actTitle: ref.act_title, article: ref.article };

@@ -32,8 +32,8 @@ Read this before any change. Zone files add detail; this file is the map.
   is one line — see ADR-0006). `uk` is the default and defines the key set; `en` is typed against
   it, so a key added to one and missed in the other fails to compile. Counted phrases go through
   `tCount`, because Ukrainian has three plural forms where English has two and a `count === 1`
-  ternary is correct English and wrong Ukrainian. The console shell is adopted; the feature screens
-  are not yet.
+  ternary is correct English and wrong Ukrainian. Adopted everywhere but `design-kit`, which is a
+  developer gallery and is excluded from `check:copy` for the same reason.
 - `supabase/` — migrations, edge functions, seed. See `supabase/CLAUDE.md`.
 - `docs/` — vision, ADRs, specs (`docs/specs/`), `docs/CONTRIBUTING.md`, session journals. **Sorted
   by when they are read, not by what they are about** — see "Documents have tiers" below.

@@ -10,39 +10,38 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
-## Done — the contract gets its field list (2026-08-28)
+## Done — the anatomy screen stops overclaiming (2026-08-28)
 
-ADM-3's first three passes, as PRs #55, #56 and #57. ADR-0021 had been sitting on a branch with no
-PR; it merged, the trace stopped existing in two places, and the field list is frozen against
-`VISION.md`'s six.
+**Its three findings closed together, as PR #61.** The screen had been written in English, printing
+a review nobody had performed, and dropping two fields the trace was already carrying.
 
-- **The deferred law-reference decision landed as a register plus pointers.** Every cited norm
-  appears once in `trace.law_refs`; a block cites by `norm_id`. Inline copies have a failure the
-  schema cannot express — four blocks citing article 112 would carry four copies and nothing stops
-  two disagreeing — and an id it cannot say resolves is the better trade, because a dangling one
-  renders visibly oddly rather than quietly wrong. Each ref is a pointer _and_ a snapshot: a live
-  screen follows it into the register, an archived trace (§5.3) is read when the row has moved on.
-- **No `scope` field, because the migration already decides it.** `article is not null` holds
-  exactly when the scope is an article, so carrying both would be two representations of one fact —
-  which `law_norms`' own comments refuse except for a generated column that cannot drift.
-- **Tool calls carry no arguments, and the schema is where that is enforced.** Arguments carry
-  client answers; §5.5 and §6.4 say keys only. `CONTRIBUTING.md` says the stricter reading wins, so
-  personal data gets nowhere to sit rather than a promise the core will leave it out. Adding a
-  redacted field later is a version bump; removing one that leaked is an incident.
-- **A condition is text plus the keys it read, not a syntax tree.** ADM-16 and ADM-1 do not exist,
-  and an AST frozen here would repeat the mistake law refs nearly made — a triple that could not
-  express act scope, justified by a claim one `ls supabase/migrations` would have refuted.
-- **The first timestamp arrived, and with it what ADR-0021 §3 promised for it**: a `Z`-anchored
-  `pattern` rather than `format: date-time`, which throws without `ajv-formats` and with it still
-  accepts `+03:00`.
-- **Twenty-nine defects were injected by hand; twenty-eight went red and one did not — the checker
-  itself.** "Has a case for every constraint keyword" matched keys against a list its author wrote,
-  so `maxLength` slipped past: a keyword nobody thought of was, by construction, not on the list of
-  keywords to check for. It counts by exclusion now. The same shape had already appeared once that
-  day in a degenerate test fixture, which is why it has a journal entry rather than a PR line.
-- **The evidence was in transcripts, and is in `scripts/probes.mjs` now.** Twenty-nine injections
-  against two files no probe reached. They were folded into the suite on 2026-08-28, which is where
-  a drift case belongs and where nothing has to remember to re-run it.
+- **A feature excluded from a checker is a rule that stops applying to it.** `check-copy.mjs`
+  exempted `anatomy` because a fixture trace is content rather than copy — true of the block titles
+  and false of every sentence around them, which is how a screen stayed English while a gate stayed
+  green. The exclusion is gone and the checker scans 51 files. Errors leave `useTrace` as a
+  `TranslationKey` mapped from `AppError.code`, because a sentence translated at catch time is
+  frozen in whichever language was active then.
+- **`BlockTrust` and the `confirmed` marker are two axes, and the screen was rendering one as the
+  other.** The schema says trust answers _who wrote the text_; design-system §8.1 says a block flips
+  to `confirmed` when a lawyer _approves_ it. `template` — lawyer-authored text, filled in
+  deterministically — was therefore printing «Підтверджено юристом» over documents nobody had
+  opened. It keeps the marker and says «Із шаблону юриста». Where the approval axis lives is **Q27**
+  rather than a guess: in the trace it is a `trace_version` bump across three runtimes; beside it,
+  a table the review screen owns.
+- **A deferral can be written carefully and still name the wrong screen.** `selected_by` and
+  `tool_calls` were recorded in `types.ts` as belonging to a review screen that does not exist. The
+  condition is the whole of _why a block is in this document_, which is this screen's subject —
+  `VISION.md` had said so before either screen was built, and nobody re-read it. Both render now: a
+  null condition as its own sentence, because "nothing selected this" and "we did not show you what
+  did" look identical when the absence is silent; the calls in the order they ran, keeping both
+  halves of a retry, because a block produced after a tool failed is one a lawyer reads differently.
+- **`started_at` is the one field the view model refuses.** The order is already on screen and is
+  what a reader of a retry needs; a timestamp at minute resolution would answer the same question
+  worse. In the contract, absent from the view — which is the layer working rather than lagging.
+- **Six probes, and the screen's first component test.** Drop a label and the English default
+  returns; swallow the failure and it reads as an ungenerated document; hide the failed calls, let
+  `started_at` ride along on a spread, or render nothing for an unconditional block — each turns one
+  named test red. `pnpm probes anatomy`: 12 run, 12 caught.
 
 ## Done — the contract learns to be called (2026-08-28)
 
@@ -158,8 +157,8 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
   into a claim the firm makes about a person, with a retention question attached.
-- Component tests for the screens that do not have one. Seven of twelve are covered; the five
-  without are `AccountPage`, `AnatomyPage`, `DesignKitPage`, `ServiceDetailPage` and `TeamPage`.
+- Component tests for the screens that do not have one. Eight of twelve are covered; the four
+  without are `AccountPage`, `DesignKitPage`, `ServiceDetailPage` and `TeamPage`.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.
 - Core: LangGraph pipeline behind the frozen contract (the core zone).
 

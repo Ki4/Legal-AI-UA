@@ -533,6 +533,30 @@ export const en: Dictionary = {
   "gdpr.specialBasis.health_care": "Health care",
   "gdpr.specialBasis.public_health": "Public health",
   "gdpr.specialBasis.archiving_research": "Archiving and research",
+
+  // Document anatomy (§8) ------------------------------------------------------
+  "anatomy.title": "Document anatomy",
+  "anatomy.subtitle":
+    "Service {service} — which blocks the document is made of, and what each one rests on.",
+  "anatomy.loading": "Loading the document anatomy",
+  "anatomy.empty": "Nothing has been generated for this service yet.",
+  "anatomy.questionnaireFields": "Questionnaire fields: {fields}",
+  "anatomy.needsReview": "Worth checking",
+  "anatomy.trust.template": "From the lawyer's template",
+  "anatomy.trust.ai_generated": "AI suggested",
+  "anatomy.trust.lawyer_edited": "Edited by lawyer",
+  "anatomy.error.forbidden": "You do not have access to this document.",
+  "anatomy.error.notFound": "There is no stored anatomy for this service.",
+  "anatomy.error.validation": "The request was rejected — check the link you arrived by.",
+  "anatomy.error.conflict": "The document changed while we were reading it. Reload the page.",
+  "anatomy.error.network": "Could not reach the server. Check your connection.",
+  "anatomy.error.unknown": "Something went wrong while loading the document anatomy.",
+  "anatomy.selectedBy": "Condition: {expression}",
+  "anatomy.selectedBy.unconditional": "Unconditional — this block is in every document.",
+  "anatomy.selectedBy.fields": "The condition reads: {fields}",
+  "anatomy.toolCalls": "Tool calls",
+  "anatomy.toolCall.ok": "ok",
+  "anatomy.toolCall.error": "failed",
 };
 
 /**

@@ -7,43 +7,66 @@
 // "nothing" for three different reasons — loading, no blocks, and failed —
 // that a reader cannot tell apart. This hook keeps them apart instead.
 //
-// No dictionary key for the failure sentence: anatomy's text stays hardcoded
-// (apps/console/CLAUDE.md — this feature is fixture content, not interface
-// copy), so a fixed string, not `error.message`, is what the component gets.
+// The failure leaves here as a `TranslationKey`, not as a sentence. A string
+// translated at catch time is frozen in whichever language was active then, so
+// a reader who switches while it is on screen keeps reading the old one
+// (`apps/console/CLAUDE.md`, "Copy: dictionary keys only"; DoD §6). Which
+// sentence belongs to which failure is decided here; which language it is in is
+// decided by whoever renders it.
 
+import type { TranslationKey } from "@legal-ai/i18n";
 import { useEffect, useState } from "react";
+import { AppError } from "../../../shared/api/errors";
 import { anatomyApi, type GenerationTraceView } from "../api";
 
 export interface Trace {
   trace: GenerationTraceView | null;
   loading: boolean;
-  error: string | null;
+  errorKey: TranslationKey | null;
 }
 
-const FAILURE_MESSAGE = "Could not load the generation trace. Try again in a moment.";
+// Every code gets its own sentence, and nothing falls through to
+// `error.message` — those are written for whoever is reading a stack trace, not
+// for a lawyer looking at a screen, and they are written in English whatever
+// the reader chose.
+function messageKeyFor(error: unknown): TranslationKey {
+  if (error instanceof AppError) {
+    switch (error.code) {
+      case "forbidden":
+        return "anatomy.error.forbidden";
+      case "not_found":
+        return "anatomy.error.notFound";
+      case "validation":
+        return "anatomy.error.validation";
+      case "conflict":
+        return "anatomy.error.conflict";
+      case "network":
+        return "anatomy.error.network";
+      case "unknown":
+        return "anatomy.error.unknown";
+    }
+  }
+  return "anatomy.error.unknown";
+}
 
 export function useTrace(serviceId: string | undefined): Trace {
   const [trace, setTrace] = useState<GenerationTraceView | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setError(null);
+    setErrorKey(null);
 
     anatomyApi
       .getTrace(serviceId ?? "")
       .then((result) => {
         if (!cancelled) setTrace(result);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (cancelled) return;
-        // The code is not rendered — see the file header — only that
-        // something failed. `AppError` and its `code` are the layer's
-        // business; the screen has one sentence for every reason this can
-        // reject.
-        setError(FAILURE_MESSAGE);
+        setErrorKey(messageKeyFor(error));
         setTrace(null);
       })
       .finally(() => {
@@ -55,5 +78,5 @@ export function useTrace(serviceId: string | undefined): Trace {
     };
   }, [serviceId]);
 
-  return { trace, loading, error };
+  return { trace, loading, errorKey };
 }

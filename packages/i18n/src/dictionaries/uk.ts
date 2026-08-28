@@ -589,6 +589,55 @@ export const uk = {
   "gdpr.specialBasis.health_care": "Медична допомога",
   "gdpr.specialBasis.public_health": "Громадське здоровʼя",
   "gdpr.specialBasis.archiving_research": "Архівування та дослідження",
+
+  // Document anatomy (§8) ------------------------------------------------------
+  //
+  // The screen renders a generation trace: which blocks a document is made of,
+  // what each one rests on, and who stands behind it. The trace itself is
+  // fixture data today (`features/anatomy/api`) — that is a fact about the data
+  // source, not about the reader, so the copy is written for the lawyer who
+  // will read the real one.
+  "anatomy.title": "Анатомія документа",
+  "anatomy.subtitle":
+    "Послуга {service} — з яких блоків складено документ і на що спирається кожен.",
+  "anatomy.loading": "Завантажуємо анатомію документа",
+  "anatomy.empty": "Для цієї послуги ще немає згенерованого документа.",
+  "anatomy.questionnaireFields": "Поля анкети: {fields}",
+
+  // §8.2 — дві позначки, ніколи не відсоток. Впевнений блок мовчить.
+  "anatomy.needsReview": "Варто перевірити",
+
+  // §8.1 — хто написав текст блоку. Дизайн-система дає ці слова, і два з трьох
+  // узято звідти дослівно. Третє — ні: `BlockTrust` у схемі траси відповідає на
+  // питання «хто це написав», а стан `confirmed` у §8.1 означає «юрист це
+  // затвердив», і це різні осі. Блок із шаблону написав юрист заздалегідь;
+  // затвердження цього документа не відбувалося, і екран більше про нього не
+  // говорить. Друга вісь — хто затвердив — у трасі не існує взагалі.
+  "anatomy.trust.template": "Із шаблону юриста",
+  "anatomy.trust.ai_generated": "Запропоновано AI",
+  "anatomy.trust.lawyer_edited": "Змінено юристом",
+
+  // Ключ на кожен код помилки — той самий підхід, що й у каталозі: сюди
+  // приходить `AppError.code`, а не `error.message`.
+  "anatomy.error.forbidden": "У вас немає доступу до цього документа.",
+  "anatomy.error.notFound": "Для цієї послуги немає збереженої анатомії.",
+  "anatomy.error.validation": "Запит відхилено — перевірте посилання, за яким ви прийшли.",
+  "anatomy.error.conflict": "Документ змінився, поки ми його читали. Оновіть сторінку.",
+  "anatomy.error.network": "Не вдалося зв’язатися із сервером. Перевірте з’єднання.",
+  "anatomy.error.unknown": "Щось пішло не так під час завантаження анатомії документа.",
+
+  // Чому блок узагалі тут (§8, «branching conditions»). Умову показуємо так, як
+  // її написано в шаблоні, — розбирати її на екрані означало б другу реалізацію
+  // мови шаблонів не в тій зоні.
+  "anatomy.selectedBy": "Умова: {expression}",
+  "anatomy.selectedBy.unconditional": "Блок безумовний — він є в кожному документі.",
+  "anatomy.selectedBy.fields": "Умова читає: {fields}",
+
+  // Що виконував core, поки робив блок. Порядок — той, у якому виклики
+  // починалися; часу немає навмисне (див. `ToolCallView`).
+  "anatomy.toolCalls": "Виклики інструментів",
+  "anatomy.toolCall.ok": "виконано",
+  "anatomy.toolCall.error": "помилка",
 } as const satisfies Record<string, string>;
 
 /**

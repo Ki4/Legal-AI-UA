@@ -1574,6 +1574,22 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   console is staff-only and staff read Ukrainian; the cost of deciding late is a migration over live
   questionnaires plus every answer snapshot that quoted an option by its text.
 
+- **Q27. Is a block's approval a second axis, and where does it live?** `BlockTrust` in the trace
+  answers who wrote a block's text — `template` is lawyer-authored text filled in deterministically,
+  `ai_generated` came from the model, `lawyer_edited` from the model and then corrected. Design
+  system §8.1 gives the `confirmed` marker a different meaning: a block carries `ai` while it awaits
+  review and flips to `confirmed` when a lawyer approves it. Those are two axes, and the anatomy
+  screen had been rendering the first as if it were the second — printing «Підтверджено юристом» for
+  a document nobody had opened. The copy now states only the axis the trace carries (2026-08-28), so
+  nothing on screen is false; what is still undecided is where the other axis lives. It is not
+  obviously the trace's: the trace is the core's account of what produced a document and is archived
+  unchanged in the passport (ADR-0009), whereas an approval happens afterwards, in the console, and
+  can happen twice. Putting it in the trace is a `trace_version` bump across three runtimes;
+  putting it beside the trace is a console table the review screen owns. Deciding it before the
+  review screen exists costs a paragraph; deciding it after costs whatever that screen was built on.
+  The trust surface is the product's flagship claim (`VISION.md`), which is what makes this a
+  question rather than a detail.
+
 **Already answered, listed so they stop being reopened**
 
 - **Q4** — the promise is a **format, not a deadline**. The client is told that a change was found

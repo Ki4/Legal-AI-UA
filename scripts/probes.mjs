@@ -528,4 +528,62 @@ export const PROBES = [
     to: `    return ((globalThis as { __probeView?: GenerationTraceView }).__probeView ??=
       toTraceView(fixtureTrace));`,
   },
+  {
+    id: "anatomy-trust-falls-back-to-english",
+    what: "drops the label, so a lawyer reads the design system's English default",
+    file: "apps/console/src/features/anatomy/components/AnatomyPage.tsx",
+    test: "apps/console/src/features/anatomy/components/AnatomyPage.test.tsx",
+    from: `                  <Provenance
+                    state={trustBadge[block.trust].state}
+                    label={t(trustBadge[block.trust].key)}
+                  />`,
+    to: `                  <Provenance state={trustBadge[block.trust].state} />`,
+  },
+  {
+    id: "anatomy-failure-renders-as-empty",
+    what: "swallows the failure, so a document nobody may see reads as one nobody generated",
+    file: "apps/console/src/features/anatomy/hooks/useTrace.ts",
+    test: "apps/console/src/features/anatomy/components/AnatomyPage.test.tsx",
+    from: `        setErrorKey(messageKeyFor(error));
+        setTrace(null);`,
+    to: `        setTrace(null);`,
+  },
+  {
+    id: "anatomy-failure-loses-its-code",
+    what: "reads a refused read as a generic fault, losing the one sentence that says why",
+    file: "apps/console/src/features/anatomy/hooks/useTrace.ts",
+    test: "apps/console/src/features/anatomy/components/AnatomyPage.test.tsx",
+    from: `      case "forbidden":
+        return "anatomy.error.forbidden";`,
+    to: `      case "forbidden":
+        return "anatomy.error.unknown";`,
+  },
+  {
+    id: "anatomy-tool-calls-hide-the-failure",
+    what: "keeps only the calls that succeeded, so a retried failure never reaches the screen",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `    toolCalls: block.tool_calls.map(toToolCallView),`,
+    to: `    toolCalls: block.tool_calls.filter((c) => c.outcome === "ok").map(toToolCallView),`,
+  },
+  {
+    id: "anatomy-tool-call-carries-the-clock-through",
+    what: "spreads the wire call into the view, so started_at rides along as an excess property",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `  return { tool: call.tool, outcome: call.outcome };`,
+    to: `  return { ...call };`,
+  },
+  {
+    id: "anatomy-unconditional-block-says-nothing",
+    what: "renders nothing for a block no condition selected, so absence and silence look alike",
+    file: "apps/console/src/features/anatomy/components/AnatomyPage.tsx",
+    test: "apps/console/src/features/anatomy/components/AnatomyPage.test.tsx",
+    from: `                {block.selectedBy === null
+                  ? t("anatomy.selectedBy.unconditional")
+                  : t("anatomy.selectedBy", { expression: block.selectedBy.expression })}`,
+    to: `                {block.selectedBy === null
+                  ? null
+                  : t("anatomy.selectedBy", { expression: block.selectedBy.expression })}`,
+  },
 ];

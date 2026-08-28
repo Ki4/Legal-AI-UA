@@ -16,26 +16,24 @@
 // learns which package the word came from — the point of the convention is
 // that moving it again is this file's diff and nobody else's.
 //
-// **Three contract fields have no view model here, and each absence is a
-// decision.** A view model exists because a screen renders it (convention 6),
-// so a field nothing renders would be a field this layer has to keep truthful
-// for no one:
+// **One contract field has no view model here, and the absence is a decision.**
+// A view model exists because a screen renders it (convention 6), so a field
+// nothing renders would be a field this layer has to keep truthful for no one:
 //
 //   `trace_version`  tells a reader of an archived trace which shape to expect.
 //                    A screen rendering the trace it just fetched knows already.
-//   `selected_by`    the branching condition. Spec §4.6 promises a lawyer this,
-//                    on the runs screen — ADM-28, which does not exist. It is in
-//                    the contract because freezing the field list was the point
-//                    of that pass, not because this screen is ready for it.
-//   `tool_calls`     the same, and it belongs to the review screen rather than
-//                    the client-facing anatomy view.
 //
-// They stay in the contract and arrive here when the screen that renders them
-// does. That is the layer working, not the layer lagging.
+// `selected_by` and `tool_calls` were on that list until 2026-08-28, deferred to
+// a review screen that does not exist. The deferral was wrong about which screen
+// they belong to: the condition is the whole of *why a block is in this
+// document*, and this is the screen whose subject is that question. They are
+// rendered here, and the review screen will render them again with a reviewer's
+// controls around them — the same trace, two consumers, which is what
+// `VISION.md` said before either screen was built.
 
-import type { BlockTrust } from "@legal-ai/core-client";
+import type { BlockTrust, ToolOutcome } from "@legal-ai/core-client";
 
-export type { BlockTrust } from "@legal-ai/core-client";
+export type { BlockTrust, ToolOutcome } from "@legal-ai/core-client";
 
 /**
  * A cited norm, already resolved out of the trace's register.
@@ -57,13 +55,46 @@ export interface LawRefView {
   article: string | null;
 }
 
+/**
+ * Why this block is in the document, when it did not have to be.
+ *
+ * `fieldKeys` stays separate rather than being parsed back out of
+ * `expression`: parsing it out means an expression parser in the console, which
+ * is a second implementation of the template language living in the wrong zone.
+ * The core says both, and this layer carries both.
+ */
+export interface BlockConditionView {
+  expression: string;
+  /** Keys of the answers the condition read. Keys only — never their values. */
+  fieldKeys: string[];
+}
+
+/**
+ * One call the core made while producing a block.
+ *
+ * `started_at` has no field here, and that is the one deliberate omission on
+ * this type. The calls arrive in the order they started and are rendered in it,
+ * so the sequence — which is what a reader of a failed-then-retried call needs —
+ * is already on screen. A timestamp would add a second answer to the same
+ * question, rendered at a resolution that makes calls seconds apart look
+ * simultaneous. It is in the contract, and the screen that needs the clock
+ * rather than the order is where it becomes a view model.
+ */
+export interface ToolCallView {
+  tool: string;
+  outcome: ToolOutcome;
+}
+
 export interface TraceBlockView {
   id: string;
   title: string;
   trust: BlockTrust;
   needsAttention: boolean;
+  /** Null when the block is unconditional, never merely unknown. */
+  selectedBy: BlockConditionView | null;
   lawRefs: LawRefView[];
   questionnaireFields: string[];
+  toolCalls: ToolCallView[];
 }
 
 export interface GenerationTraceView {

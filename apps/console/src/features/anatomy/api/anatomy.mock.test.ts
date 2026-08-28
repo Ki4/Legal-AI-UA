@@ -102,7 +102,10 @@ const sample: GenerationTrace = {
       selected_by: null,
       law_ref_ids: ["norm-act"],
       questionnaire_fields: [],
-      tool_calls: [],
+      tool_calls: [
+        { tool: "retrieve_precedent", started_at: "2026-08-26T09:42:00Z", outcome: "error" },
+        { tool: "retrieve_precedent", started_at: "2026-08-26T09:42:05.250Z", outcome: "ok" },
+      ],
     },
   ],
 };
@@ -118,26 +121,40 @@ describe("toTraceView", () => {
         title: "Flagged, cites nothing, asks two questions",
         trust: "ai_generated",
         needsAttention: true,
+        selectedBy: null,
         lawRefs: [],
         questionnaireFields: ["applicant_name", "court_region"],
+        toolCalls: [],
       },
       {
         id: "blk-settled",
         title: "Settled, cites one norm, asks nothing",
         trust: "lawyer_edited",
         needsAttention: false,
+        selectedBy: { expression: "children is empty", fieldKeys: ["children"] },
         lawRefs: [{ normId: "norm-article", actTitle: "Family Code of Ukraine", article: "112" }],
         questionnaireFields: [],
+        // `started_at` is read and dropped on purpose (`ToolCallView`), which is
+        // a claim about the mapper and therefore asserted rather than described.
+        toolCalls: [{ tool: "retrieve_norm_text", outcome: "ok" }],
       },
       {
         id: "blk-flagged-with-a-ref",
         title: "Flagged, cites the act as a whole, asks nothing",
         trust: "template",
         needsAttention: true,
+        selectedBy: null,
         lawRefs: [
           { normId: "norm-act", actTitle: "Civil Procedure Code of Ukraine", article: null },
         ],
         questionnaireFields: [],
+        // The retry, in the order it happened. A mapper that deduplicated by
+        // tool name, or sorted by outcome, would lose the one thing this list
+        // is read for.
+        toolCalls: [
+          { tool: "retrieve_precedent", outcome: "error" },
+          { tool: "retrieve_precedent", outcome: "ok" },
+        ],
       },
     ]);
   });
@@ -156,8 +173,19 @@ describe("toTraceView", () => {
       "lawRefs",
       "needsAttention",
       "questionnaireFields",
+      "selectedBy",
       "title",
+      "toolCalls",
       "trust",
+    ]);
+    // The same argument one level down: `started_at` surviving as an excess
+    // property is what a spread-based mapper produces, and `toEqual` above
+    // cannot see it.
+    expect(Object.keys(at(at(view.blocks, 1).toolCalls, 0)).sort()).toEqual(["outcome", "tool"]);
+    const condition = at(view.blocks, 1).selectedBy;
+    expect(condition === null ? [] : Object.keys(condition).sort()).toEqual([
+      "expression",
+      "fieldKeys",
     ]);
     expect(Object.keys(at(at(view.blocks, 1).lawRefs, 0)).sort()).toEqual([
       "actTitle",
@@ -170,9 +198,13 @@ describe("toTraceView", () => {
     const view = toTraceView(sample);
     at(view.blocks, 0).questionnaireFields.push("invented by a component");
     at(view.blocks, 1).lawRefs.push({ normId: "x", actTitle: "x", article: null });
+    at(view.blocks, 1).selectedBy?.fieldKeys.push("invented by a component");
+    at(view.blocks, 2).toolCalls.push({ tool: "invented", outcome: "ok" });
 
     expect(at(sample.blocks, 0).questionnaire_fields).toEqual(["applicant_name", "court_region"]);
     expect(at(sample.blocks, 1).law_ref_ids).toEqual(["norm-article"]);
+    expect(at(sample.blocks, 1).selected_by?.field_keys).toEqual(["children"]);
+    expect(at(sample.blocks, 2).tool_calls).toHaveLength(2);
   });
 
   it("maps a trace with no blocks to a view with no blocks", () => {

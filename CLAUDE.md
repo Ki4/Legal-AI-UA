@@ -94,6 +94,12 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
   A checker's rule is asserted in **both halves**: a source that must trip it, and the source one
   line away that must not. A checker that flags everything and one that flags nothing are equally
   useless, and only the pair tells them apart.
+- `pnpm probes` is the gate on the gates: it breaks one real line of source, runs the one test that
+  must notice, and fails if that test stays green. It has its own CI job, parallel to `verify`,
+  because it costs minutes and because a suite about unattended decay cannot itself be run by
+  remembering. A probe names a test file and is watched by Vitest; a probe naming a package in
+  `typecheck` is watched by that package's `tsc` instead, for assertions written as types — which
+  Vitest transpiles away. A drift case demonstrated in a PR description is a case nothing re-runs.
 - `pnpm docs:check` runs on every push (git pre-push) and in CI: broken relative links, section
   cross-references pointing at sections that no longer exist, backlog ids cited without a defining
   row. It reports orphaned ADRs as notes without failing. It checks only what is decidable without

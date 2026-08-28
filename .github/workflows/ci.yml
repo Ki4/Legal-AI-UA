@@ -56,3 +56,40 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  # A separate job, and parallel to `verify` on purpose. `pnpm probes` breaks
+  # real source files one at a time and runs the one test that must notice, so
+  # it costs minutes rather than seconds — appended to `verify` it would push
+  # every pull request's wall-clock out by that much, and run last, after the
+  # cheap checks a change usually fails on. Beside it, it costs nothing a human
+  # waits for.
+  #
+  # Why not a nightly run, which is the other obvious shape: a nightly failure
+  # arrives detached from the change that caused it, hours later, against a main
+  # that has moved. The point of this suite is that the tests can fail, and that
+  # claim is only useful attached to the commit that weakened one. Why not a
+  # path filter: the set of files a probe reaches is the set of files it patches
+  # plus every test that watches them, and `probes.mjs` itself — a filter that
+  # forgets the last one is a filter that stops running exactly when a probe is
+  # edited.
+  probes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The runner refuses to start on a dirty tree, because it restores by
+      # rewriting originals and `git checkout .` is the recovery if it dies.
+      # A fresh checkout is clean; this fails loudly if some earlier step ever
+      # stops leaving it that way.
+      - name: Probes
+        run: pnpm probes

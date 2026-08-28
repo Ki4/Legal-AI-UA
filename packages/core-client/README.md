@@ -216,21 +216,27 @@ inert under the test runner:
 | a property added to the schema     | `pnpm test`      |
 | a property added to the interface  | `pnpm typecheck` |
 
-Run all four by hand when the bridges change. A bridge nobody has watched fail is a bridge nobody
-has evidence for — which is the repository's verification rule (`docs/CONTRIBUTING.md`) applied to
-this package's own safety net. The four were re-run on 2026-08-28 against the frozen field list, on
-`ToolOutcome` and `LawRef` rather than `BlockTrust` and `TraceBlock`, and the table held: the fourth
-row is still the one `pnpm test` sleeps through.
+`pnpm probes` runs all four, and nothing about them is by hand any more. A bridge nobody has
+watched fail is a bridge nobody has evidence for — the repository's verification rule
+(`docs/CONTRIBUTING.md`) applied to this package's own safety net — and evidence a person has to
+remember to produce is evidence that stops arriving. The table's fourth row is still the one
+`pnpm test` sleeps through; what changed is that something else is awake for it.
 
-**Six of the seven cases run for the fixture client are probes**, and the seventh — two clients
-sharing one store — is left by hand because its patch has to declare something, which a one-for-one
-text replacement cannot do.
+**Every case run against this package is a probe**, watched by whichever checker can see it:
 
-**Ten of the twelve cases run for the job protocol are probes** (`pnpm probes`), which is where a
-drift case belongs: `scripts/probes.mjs` breaks the real file, runs the one test that must notice,
-and fails if it does not. The two that are not are the typecheck-only rows of the table above —
-`pnpm probes` runs Vitest, so a case only `tsc` can see is a case it cannot make. Those two stay in
-the by-hand list, named rather than assumed.
+- The cases a test notices name a test file, and `pnpm probes` runs Vitest against it.
+- The cases only `tsc` notices name a package in `typecheck` instead, and the probe runs that
+  package's `tsc`. This is the fourth row: `Job` grows a property its key bridge does not list,
+  `CoreClient` grows a method `CORE_OPERATIONS` does not list. Vitest transpiles the
+  `…AreExhaustive` types away, so under a test run both stay green — a probe watched by the wrong
+  checker reports a defect that is not there, which is worse than no probe.
+- Two fixture clients sharing one store was the one called inexpressible, on the grounds that its
+  patch has to declare something. It does not: the patch reaches `globalThis` for the map, which is
+  one text replacement in place.
+
+The CI workflow runs `pnpm probes` as its own job, parallel to `verify`. It was previously run when
+somebody remembered, which for a suite whose whole subject is _unattended_ decay is the one schedule
+that cannot work.
 
 Seven more were run the same way against the coverage assertions, and every one went red: a
 constraint keyword with no failing case, a failing case deleted, a block citing a norm the register

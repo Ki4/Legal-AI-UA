@@ -96,8 +96,11 @@ has to remember, it is a line a test fails on.
   ADM-5's to decide. Server-sent events or a webhook would remove them and are what to revisit if
   the poll traffic ever shows up as a number rather than a worry.
 - **Eight more drift cases exist and are executable**, added to `scripts/probes.mjs` rather than
-  written into a PR description. Two of the twelve run for this pass are typecheck-only and stay
-  manual — `pnpm probes` runs Vitest, and that gap is the same one `README.md`'s table names.
+  written into a PR description. Two of the twelve run for this pass were typecheck-only and stayed
+  manual, because `pnpm probes` ran Vitest and a case only `tsc` can see is one it could not make.
+  Amended 2026-08-28: a probe may now name a package instead of a test file and be watched by that
+  package's `tsc`, so all twelve are probes. The gap `README.md`'s table names is a gap between two
+  checkers, not a gap in what can be probed.
 - **The generation request carries two pointers and no answers.** The answers table (ADM-64) does
   not exist, and a shape guessed for it now is the mistake the trace's own README records twice.
   Adding the payload later is a `protocol_version` bump.

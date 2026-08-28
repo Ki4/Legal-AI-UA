@@ -119,6 +119,38 @@ that performs it, if one is ever wanted.
 "trace.valid.json" }` is replaced by that file's contents before validation. A succeeded job carries
 a trace, and pasting a copy of one here would be a third home for data that already has two.
 
+## The fixture client
+
+`createFixtureCoreClient()` is a `CoreClient` that answers out of `fixtureTrace`, so a screen can be
+built against the protocol before `apps/core` exists. ADR-0021 §7 is what asked for it, in place of
+the MSW mocks ADR-0004 and the ROADMAP promised: MSW intercepts HTTP, and no client speaks HTTP here
+until the gateway lands (ADM-5).
+
+**It advances on poll, not on a clock.** A job moves `queued` → `running` → terminal one step per
+`getGenerationJob`, and a poll after the end returns the same terminal job. Wall-clock progress would
+make a screen's state depend on how fast the machine is and turn every test that watches the sequence
+into a race, so the caller's own polling is the clock: a test that wants the running state polls once.
+
+**Its instants are written down**, not read from `Date.now()`. Worth knowing why the obvious test is
+not enough: comparing two runs inside one process passes even with a wall clock, because a
+module-level epoch is read once and both runs share it. The determinism claim is only as strong as an
+instant asserted literally, and that is what `fixture-client.test.ts` does — after an injected wall
+clock walked straight through the weaker version.
+
+**It fails only in ways `operations.json` declares** for the operation being called, checked by a
+test. A fixture that throws an undeclared code teaches every call site to handle something the core
+will never send, and that handling looks like diligence rather than fiction.
+
+**It hands out copies**, so a caller that sorts or edits what it received is not editing the client's
+own store — a bug no implementation reading a real response could have.
+
+**`fixtureTrace` is a second copy of `fixtures/trace.valid.json`, and it has to be.** Nothing on
+`index.ts`'s graph may read a file (ADR-0021 §8), so the runtime needs a literal. What changed in the
+fifth pass is that there are now two rather than three — the console's `anatomy.mock.ts` held one
+that no schema and no test reached — and that `fixture-client.test.ts` compares the constant against
+the file. It also validates the constant against the schema on its own, because a `toEqual` failure
+says the two differ and not which one is wrong.
+
 ## Adding an operation
 
 The envelope is checked, which is the whole reason there is no OpenAPI document (ADR-0021 §1). For a
@@ -189,6 +221,10 @@ has evidence for — which is the repository's verification rule (`docs/CONTRIBU
 this package's own safety net. The four were re-run on 2026-08-28 against the frozen field list, on
 `ToolOutcome` and `LawRef` rather than `BlockTrust` and `TraceBlock`, and the table held: the fourth
 row is still the one `pnpm test` sleeps through.
+
+**Six of the seven cases run for the fixture client are probes**, and the seventh — two clients
+sharing one store — is left by hand because its patch has to declare something, which a one-for-one
+text replacement cannot do.
 
 **Ten of the twelve cases run for the job protocol are probes** (`pnpm probes`), which is where a
 drift case belongs: `scripts/probes.mjs` breaks the real file, runs the one test that must notice,

@@ -78,3 +78,11 @@ export type {
   JobKeysAreExhaustive,
   JobStatus,
 } from "./protocol.ts";
+
+// The fixture implementation, exported from the same entry as the interface it
+// implements — `packages/db` ships its mocks beside its types for the same
+// reason, and a second entry point would be a boundary nothing yet needs. It is
+// tree-shaken out of anything that only imports the types.
+export { createFixtureCoreClient } from "./fixture-client.ts";
+export type { FixtureCoreClientOptions } from "./fixture-client.ts";
+export { fixtureTrace } from "./fixture-trace.ts";

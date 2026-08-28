@@ -205,4 +205,55 @@ export const PROBES = [
     from: `      "status": "running",`,
     to: `      "status": "queued",`,
   },
+  {
+    id: "runtime-trace-drifts-from-the-file",
+    what: "changes the shipped trace without changing the fixture ajv validates",
+    file: "packages/core-client/src/fixture-trace.ts",
+    test: "packages/core-client/src/fixture-client.test.ts",
+    from: `      title: "Legal grounds",`,
+    to: `      title: "Legal basis",`,
+  },
+  {
+    id: "terminal-job-takes-another-step",
+    what: "lets a finished job move again on the next poll",
+    file: "packages/core-client/src/fixture-client.ts",
+    test: "packages/core-client/src/fixture-client.test.ts",
+    from: `      if (job.status === "queued") {`,
+    to: `      if (job.status === "queued" || job.status === "succeeded") {`,
+  },
+  {
+    id: "fixture-client-hands-out-its-own-state",
+    what: "returns the stored job, so a caller that edits it edits the fixture",
+    file: "packages/core-client/src/fixture-client.ts",
+    test: "packages/core-client/src/fixture-client.test.ts",
+    from: `      // A poll after the end is not another step. Nothing above moves a terminal
+      // job, so this returns what the previous poll returned.
+      return copyOf(job);`,
+    to: `      return job;`,
+  },
+  {
+    id: "fixture-throws-an-undeclared-code",
+    what: "refuses a poll with a code operations.json does not declare for it",
+    file: "packages/core-client/src/fixture-client.ts",
+    test: "packages/core-client/src/fixture-client.test.ts",
+    from: `throw new CoreCallError({ code: "not_found", message: \`No job \${jobId}.\` });`,
+    to: `throw new CoreCallError({ code: "invalid_request", message: \`No job \${jobId}.\` });`,
+  },
+  {
+    id: "fixture-timestamps-come-from-the-wall-clock",
+    what: "reads the clock instead of the fixed epoch, so no two runs agree",
+    file: "packages/core-client/src/fixture-client.ts",
+    test: "packages/core-client/src/fixture-client.test.ts",
+    from: `const EPOCH = Date.parse("2026-08-28T08:00:00.000Z");`,
+    to: `const EPOCH = Date.now();`,
+  },
+  {
+    id: "failed-job-carries-a-result-too",
+    what: "puts a trace on a failed job, which the invariants forbid",
+    file: "packages/core-client/src/fixture-client.ts",
+    test: "packages/core-client/src/fixture-client.test.ts",
+    from: `          job.status = "failed";`,
+    to: `          job.status = "failed";
+          job.result = fixtureTrace;`,
+  },
 ];

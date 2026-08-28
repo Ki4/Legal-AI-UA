@@ -18,6 +18,11 @@
 //      the whole failure mode this file exists to prevent, one level up: the
 //      code moved, the probe silently stopped probing, and the run stayed green.
 //
+// Two things can watch. Most probes name a test file and are watched by Vitest;
+// a probe that names a package in `typecheck` instead is watched by that
+// package's `tsc`, because an assertion written as a type is invisible to a test
+// run. Which one a probe uses is a property of the assertion, not a preference.
+//
 // What it does not do is prove a test is *good*. A probe says one assertion
 // notices one change. A test that notices the change and asserts nothing else
 // useful still passes here.
@@ -36,14 +41,42 @@ function workingTreeIsClean() {
   return status.stdout.trim() === "";
 }
 
+const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+
 /** Vitest's exit code, with output swallowed — a probe expects red, and red is not news. */
 function runTest(testPath) {
-  const result = spawnSync(
-    process.platform === "win32" ? "pnpm.cmd" : "pnpm",
-    ["exec", "vitest", "run", testPath, "--reporter=dot"],
-    { cwd: root, encoding: "utf8" },
-  );
+  const result = spawnSync(pnpm, ["exec", "vitest", "run", testPath, "--reporter=dot"], {
+    cwd: root,
+    encoding: "utf8",
+  });
   return result.status;
+}
+
+/**
+ * `tsc`'s exit code for one package.
+ *
+ * Vitest transpiles types away without checking them, so an assertion written as
+ * a type — the `…AreExhaustive` bridges in `packages/core-client` — is inert
+ * under `runTest` above: break it and the test run stays green, which would make
+ * the probe report a defect that is not there. Those probes name a package
+ * instead of a test file, and this is what watches them.
+ */
+function runTypecheck(pkg) {
+  const result = spawnSync(pnpm, ["--filter", pkg, "typecheck"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  return result.status;
+}
+
+/** What must go red, and how to ask it. */
+function watcherOf(probe) {
+  return probe.typecheck === undefined
+    ? { run: () => runTest(probe.test), name: probe.test }
+    : {
+        run: () => runTypecheck(probe.typecheck),
+        name: `${probe.test} (\`tsc\`, ${probe.typecheck})`,
+      };
 }
 
 function main() {
@@ -97,17 +130,19 @@ function main() {
       continue;
     }
 
+    const watcher = watcherOf(probe);
+
     let status;
     try {
       writeFileSync(file, original.replace(probe.from, probe.to), "utf8");
-      status = runTest(probe.test);
+      status = watcher.run();
     } finally {
       writeFileSync(file, original, "utf8");
     }
 
     if (status === 0) {
       failures.push(
-        `${probe.id}: ${probe.test} passed while the code ${probe.what}. ` +
+        `${probe.id}: ${watcher.name} passed while the code ${probe.what}. ` +
           `The assertion that was supposed to notice is not reaching it.`,
       );
       console.error(`CAUGHT NOTHING  ${probe.id} — ${probe.what}`);

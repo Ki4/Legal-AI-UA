@@ -256,4 +256,276 @@ export const PROBES = [
     to: `          job.status = "failed";
           job.result = fixtureTrace;`,
   },
+
+  // The last three of the cases this package ran by hand. Two of them are
+  // watched by `tsc` rather than Vitest (the `typecheck` field): the bridges
+  // they break are types, and a type assertion is transpiled away before a test
+  // ever runs, so Vitest would stay green and the probe would report a defect
+  // that is not there. The third was called inexpressible because its patch has
+  // to make one store outlive the function that owns it; it does, through
+  // `globalThis`, which is one text replacement and needs no new declaration.
+  {
+    id: "job-interface-grows-a-key-its-bridge-misses",
+    what: "adds a property to `Job` that `JOB_KEYS` does not list",
+    file: "packages/core-client/src/protocol.ts",
+    typecheck: "@legal-ai/core-client",
+    test: "JobKeysAreExhaustive",
+    from: `  /** Why it failed, present exactly when \`status\` is \`failed\`. */
+  error: CoreError | null;
+}`,
+    to: `  /** Why it failed, present exactly when \`status\` is \`failed\`. */
+  error: CoreError | null;
+  retries: number;
+}`,
+  },
+  {
+    id: "core-client-grows-a-method-operations-does-not-know",
+    what: "adds a method to `CoreClient` that `CORE_OPERATIONS` does not list",
+    file: "packages/core-client/src/protocol.ts",
+    typecheck: "@legal-ai/core-client",
+    test: "CoreOperationsAreExhaustive",
+    from: `  /** The job as it stands. Returns, rather than throws, on a failed job. */
+  getGenerationJob(jobId: string): Promise<Job>;
+}`,
+    to: `  /** The job as it stands. Returns, rather than throws, on a failed job. */
+  getGenerationJob(jobId: string): Promise<Job>;
+  cancelGenerationJob(jobId: string): Promise<Job>;
+}`,
+  },
+  {
+    id: "two-fixture-clients-share-one-store",
+    what: "gives every fixture client the same job map, so two screens see each other's work",
+    file: "packages/core-client/src/fixture-client.ts",
+    test: "packages/core-client/src/fixture-client.test.ts",
+    from: `  const jobs = new Map<string, Job>();`,
+    to: `  const jobs = ((globalThis as { __probeJobs?: Map<string, Job> }).__probeJobs ??= new Map<
+    string,
+    Job
+  >());`,
+  },
+
+  // The twenty-nine cases run by hand against the trace schema and the anatomy
+  // mapper on 2026-08-27, and carried as a debt ever since. They were real work
+  // and every one of them went red; what none of them was, was repeatable.
+  //
+  // **These probes name a test file, and several assertions share one.** A probe
+  // here proves `schema.test.ts` notices — not which `it` inside it did. That is
+  // weaker than the one-probe-one-assertion claim this file opens with, and it
+  // is the granularity Vitest offers at a path. Where a case could be aimed at a
+  // single assertion it was; where two assertions both catch a patch, `what`
+  // says which one it was written for.
+  {
+    id: "trace-block-left-open",
+    what: "lets a block carry a property the contract has never heard of",
+    file: "packages/core-client/schema/trace.schema.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `    "TraceBlock": {
+      "description": "One block of the generated document, and the account of what produced it.",
+      "type": "object",
+      "additionalProperties": false,`,
+    to: `    "TraceBlock": {
+      "description": "One block of the generated document, and the account of what produced it.",
+      "type": "object",
+      "additionalProperties": true,`,
+  },
+  {
+    id: "block-trust-enum-drifts-from-its-bridge",
+    what: "adds a trust value to the schema that BLOCK_TRUST does not carry",
+    file: "packages/core-client/schema/trace.schema.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "enum": ["template", "ai_generated", "lawyer_edited"]`,
+    to: `      "enum": ["template", "ai_generated", "lawyer_edited", "core_reviewed"]`,
+  },
+  {
+    id: "trace-def-nothing-exercises",
+    what: "adds a $def no fixture reaches, which must fail rather than pass quietly",
+    file: "packages/core-client/schema/trace.schema.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `    "LawSource": {`,
+    to: `    "Unused": {
+      "description": "A type nothing reaches.",
+      "type": "string"
+    },
+    "LawSource": {`,
+  },
+  {
+    id: "trace-constraint-with-no-failing-case",
+    what: "adds a constraint no invalid fixture has watched the schema enforce",
+    file: "packages/core-client/schema/trace.schema.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `          "type": "string",
+          "minLength": 1
+        },
+        "article": {`,
+    to: `          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "article": {`,
+  },
+  {
+    id: "instant-accepts-an-offset-again",
+    what: "relaxes the Instant pattern to accept +03:00, the acceptance ADR-0021 section 3 rejected format: date-time over",
+    file: "packages/core-client/schema/trace.schema.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `(\\\\.\\\\d{3})?Z$"`,
+    to: `(\\\\.\\\\d{3})?(Z|[+-]\\\\d{2}:\\\\d{2})$"`,
+  },
+  {
+    id: "trace-key-bridge-loses-a-property",
+    what: "drops a key from GENERATION_TRACE_KEYS while the schema still requires it",
+    file: "packages/core-client/src/trace.ts",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `export const GENERATION_TRACE_KEYS = [
+  "trace_version",
+  "service_id",
+  "law_refs",
+  "blocks",
+]`,
+    to: `export const GENERATION_TRACE_KEYS = [
+  "trace_version",
+  "service_id",
+  "law_refs",
+]`,
+  },
+  {
+    id: "law-source-bridge-gains-a-value",
+    what: "adds a source to LAW_SOURCE that the schema enum does not list",
+    file: "packages/core-client/src/trace.ts",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `export const LAW_SOURCE = ["zakon_rada"] as const;`,
+    to: `export const LAW_SOURCE = ["zakon_rada", "opendatabot"] as const;`,
+  },
+  {
+    id: "constraint-keywords-counted-by-inclusion",
+    what: "counts constraints against a written list again, so a keyword nobody thought of goes unwatched",
+    file: "packages/core-client/src/schema-walk.ts",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      constrained.add(key);`,
+    to: `      if (["enum", "const", "type", "required", "minLength"].includes(key)) constrained.add(key);`,
+  },
+  {
+    id: "trust-value-no-fixture-reaches",
+    what: "leaves the template trust value carried by no fixture block",
+    file: "packages/core-client/fixtures/trace.valid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "trust": "template",`,
+    to: `      "trust": "ai_generated",`,
+  },
+  {
+    id: "tool-outcome-no-fixture-reaches",
+    what: "makes every fixture tool call succeed, so the error outcome is never exercised",
+    file: "packages/core-client/fixtures/trace.valid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `          "outcome": "error"`,
+    to: `          "outcome": "ok"`,
+  },
+  {
+    id: "act-scope-never-exercised",
+    what: "gives every law ref an article, so null — which is how the contract says the whole act — is never sent",
+    file: "packages/core-client/fixtures/trace.valid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "article": null,`,
+    to: `      "article": "3",`,
+  },
+  {
+    id: "verified-at-never-null",
+    what: "verifies every law ref, so the never-verified branch has no fixture",
+    file: "packages/core-client/fixtures/trace.valid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "verified_at": null`,
+    to: `      "verified_at": "2026-08-20T06:15:00Z"`,
+  },
+  {
+    id: "law-ref-ids-never-empty",
+    what: "cites a norm in every block, so an empty citation list is never proven legal",
+    file: "packages/core-client/fixtures/trace.valid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "law_ref_ids": [],`,
+    to: `      "law_ref_ids": ["norm-family-105"],`,
+  },
+  {
+    id: "questionnaire-fields-never-empty",
+    what: "gives every block a questionnaire field, so the empty array is never sent",
+    file: "packages/core-client/fixtures/trace.valid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "questionnaire_fields": [],`,
+    to: `      "questionnaire_fields": ["children"],`,
+  },
+  {
+    id: "block-cites-a-norm-the-register-lacks",
+    what: "cites an id the trace does not carry, which the schema cannot see and the screen renders as a hole",
+    file: "packages/core-client/fixtures/trace.valid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "law_ref_ids": ["norm-family-112", "norm-family-105"],`,
+    to: `      "law_ref_ids": ["norm-family-112", "norm-family-999"],`,
+  },
+  {
+    id: "register-carries-a-norm-nobody-cites",
+    what: "leaves a law ref in the register that no block cites, which renders nowhere",
+    file: "packages/core-client/fixtures/trace.valid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "law_ref_ids": ["norm-family-112", "norm-family-105"],
+      "questionnaire_fields": [],`,
+    to: `      "law_ref_ids": ["norm-family-112"],
+      "questionnaire_fields": [],`,
+  },
+  {
+    id: "invalid-case-stops-covering-its-constraint",
+    what: "retags the one case aimed at const, leaving that constraint with nothing watching it",
+    file: "packages/core-client/fixtures/trace.invalid.json",
+    test: "packages/core-client/src/schema.test.ts",
+    from: `      "constraint": "const",`,
+    to: `      "constraint": "type",`,
+  },
+  {
+    id: "anatomy-mapper-stops-renaming-a-field",
+    what: "reads nothing for needsAttention, so the snake_case source is not the one being renamed",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `    needsAttention: block.needs_attention,`,
+    to: `    needsAttention: false,`,
+  },
+  {
+    id: "anatomy-view-carries-the-wire-shape-through",
+    what: "spreads the wire block into the view, so snake_case keys reach the component",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `    id: block.id,`,
+    to: `    ...block,
+    id: block.id,`,
+  },
+  {
+    id: "anatomy-view-hands-out-the-source-array",
+    what: "returns the fixture's own array, so a component sorting it rewrites the source",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `    questionnaireFields: [...block.questionnaire_fields],`,
+    to: `    questionnaireFields: block.questionnaire_fields,`,
+  },
+  {
+    id: "anatomy-reorders-a-blocks-citations",
+    what: "sorts a block's citations, losing the order the core cited them in",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `    lawRefs: block.law_ref_ids.map((normId) => {`,
+    to: `    lawRefs: [...block.law_ref_ids].sort().map((normId) => {`,
+  },
+  {
+    id: "anatomy-renders-a-dangling-id-as-nothing",
+    what: "renders an unresolved citation with an empty title instead of the id itself",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `  return { normId, actTitle: normId, article: null };`,
+    to: `  return { normId, actTitle: "", article: null };`,
+  },
+  {
+    id: "anatomy-getTrace-hands-out-one-shared-view",
+    what: "returns one view object to every caller, so one caller's edit reaches the next",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `    return toTraceView(fixtureTrace);`,
+    to: `    return ((globalThis as { __probeView?: GenerationTraceView }).__probeView ??=
+      toTraceView(fixtureTrace));`,
+  },
 ];

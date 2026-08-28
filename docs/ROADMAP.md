@@ -62,9 +62,9 @@ PR; it merged, the trace stopped existing in two places, and the field list is f
   so `maxLength` slipped past: a keyword nobody thought of was, by construction, not on the list of
   keywords to check for. It counts by exclusion now. The same shape had already appeared once that
   day in a degenerate test fixture, which is why it has a journal entry rather than a PR line.
-- **The evidence is still in transcripts.** Twenty-nine injections, no probe. `pnpm probes` exists
-  precisely for this and reached neither file; the next day it reaches the package but not these
-  twenty-nine, which STATE still carries as the 2026-08-27 debt.
+- **The evidence was in transcripts, and is in `scripts/probes.mjs` now.** Twenty-nine injections
+  against two files no probe reached. They were folded into the suite on 2026-08-28, which is where
+  a drift case belongs and where nothing has to remember to re-run it.
 
 ## Done — the contract learns to be called (2026-08-28)
 
@@ -95,8 +95,9 @@ this says how it is called and ships something that answers.
   is asserted against written-down instants now — a determinism claim is only as strong as a value
   written down, because a second run is not an independent witness.
 - **Sixteen of the nineteen became probes**, `pnpm probes` going from ten to twenty-six. The other
-  three are named in the package README: two only `tsc` can see, one needs a patch that declares
-  something. Closing this session found the hole underneath: nothing runs `pnpm probes`.
+  three were called inexpressible and were not: two needed a second watcher — a probe may name a
+  package and be run against its `tsc` — and the third's patch reaches `globalThis`. Closing this
+  session found the hole underneath: nothing runs `pnpm probes`. Both closed on 2026-08-28.
 
 ## Now — wave 1 (parallel, no file overlap)
 

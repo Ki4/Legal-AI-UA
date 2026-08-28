@@ -26,13 +26,35 @@
 // gets to decide what a missing one means.
 
 import { fixtureTrace } from "@legal-ai/core-client";
-import type { GenerationTrace, LawRef, TraceBlock } from "@legal-ai/core-client";
+import type {
+  BlockCondition,
+  GenerationTrace,
+  LawRef,
+  ToolCall,
+  TraceBlock,
+} from "@legal-ai/core-client";
 import { fixtureDelay } from "../../../shared/api/fixture-store";
 import type { AnatomyApi } from "./contract";
-import type { GenerationTraceView, LawRefView, TraceBlockView } from "./types";
+import type {
+  BlockConditionView,
+  GenerationTraceView,
+  LawRefView,
+  ToolCallView,
+  TraceBlockView,
+} from "./types";
 
 function toLawRefView(ref: LawRef): LawRefView {
   return { normId: ref.norm_id, actTitle: ref.act_title, article: ref.article };
+}
+
+function toConditionView(condition: BlockCondition): BlockConditionView {
+  return { expression: condition.expression, fieldKeys: [...condition.field_keys] };
+}
+
+// `started_at` is read and dropped: `ToolCallView` says why, and the rename is
+// what this function exists for either way.
+function toToolCallView(call: ToolCall): ToolCallView {
+  return { tool: call.tool, outcome: call.outcome };
 }
 
 /**
@@ -60,11 +82,13 @@ function toBlockView(block: TraceBlock, register: Map<string, LawRef>): TraceBlo
     title: block.title,
     trust: block.trust,
     needsAttention: block.needs_attention,
+    selectedBy: block.selected_by === null ? null : toConditionView(block.selected_by),
     lawRefs: block.law_ref_ids.map((normId) => {
       const ref = register.get(normId);
       return ref === undefined ? toUnresolvedView(normId) : toLawRefView(ref);
     }),
     questionnaireFields: [...block.questionnaire_fields],
+    toolCalls: block.tool_calls.map(toToolCallView),
   };
 }
 

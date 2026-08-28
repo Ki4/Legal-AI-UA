@@ -542,7 +542,7 @@ export const en: Dictionary = {
   "anatomy.empty": "Nothing has been generated for this service yet.",
   "anatomy.questionnaireFields": "Questionnaire fields: {fields}",
   "anatomy.needsReview": "Worth checking",
-  "anatomy.trust.template": "Confirmed by lawyer",
+  "anatomy.trust.template": "From the lawyer's template",
   "anatomy.trust.ai_generated": "AI suggested",
   "anatomy.trust.lawyer_edited": "Edited by lawyer",
   "anatomy.error.forbidden": "You do not have access to this document.",
@@ -551,6 +551,12 @@ export const en: Dictionary = {
   "anatomy.error.conflict": "The document changed while we were reading it. Reload the page.",
   "anatomy.error.network": "Could not reach the server. Check your connection.",
   "anatomy.error.unknown": "Something went wrong while loading the document anatomy.",
+  "anatomy.selectedBy": "Condition: {expression}",
+  "anatomy.selectedBy.unconditional": "Unconditional — this block is in every document.",
+  "anatomy.selectedBy.fields": "The condition reads: {fields}",
+  "anatomy.toolCalls": "Tool calls",
+  "anatomy.toolCall.ok": "ok",
+  "anatomy.toolCall.error": "failed",
 };
 
 /**

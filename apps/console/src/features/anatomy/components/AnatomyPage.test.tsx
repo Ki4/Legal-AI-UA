@@ -35,8 +35,10 @@ function block(overrides: Partial<TraceBlockView> = {}): TraceBlockView {
     title: "Вимоги позивача",
     trust: "template",
     needsAttention: false,
+    selectedBy: null,
     lawRefs: [],
     questionnaireFields: [],
+    toolCalls: [],
     ...overrides,
   };
 }
@@ -99,6 +101,63 @@ describe("AnatomyPage", () => {
 
     expect(await screen.findByText("Вимоги позивача")).toBeDefined();
     expect(screen.queryByText(t("anatomy.needsReview"))).toBeNull();
+  });
+
+  it("says why a block is in the document, and says so when nothing decided it", async () => {
+    getTrace.mockResolvedValue({
+      serviceId: "svc-divorce",
+      blocks: [
+        block({ id: "blk-1", title: "Аліменти", selectedBy: null }),
+        block({
+          id: "blk-2",
+          title: "Поділ майна",
+          selectedBy: { expression: "children is empty", fieldKeys: ["children"] },
+        }),
+      ],
+    });
+
+    renderAnatomy();
+
+    // The unconditional block gets a sentence of its own. "Nothing selected
+    // this" and "we did not show you what did" are the two readings a blank
+    // line leaves open, and only one of them is true.
+    expect(await screen.findByText(t("anatomy.selectedBy.unconditional"))).toBeDefined();
+    expect(
+      screen.getByText(
+        translate(DEFAULT_LOCALE, "anatomy.selectedBy", {
+          expression: "children is empty",
+        }),
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        translate(DEFAULT_LOCALE, "anatomy.selectedBy.fields", { fields: "children" }),
+      ),
+    ).toBeDefined();
+  });
+
+  it("names each tool call and how it ended, in the order they ran", async () => {
+    getTrace.mockResolvedValue({
+      serviceId: "svc-divorce",
+      blocks: [
+        block({
+          toolCalls: [
+            { tool: "retrieve_norm_text", outcome: "error" },
+            { tool: "retrieve_norm_text", outcome: "ok" },
+          ],
+        }),
+      ],
+    });
+
+    renderAnatomy();
+
+    // One tool called twice — the retry — is the case that has to survive:
+    // both entries render, and the failure is not swallowed by the success
+    // that followed it.
+    const calls = await screen.findAllByText("retrieve_norm_text");
+    expect(calls).toHaveLength(2);
+    expect(screen.getByText(t("anatomy.toolCall.error"))).toBeDefined();
+    expect(screen.getByText(t("anatomy.toolCall.ok"))).toBeDefined();
   });
 
   it("reads a failure by its code, not by its message", async () => {

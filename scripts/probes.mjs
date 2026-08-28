@@ -558,4 +558,32 @@ export const PROBES = [
     to: `      case "forbidden":
         return "anatomy.error.unknown";`,
   },
+  {
+    id: "anatomy-tool-calls-hide-the-failure",
+    what: "keeps only the calls that succeeded, so a retried failure never reaches the screen",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `    toolCalls: block.tool_calls.map(toToolCallView),`,
+    to: `    toolCalls: block.tool_calls.filter((c) => c.outcome === "ok").map(toToolCallView),`,
+  },
+  {
+    id: "anatomy-tool-call-carries-the-clock-through",
+    what: "spreads the wire call into the view, so started_at rides along as an excess property",
+    file: "apps/console/src/features/anatomy/api/anatomy.mock.ts",
+    test: "apps/console/src/features/anatomy/api/anatomy.mock.test.ts",
+    from: `  return { tool: call.tool, outcome: call.outcome };`,
+    to: `  return { ...call };`,
+  },
+  {
+    id: "anatomy-unconditional-block-says-nothing",
+    what: "renders nothing for a block no condition selected, so absence and silence look alike",
+    file: "apps/console/src/features/anatomy/components/AnatomyPage.tsx",
+    test: "apps/console/src/features/anatomy/components/AnatomyPage.test.tsx",
+    from: `                {block.selectedBy === null
+                  ? t("anatomy.selectedBy.unconditional")
+                  : t("anatomy.selectedBy", { expression: block.selectedBy.expression })}`,
+    to: `                {block.selectedBy === null
+                  ? null
+                  : t("anatomy.selectedBy", { expression: block.selectedBy.expression })}`,
+  },
 ];

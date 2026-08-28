@@ -84,6 +84,17 @@ For a route restricted by role:
 - [ ] **Access denied** — `RequireAuth` renders this, so the feature inherits it rather than
       building its own. A feature open to every signed-in role has nothing to do here.
 
+For a group of fields that are required together or not at all:
+
+- [ ] **Model it as a union of shapes, not as a set of nullable fields.** When a flag makes two
+      other fields mandatory, five nullable fields let the screen hold every state the database
+      rejects, and the reader finds out on save. Three shapes — off, on-and-complete,
+      on-and-incomplete — cannot construct those states at all. The half-filled form keeps its own
+      draft type, and one function is the door between the draft and the value the API takes.
+      `questionnaire_fields_gdpr_triad` and `service-fields/api/draft.ts` are the worked pair.
+      Recorded here on 2026-08-28, when the session that learned it was archived off the roadmap
+      and this was the lesson nothing else carried.
+
 ## 5. Telling the truth about data
 
 Learned from reviewing the reference, all of which it got wrong first time:

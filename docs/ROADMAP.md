@@ -64,33 +64,38 @@ the platform may do with each answer. Four things worth carrying forward:
   died loading its fixtures the moment `seed.sql` gained real norms. Fixtures now use synthetic act
   ids. `pnpm verify:sql` is what found it; CI would have too, on the PR.
 
-## Done — the norm register (2026-08-15)
+## Done — the contract gets its field list (2026-08-28)
 
-ADM-21 in one PR (#54), with the offline halves of ADM-41 and ADM-43. §8 has sold a promise about
-legislation since 2026-08-04; until this it rested on no table at all.
+ADM-3's first three passes, as PRs #55, #56 and #57. ADR-0021 had been sitting on a branch with no
+PR; it merged, the trace stopped existing in two places, and the field list is frozen against
+`VISION.md`'s six.
 
-- **"A norm is watched once" became a constraint** — `unique nulls not distinct (source, act_id,
-article)`, where the `nulls not distinct` is the load-bearing half: two act-scoped rows for one
-  act carry a null article each, so without it the constraint would have collided with nothing.
-- **A trigger could not enforce the cadence cap alone, and finding out took building it.** Three
-  orderings slip past any trigger on these two tables, and the third is the one care would not have
-  caught: a service being _published_ later changes the answer while writing to neither table. So
-  the cap is derived on read as well — `effective_probe_interval` is what the scheduler gets.
-- **Q4 was answered as a format rather than a deadline**, which changed a rule's owner instead of
-  removing the rule: the cap became an internal operating maximum. Closing it _removed_ a dependency
-  — Q5 through Q8 were recorded as depending on its number and none does.
-- **A backlog line would have blocked three tasks on two unbuilt foundation rows.** "Fetching,
-  normalization and diffing belong to the core owner's zone", read with ADR-0004 and ADR-0016, put
-  a fetcher with no model call in it inside an unbuilt Python service behind an unbuilt gateway.
-  ADR-0020 moves it to an edge function; §10 carries the correction rather than leaving it inferred.
-- **Two of §9.11's eight states are derived and one is a transition.** `no impact` ends its own
-  definition with "re-fingerprint and continue", after which the norm is `verified` anyway — storing
-  both is the second simultaneous answer §6.1 refuses.
-- **Two verification scenarios were wrong and the schema was right both times.** The script is the
-  newer artifact, so when the two disagree it is the better first suspect.
-- **The feature was complete, tested and unreachable.** `/law` had no link anywhere while every gate
-  was green. DoD §1 gained a line; no script can see an orphaned route.
-- Five probes, each reddening exactly the tests written for it.
+- **The deferred law-reference decision landed as a register plus pointers.** Every cited norm
+  appears once in `trace.law_refs`; a block cites by `norm_id`. Inline copies have a failure the
+  schema cannot express — four blocks citing article 112 would carry four copies and nothing stops
+  two disagreeing — and an id it cannot say resolves is the better trade, because a dangling one
+  renders visibly oddly rather than quietly wrong. Each ref is a pointer _and_ a snapshot: a live
+  screen follows it into the register, an archived trace (§5.3) is read when the row has moved on.
+- **No `scope` field, because the migration already decides it.** `article is not null` holds
+  exactly when the scope is an article, so carrying both would be two representations of one fact —
+  which `law_norms`' own comments refuse except for a generated column that cannot drift.
+- **Tool calls carry no arguments, and the schema is where that is enforced.** Arguments carry
+  client answers; §5.5 and §6.4 say keys only. `CONTRIBUTING.md` says the stricter reading wins, so
+  personal data gets nowhere to sit rather than a promise the core will leave it out. Adding a
+  redacted field later is a version bump; removing one that leaked is an incident.
+- **A condition is text plus the keys it read, not a syntax tree.** ADM-16 and ADM-1 do not exist,
+  and an AST frozen here would repeat the mistake law refs nearly made — a triple that could not
+  express act scope, justified by a claim one `ls supabase/migrations` would have refuted.
+- **The first timestamp arrived, and with it what ADR-0021 §3 promised for it**: a `Z`-anchored
+  `pattern` rather than `format: date-time`, which throws without `ajv-formats` and with it still
+  accepts `+03:00`.
+- **Twenty-nine defects were injected by hand; twenty-eight went red and one did not — the checker
+  itself.** "Has a case for every constraint keyword" matched keys against a list its author wrote,
+  so `maxLength` slipped past: a keyword nobody thought of was, by construction, not on the list of
+  keywords to check for. It counts by exclusion now. The same shape had already appeared once that
+  day in a degenerate test fixture, which is why it has a journal entry rather than a PR line.
+- **The evidence is still in transcripts.** Twenty-nine injections, no probe. `pnpm probes` exists
+  precisely for this and reaches neither file; STATE carries it as the 2026-08-27 debt, grown.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -114,8 +119,9 @@ article)`, where the `nulls not distinct` is the load-bearing half: two act-scop
    product speaks.
 
 **Data layer** (PO): the catalogue and client halves have both shipped, and so has the law-reference
-register (ADM-21) — see the sections above. What remains is `document_blocks`, which waits on the
-trace schema below because the two constrain each other's shape. Nothing in the client half gets an event
+register (ADM-21) — see the sections above. What remains is `document_blocks`, which waited on the
+trace schema below because the two constrain each other's shape; that shape was frozen on
+2026-08-28, so it now waits on nothing. Nothing in the client half gets an event
 table of its own: `audit_events` is the log, and a new domain table joins it by gaining an entity
 mapping in `audit_change` — which raises rather than logging a null service, so the mapping cannot
 be forgotten.
@@ -132,9 +138,9 @@ type the console happens to own.
 rather than OpenAPI, TypeScript hand-written rather than generated, and drift closed by bridge
 constants compared against the schema in a test. It also overrules the "MSW mocks" wording above —
 there is no HTTP client to intercept until the gateway (ADM-5), so the package ships a `CoreClient`
-interface and a fixture implementation instead. The package skeleton, the trace schema at its
-existing shape and the drift mechanism have landed; the frozen field list, the job protocol and the
-console wiring are the remaining passes.
+interface and a fixture implementation instead. Three passes have landed — the package and its
+drift mechanism, the trace's move out of `packages/db`, and the frozen field list. The job protocol
+and the fixture client remain.
 
 ## Next — wave 2
 

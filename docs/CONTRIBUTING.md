@@ -163,6 +163,13 @@ requires two agreeing pieces of evidence, and at least one of them must show the
 from somewhere that runs). This applies equally to AI assistant output: "my assistant said so" is
 not an argument in a PR or a discussion — a link to code, a test result, or a screenshot is.
 
+**When a verification script and the thing it verifies disagree, suspect the script first.** It is
+almost always the newer artifact, and the older one has had more chances to be wrong in public. This
+was learned twice on 2026-08-15, both times after the schema had been read as the suspect and found
+innocent (`docs/history/2026-Q3.md`, the norm register). It is a starting point for the search, not
+a verdict — the day the schema really is wrong, this rule costs one wasted look and the alternative
+costs a migration written against a fiction.
+
 ## GDPR: new personal-data fields
 
 Any PR that adds a new field collecting personal data must answer, in the PR description:

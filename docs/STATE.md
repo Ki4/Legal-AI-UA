@@ -1,8 +1,7 @@
-# State — 2026-08-28, the contract gets its mechanism
+# State — 2026-08-28, the contract is frozen and has a consumer
 
-Written at `9d61db7` on `sergey/core-contract-adr`. If `git log` shows commits after it, this file
-is behind: say so in one line and let the git history win. A briefing from a stale state file reads
-as current.
+Written at `50c92a4` on `main`. If `git log` shows commits after it, this file is behind: say so in
+one line and let the git history win. A briefing from a stale state file reads as current.
 
 Tier 1: **the only document a session reads to orient.** ROADMAP, the specs and the DoD are read
 when a task has been chosen, not on arrival. `pnpm docs:check` fails if this file passes 60 lines —
@@ -10,17 +9,13 @@ it does not fit means something has to close or move to the backlog, and that pr
 
 ## Wave
 
-Wave 1. ADM-3 is open — the core contract, and the decision ADR-0016 deferred to it. Five passes;
-the first landed: schema language settled, package built, drift mechanism watched to fail.
+Wave 1. ADM-3 is three passes into five: the schema language settled (ADR-0021), the trace moved out
+of `packages/db` into `packages/core-client`, and the field list is frozen against VISION's six.
 
 ## In flight
 
-- `sergey/core-contract-adr` — pushed, **no PR opened**, not merged. ADR-0021 and
-  `packages/core-client`: the trace schema at the placeholder's existing shape, plus the bridge
-  tests. Nothing imports the package, so `main` is unaffected either way.
-- Four passes remain, in order: move the trace out of `packages/db`; freeze the field list; the job
-  protocol; the fixture client and console wiring. Each branches from `main` after the previous
-  merges — `CONTRIBUTING.md` forbids stacking and the 2026-08-11 attempt is why.
+- Nothing. `main` is clean, no open PRs; #55, #56 and #57 all merged today. Two of ADM-3's five
+  passes remain — the job protocol and the fixture client — and both are in the candidates below.
 
 ## Blocking — the question, and what it stops
 
@@ -35,24 +30,29 @@ the first landed: schema language settled, package built, drift mechanism watche
 ## Debts — carried since
 
 - `2026-08-04` **Access-control migrations owe a review — a booked handover, not a worry.** The age
-  is left to `docs:check`, which prints it: a number typed here is wrong by one the next morning.
-  `CONTRIBUTING.md` lists the thirteen, what each decides and its verification script. The
-  substitute works — 252 scenarios — but cannot ask the question a reviewer asks. Closes when the
-  second developer reads them.
-- `2026-08-27` **The trace is defined twice and nothing compares the two.** `packages/db` holds the
-  camelCase placeholder the console renders; `packages/core-client` holds the snake_case schema
-  nothing imports yet. The next pass closes it — dated anyway, because "the next pass" slips.
-- `2026-08-27` **Nothing re-checks that the bridge tests still fail when they should.** The four
-  drift cases were run by hand and written into ADR-0021; a proof nobody re-runs expires.
+  is left to `docs:check`, which prints it. `CONTRIBUTING.md` lists the thirteen, what each decides
+  and its verification script. The substitute works — 252 scenarios — but cannot ask the question a
+  reviewer asks. Closes when the second developer reads them.
+- `2026-08-27` **The drift cases are re-run by hand and nothing re-runs them.** Four then,
+  twenty-nine now across `core-client` and `features/anatomy` — each named in a PR description and
+  executable by none. `pnpm probes` is the mechanism built for exactly this; no probe reaches here.
+- `2026-08-28` **The trace fixture exists twice and nothing compares the two.** The same data is in
+  `packages/core-client/fixtures/trace.valid.json`, where ajv validates it, and in
+  `features/anatomy/api/anatomy.mock.ts`, where nothing does. The fifth pass collapses them; dated
+  anyway, because "the next pass" slips.
+- `2026-08-28` **The anatomy screen has not been looked at through two merged PRs.** DoD §8 asks for
+  it in both themes with a clean console. It is behind `RequireAuth` — Playwright confirmed the
+  redirect and a clean console, so this needs a signed-in human, not a better tool.
 
 ## Next candidates
 
-1. **Finish ADM-3.** The next pass is the smallest of the five and closes the duplication debt
-   above: lift the trace out of `packages/db` unchanged and re-point `features/anatomy`.
-2. **ADM-54 — transcript store and extraction into answers.** ADM-18 unblocked it; it is the MVP's
-   intake path. ADM-20 (block ↔ field links) is the cheaper neighbour and completes §4.4's map.
-3. **The fetcher (ADM-42, ADM-43's network half, ADM-50).** An edge function per ADR-0020, so not
-   the core owner's — and it is what the subscription sells.
+1. **ADM-3 pass four — the job protocol.** `CoreClient`, `schema/operations.json`, and the test
+   asserting its operation set equals the interface's keys. Two decisions open: synchronous call
+   versus job-plus-poll, and what an error looks like on the wire.
+2. **Turn the twenty-nine injections into probes.** Closes the 2026-08-27 debt with the runner that
+   already exists, and stops this session's evidence expiring the way the first four did.
+3. **`document_blocks` (ADM-1's remainder) is unblocked.** It waited on the trace schema because the
+   two constrain each other's shape; the shape is frozen.
 
 ## Detail lives in
 

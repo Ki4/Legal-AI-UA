@@ -53,3 +53,28 @@ export type {
   TraceBlock,
   TraceBlockKeysAreExhaustive,
 } from "./trace.ts";
+
+export {
+  CORE_ERROR_CODE,
+  CORE_ERROR_KEYS,
+  CORE_OPERATIONS,
+  CoreCallError,
+  ERROR_RESPONSE_KEYS,
+  GENERATION_REQUEST_KEYS,
+  JOB_KEYS,
+  JOB_STATUS,
+} from "./protocol.ts";
+export type {
+  CoreClient,
+  CoreError,
+  CoreErrorCode,
+  CoreErrorKeysAreExhaustive,
+  CoreOperationsAreExhaustive,
+  ErrorResponse,
+  ErrorResponseKeysAreExhaustive,
+  GenerationRequest,
+  GenerationRequestKeysAreExhaustive,
+  Job,
+  JobKeysAreExhaustive,
+  JobStatus,
+} from "./protocol.ts";

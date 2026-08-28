@@ -33,9 +33,9 @@
 // The fourth is the one that would be missed by trusting the test runner alone.
 // A bridge nobody has seen fail is a bridge nobody has evidence for.
 
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Ajv2020 from "ajv/dist/2020.js";
+import { constraintKeywords, readJson, type JsonSchemaObject } from "./schema-walk.ts";
 import {
   BLOCK_CONDITION_KEYS,
   BLOCK_TRUST,
@@ -53,28 +53,9 @@ import {
   type TraceBlockKeysAreExhaustive,
 } from "./trace.ts";
 
-// `readFileSync`, not `import`: a `.json` import anywhere reachable from
-// `index.ts` would make this package unimportable from the Deno gateway, and a
-// rule that holds everywhere except in tests is a rule with an exception nobody
-// remembers. See ADR-0021 §8.
-function readJson(relativePath: string): unknown {
-  return JSON.parse(readFileSync(new URL(relativePath, import.meta.url), "utf8"));
-}
-
-interface JsonSchemaObject {
-  type?: string | string[];
-  enum?: string[];
-  const?: unknown;
-  pattern?: string;
-  required?: string[];
-  additionalProperties?: boolean;
-  properties?: Record<string, unknown>;
-  $defs?: Record<string, JsonSchemaObject>;
-}
-
-const traceSchema = readJson("../schema/trace.schema.json") as JsonSchemaObject;
-const validTrace = readJson("../fixtures/trace.valid.json") as GenerationTrace;
-const invalidTraces = readJson("../fixtures/trace.invalid.json") as {
+const traceSchema = readJson("../schema/trace.schema.json", import.meta.url) as JsonSchemaObject;
+const validTrace = readJson("../fixtures/trace.valid.json", import.meta.url) as GenerationTrace;
+const invalidTraces = readJson("../fixtures/trace.invalid.json", import.meta.url) as {
   cases: { name: string; constraint: string; value: unknown }[];
 };
 
@@ -157,43 +138,12 @@ describe("the schema rejects what it claims to reject", () => {
   it("has a case for every constraint keyword the schema uses", () => {
     // Without this, a constraint could be added to the schema and never given a
     // failing case — the schema would claim to enforce something nothing has
-    // watched it enforce.
-    //
-    // **It counts by exclusion, and the first draft counted by inclusion.** That
-    // draft matched each key against a written list of constraint keywords, so
-    // adding `maxLength` to the schema left it green: a keyword nobody had
-    // thought of was, by construction, not on the list of keywords to check for.
-    // The test claimed to guard against unwatched constraints and could only
-    // ever see the watched ones. Now anything that is not a known structural or
-    // annotation keyword counts as a constraint, so a keyword nobody has thought
-    // of fails until somebody writes its case — which is the direction a gate
-    // has to fail in.
-    const ANNOTATIONS = new Set(["$schema", "$id", "$ref", "title", "description", "comment"]);
-    const SCHEMA_MAPS = new Set(["properties", "$defs"]); // keys are names, values are schemas
-    const SCHEMA_VALUES = new Set(["items"]); // the value is one schema
-    const SCHEMA_LISTS = new Set(["oneOf", "anyOf", "allOf"]); // constrains, and holds schemas
-
-    const constrained = new Set<string>();
-    const walk = (node: unknown): void => {
-      if (node === null || typeof node !== "object" || Array.isArray(node)) return;
-      for (const [key, child] of Object.entries(node as Record<string, unknown>)) {
-        if (ANNOTATIONS.has(key)) continue;
-        if (SCHEMA_MAPS.has(key)) {
-          Object.values(child as Record<string, unknown>).forEach(walk);
-          continue;
-        }
-        if (SCHEMA_VALUES.has(key)) {
-          walk(child);
-          continue;
-        }
-        constrained.add(key);
-        if (SCHEMA_LISTS.has(key)) (child as unknown[]).forEach(walk);
-      }
-    };
-    walk(traceSchema);
+    // watched it enforce. `constraintKeywords` counts by exclusion, and
+    // `schema-walk.ts` records why counting by inclusion could not work.
+    const constrained = constraintKeywords(traceSchema);
 
     const exercised = new Set(invalidTraces.cases.map((testCase) => testCase.constraint));
-    expect([...constrained].sort()).toEqual([...exercised].sort());
+    expect(constrained).toEqual([...exercised].sort());
   });
 });
 

@@ -1,0 +1,181 @@
+{
+  "comment": "The other half of the both-halves rule (root CLAUDE.md). One case per constraint each schema claims to enforce, not one per type. `schema` names which of the three the case is aimed at, `constraint` names the keyword that must be the one to catch it, and `value` is a whole document that must fail.",
+  "cases": [
+    {
+      "schema": "job",
+      "name": "a job carrying a field the protocol does not define",
+      "constraint": "additionalProperties",
+      "value": {
+        "job_id": "job-7f3a",
+        "status": "queued",
+        "submitted_at": "2026-08-28T08:00:00Z",
+        "started_at": null,
+        "finished_at": null,
+        "result": null,
+        "error": null,
+        "progress": 0.4
+      }
+    },
+    {
+      "schema": "job",
+      "name": "a job that does not say why it failed",
+      "constraint": "required",
+      "value": {
+        "job_id": "job-7f3a",
+        "status": "queued",
+        "submitted_at": "2026-08-28T08:00:00Z",
+        "started_at": null,
+        "finished_at": null,
+        "result": null
+      }
+    },
+    {
+      "schema": "job",
+      "name": "a status the contract does not define, so nothing can render it",
+      "constraint": "enum",
+      "value": {
+        "job_id": "job-7f3a",
+        "status": "cancelled",
+        "submitted_at": "2026-08-28T08:00:00Z",
+        "started_at": null,
+        "finished_at": null,
+        "result": null,
+        "error": null
+      }
+    },
+    {
+      "schema": "job",
+      "name": "a job id sent as a number, the way a loose serialiser would",
+      "constraint": "type",
+      "value": {
+        "job_id": 7,
+        "status": "queued",
+        "submitted_at": "2026-08-28T08:00:00Z",
+        "started_at": null,
+        "finished_at": null,
+        "result": null,
+        "error": null
+      }
+    },
+    {
+      "schema": "job",
+      "name": "an empty job id, which is not something to poll",
+      "constraint": "minLength",
+      "value": {
+        "job_id": "",
+        "status": "queued",
+        "submitted_at": "2026-08-28T08:00:00Z",
+        "started_at": null,
+        "finished_at": null,
+        "result": null,
+        "error": null
+      }
+    },
+    {
+      "schema": "job",
+      "name": "a start time sent as an epoch number rather than an instant or null",
+      "constraint": "oneOf",
+      "value": {
+        "job_id": "job-7f3a",
+        "status": "queued",
+        "submitted_at": "2026-08-28T08:00:00Z",
+        "started_at": 1756368000,
+        "finished_at": null,
+        "result": null,
+        "error": null
+      }
+    },
+    {
+      "schema": "error",
+      "name": "an error carrying a details bag, where a client answer would sit",
+      "constraint": "additionalProperties",
+      "value": {
+        "error": {
+          "code": "invalid_request",
+          "message": "Rejected.",
+          "details": {
+            "order_id": "ord-2026-000412"
+          }
+        }
+      }
+    },
+    {
+      "schema": "error",
+      "name": "an error with a code and nothing a log could read",
+      "constraint": "required",
+      "value": {
+        "error": {
+          "code": "internal"
+        }
+      }
+    },
+    {
+      "schema": "error",
+      "name": "a code the contract does not define, so no caller can branch on it",
+      "constraint": "enum",
+      "value": {
+        "error": {
+          "code": "core_on_fire",
+          "message": "Unhandled fault."
+        }
+      }
+    },
+    {
+      "schema": "error",
+      "name": "an error sent bare rather than in its envelope",
+      "constraint": "type",
+      "value": {
+        "error": "invalid_request"
+      }
+    },
+    {
+      "schema": "error",
+      "name": "a blank message, which is the field being optional by another route",
+      "constraint": "minLength",
+      "value": {
+        "error": {
+          "code": "internal",
+          "message": ""
+        }
+      }
+    },
+    {
+      "schema": "generation-request",
+      "name": "a request carrying the answers inline, which is not what this contract moves",
+      "constraint": "additionalProperties",
+      "value": {
+        "service_version_id": "sv-divorce-3",
+        "order_id": "ord-2026-000412",
+        "answers": {
+          "applicant_name": "Olha"
+        }
+      }
+    },
+    {
+      "schema": "generation-request",
+      "name": "a request that does not say which order it is for",
+      "constraint": "required",
+      "value": {
+        "service_version_id": "sv-divorce-3"
+      }
+    },
+    {
+      "schema": "generation-request",
+      "name": "an order id sent as a number, which loses a leading zero",
+      "constraint": "type",
+      "value": {
+        "service_version_id": "sv-divorce-3",
+        "order_id": 412
+      }
+    },
+    {
+      "schema": "generation-request",
+      "name": "an empty service version id, which pins no version at all",
+      "constraint": "minLength",
+      "value": {
+        "service_version_id": "",
+        "order_id": "ord-2026-000412"
+      }
+    }
+  ]
+}

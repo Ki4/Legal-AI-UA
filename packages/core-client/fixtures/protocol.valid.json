@@ -1,0 +1,78 @@
+{
+  "comment": "What the job protocol looks like when nothing is wrong. `$fixture` is a one-key indirection resolved by the loader: the generation trace has one home in this package, and pasting a copy of it here is the duplication the debt list is already about. Every lane that reads these files resolves the key the same way.",
+  "generation_requests": [
+    {
+      "service_version_id": "sv-divorce-3",
+      "order_id": "ord-2026-000412"
+    }
+  ],
+  "jobs": [
+    {
+      "job_id": "job-7f3a",
+      "status": "queued",
+      "submitted_at": "2026-08-28T08:00:00Z",
+      "started_at": null,
+      "finished_at": null,
+      "result": null,
+      "error": null
+    },
+    {
+      "job_id": "job-7f3b",
+      "status": "running",
+      "submitted_at": "2026-08-28T08:00:01Z",
+      "started_at": "2026-08-28T08:00:04.120Z",
+      "finished_at": null,
+      "result": null,
+      "error": null
+    },
+    {
+      "job_id": "job-7f3c",
+      "status": "succeeded",
+      "submitted_at": "2026-08-28T08:01:00Z",
+      "started_at": "2026-08-28T08:01:02Z",
+      "finished_at": "2026-08-28T08:03:41.900Z",
+      "result": {
+        "$fixture": "trace.valid.json"
+      },
+      "error": null
+    },
+    {
+      "job_id": "job-7f3d",
+      "status": "failed",
+      "submitted_at": "2026-08-28T08:05:00Z",
+      "started_at": "2026-08-28T08:05:03Z",
+      "finished_at": "2026-08-28T08:06:12Z",
+      "result": null,
+      "error": {
+        "code": "generation_failed",
+        "message": "Block assembly stopped: template block 'legal_grounds' referenced a condition field the order has no answer for."
+      }
+    }
+  ],
+  "error_responses": [
+    {
+      "error": {
+        "code": "invalid_request",
+        "message": "order_id must be a non-empty string."
+      }
+    },
+    {
+      "error": {
+        "code": "not_found",
+        "message": "No service version sv-divorce-9."
+      }
+    },
+    {
+      "error": {
+        "code": "rate_limited",
+        "message": "Too many generations in flight for this tenant."
+      }
+    },
+    {
+      "error": {
+        "code": "internal",
+        "message": "Unhandled fault; correlation id 1f2c-88."
+      }
+    }
+  ]
+}

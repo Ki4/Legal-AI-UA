@@ -13,7 +13,9 @@ the mechanics.
 ## Layout
 
 ```
-schema/     the authority. Plain JSON Schema 2020-12, one file per concept.
+schema/     the authority. Plain JSON Schema 2020-12, one file per concept —
+            plus `operations.json`, which is not a schema but the HTTP envelope:
+            which call, which method and path, which body, which errors.
 fixtures/   JSON, not TypeScript — the Python lane will validate the same files.
 src/        TypeScript that conforms to the schema, plus the bridges that prove it.
 ```
@@ -86,6 +88,57 @@ changes after something has emitted it.
 - **That a `pattern` still means what it meant.** A loosened regex or a changed numeric bound is not
   expressible in TypeScript, so no bridge covers it. ADR-0021 names this too.
 
+## The job protocol, and what it leaves open
+
+ADR-0022 has the reasoning. The shape, in one paragraph: `startGeneration` is answered `202` with the
+job it created, `getGenerationJob` returns that same object until it is `succeeded` or `failed`, and
+a failed _call_ is `{ "error": { "code", "message" } }` with the HTTP status left meaning what it
+means. A failed _job_ is not a failed call — it is returned normally, because a caller polling a job
+wants the failed job.
+
+**`Job` is flat rather than a union tagged by `status`.** The union is the better model and it is the
+shape that breaks the key bridges (ADR-0021 §3): a variable key set leaves the property assertions
+with nothing to assert. So the four invariants it would have carried live in `protocol.test.ts`
+instead, under "what the schema cannot say" — a result exactly when it succeeded, an error exactly
+when it failed, a start exactly when it left the queue, a finish exactly when it is terminal.
+
+**`generation_failed` is the code with no HTTP status.** By the time a generation can fail, the call
+that started it has been answered, so it can only arrive inside `Job.error`. `operations.json` lists
+it under `job_error_codes`, and the test asserts every code has exactly one home — an HTTP answer or
+a job, never both and never neither.
+
+**The request carries two pointers and no answers.** The answers table (ADM-64) does not exist, and a
+shape guessed for it now is the mistake this file already records twice. It is a version bump later.
+
+**What is not decided here**, so that nobody reads silence as a decision: poll interval and backoff,
+whether `startGeneration` is idempotent and on what key, and cancellation — which is why `JobStatus`
+has no `cancelled`. The first two land with the gateway (ADM-5); the third lands with an operation
+that performs it, if one is ever wanted.
+
+**`$fixture` in the fixtures is a one-key indirection**, not a schema keyword: `{ "$fixture":
+"trace.valid.json" }` is replaced by that file's contents before validation. A succeeded job carries
+a trace, and pasting a copy of one here would be a third home for data that already has two.
+
+## Adding an operation
+
+The envelope is checked, which is the whole reason there is no OpenAPI document (ADR-0021 §1). For a
+new operation `doThing`:
+
+1. **Schema.** Any new request or response body gets its own `schema/*.schema.json`, by the five
+   steps under "Adding a type" below.
+2. **Interface.** Add the method to `CoreClient` in `protocol.ts`, and its name to `CORE_OPERATIONS`.
+   The name in `operations.json` must match the method name — that equality is the assertion.
+3. **Envelope.** Add the entry to `schema/operations.json`: method, path, `request` (`null` for a
+   `GET`), `success`, and an `errors` list drawn from `CoreErrorCode`.
+4. **Fixtures.** Extend `protocol.valid.json` so any new body is reached, and add a case per
+   constraint to `protocol.invalid.json`, tagged with the schema it aims at.
+5. **Probe.** Add one to `scripts/probes.mjs`. A drift case demonstrated in a PR description is a
+   case nothing re-runs, which is the debt this package already carries once.
+
+Four assertions in `protocol.test.ts` go red on their own if a step is skipped: the operation set
+against `CORE_OPERATIONS`, every `$ref` against ajv's registry, every error code against its one
+home, and — for a `GET` that grew a body or a `POST` that lost one — the method against its request.
+
 ## Adding a type
 
 The hand-written TypeScript can drift from the schema it claims to follow, and the drift is silent —
@@ -136,6 +189,12 @@ has evidence for — which is the repository's verification rule (`docs/CONTRIBU
 this package's own safety net. The four were re-run on 2026-08-28 against the frozen field list, on
 `ToolOutcome` and `LawRef` rather than `BlockTrust` and `TraceBlock`, and the table held: the fourth
 row is still the one `pnpm test` sleeps through.
+
+**Ten of the twelve cases run for the job protocol are probes** (`pnpm probes`), which is where a
+drift case belongs: `scripts/probes.mjs` breaks the real file, runs the one test that must notice,
+and fails if it does not. The two that are not are the typecheck-only rows of the table above —
+`pnpm probes` runs Vitest, so a case only `tsc` can see is a case it cannot make. Those two stay in
+the by-hand list, named rather than assumed.
 
 Seven more were run the same way against the coverage assertions, and every one went red: a
 constraint keyword with no failing case, a failing case deleted, a block citing a norm the register

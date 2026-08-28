@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://legal-ai.ua/schema/job.schema.json",
+  "title": "Job",
+  "description": "One generation, as it stands right now. Returned when the job is accepted and returned again by every poll, so a caller reads one shape from submission to outcome.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["job_id", "status", "submitted_at", "started_at", "finished_at", "result", "error"],
+  "properties": {
+    "job_id": {
+      "description": "The job, for polling. Issued by the core and opaque to the caller.",
+      "type": "string",
+      "minLength": 1
+    },
+    "status": { "$ref": "#/$defs/JobStatus" },
+    "submitted_at": {
+      "description": "When the core accepted the request.",
+      "$ref": "https://legal-ai.ua/schema/trace.schema.json#/$defs/Instant"
+    },
+    "started_at": {
+      "description": "When work began, or null while the job is still queued.",
+      "oneOf": [
+        { "$ref": "https://legal-ai.ua/schema/trace.schema.json#/$defs/Instant" },
+        { "type": "null" }
+      ]
+    },
+    "finished_at": {
+      "description": "When the job reached an outcome, or null while it has not.",
+      "oneOf": [
+        { "$ref": "https://legal-ai.ua/schema/trace.schema.json#/$defs/Instant" },
+        { "type": "null" }
+      ]
+    },
+    "result": {
+      "description": "The generation trace, present exactly when the job succeeded and null otherwise.",
+      "oneOf": [{ "$ref": "https://legal-ai.ua/schema/trace.schema.json" }, { "type": "null" }]
+    },
+    "error": {
+      "description": "Why the job failed, present exactly when it did and null otherwise.",
+      "oneOf": [
+        { "$ref": "https://legal-ai.ua/schema/error.schema.json#/$defs/CoreError" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "$defs": {
+    "JobStatus": {
+      "description": "Where the job is. `queued` and `running` are the states a caller polls through; `succeeded` and `failed` are terminal and a caller stops.",
+      "type": "string",
+      "enum": ["queued", "running", "succeeded", "failed"]
+    }
+  }
+}

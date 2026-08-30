@@ -246,7 +246,7 @@ values
    'Сімейний кодекс України', 'article', '105', null,
    'https://zakon.rada.gov.ua/laws/show/2947-14/ed20240101#n800',
    'https://zakon.rada.gov.ua/laws/show/2947-14',
-   'verified', 'sha256:0f4c1b9d',
+   'verified', 'sha256:98d06bbe0824bb327c56dcf4e7bdd24c07eb29f82ccb6b9468f223c8310cd9ea',
    now() - interval '12 hours', now() - interval '12 hours',
    now() - interval '49 days', now() - interval '12 hours'),
 
@@ -257,7 +257,7 @@ values
    'Сімейний кодекс України', 'article', '180', null,
    'https://zakon.rada.gov.ua/laws/show/2947-14',
    'https://zakon.rada.gov.ua/laws/show/2947-14',
-   'verified', 'sha256:77ab30e1',
+   'verified', 'sha256:4b4a2c774db41663751dae997124d7a1c8c644f2bd21b369406097d1fbdafaf6',
    now() - interval '30 days', now() - interval '30 days',
    now() - interval '49 days', now() - interval '30 days'),
 
@@ -286,7 +286,7 @@ values
    'Про виконавче провадження', 'article', '26', null,
    'https://zakon.rada.gov.ua/laws/show/1404-19',
    'https://zakon.rada.gov.ua/laws/show/1404-19',
-   'drifted', 'sha256:c31d02af',
+   'drifted', 'sha256:d7b95f2dcf97be346d42f56ca49299d750883724a1ed24bd95f737f01b7cf8fe',
    now() - interval '2 hours', now() - interval '20 hours',
    now() - interval '26 days', now() - interval '2 hours')
 on conflict (id) do nothing;
@@ -339,6 +339,84 @@ update public.law_norms
 set probe_interval = interval '12 hours',
   interval_reason = 'Amended twice during the procedural reform.'
 where id = '70000000-0000-0000-0000-000000000004';
+
+-- What those articles said (§9.7, ADM-43). Every other domain table is seeded
+-- and this one would have shipped empty, which is how `document_blocks` earned
+-- its line in `docs/STATE.md` a session ago.
+--
+-- **The wording is illustrative, not the actual text of these articles.** A
+-- fixture that reads as authoritative law is worse than one that plainly does
+-- not, because somebody eventually quotes it. What is real here is the shape:
+-- normalized as `normalizeArticleText` leaves it — single spaces, a blank line
+-- between paragraphs, no trailing space — and fingerprinted with the sha256 the
+-- normalizer would actually produce over these bytes. So the register's
+-- fingerprints and this table agree by construction rather than by assertion,
+-- and `law_norms_adopt_revision` is a no-op on load instead of a surprise.
+--
+-- Article 26 carries two revisions, and that pair is the reason the table is
+-- seeded at all: it is the only fixture from which a diff can be produced. The
+-- norm is `drifted` — something moved two hours ago and nobody has read it yet
+-- — so triage has an old wording and a new one to put side by side, which is
+-- exactly what §9.16 gives a lawyer one business day to do. A register holding
+-- only current text can render that state and not the work it implies.
+insert into public.law_norm_revisions
+  (id, norm_id, fingerprint, normalizer_version, content,
+   published_revision_date, observed_at, created_at)
+values
+  ('90000000-0000-0000-0000-000000000001', '70000000-0000-0000-0000-000000000001',
+   'sha256:98d06bbe0824bb327c56dcf4e7bdd24c07eb29f82ccb6b9468f223c8310cd9ea', 1,
+   'Шлюб припиняється внаслідок його розірвання за рішенням суду за заявою одного з подружжя.
+
+Суд постановляє рішення про розірвання шлюбу, якщо буде встановлено, що подальше спільне життя подружжя суперечить інтересам одного з них.',
+   date '2024-01-01', now() - interval '49 days', now() - interval '49 days'),
+
+  ('90000000-0000-0000-0000-000000000002', '70000000-0000-0000-0000-000000000002',
+   'sha256:4b4a2c774db41663751dae997124d7a1c8c644f2bd21b369406097d1fbdafaf6', 1,
+   'Батьки зобов''язані утримувати дитину до досягнення нею повноліття.',
+   date '2023-06-15', now() - interval '49 days', now() - interval '49 days'),
+
+  -- The wording before the amendment. Still here, which is the entire point.
+  ('90000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000005',
+   'sha256:9cdbe59b4f2dc6f3e6f4daa841327f5cb54f2002826b50bc0b4c2aa7e0089c90', 1,
+   'Виконавець розпочинає виконавче провадження на підставі виконавчого документа за заявою стягувача.
+
+Заява подається у письмовій формі.',
+   date '2023-11-20', now() - interval '26 days', now() - interval '26 days'),
+
+  -- And what it says now: one clause widened, and the inline footnote that
+  -- announces it. Both survive normalization on purpose — the footnote appearing
+  -- is the event being watched for, not noise to be stripped.
+  ('90000000-0000-0000-0000-000000000004', '70000000-0000-0000-0000-000000000005',
+   'sha256:d7b95f2dcf97be346d42f56ca49299d750883724a1ed24bd95f737f01b7cf8fe', 1,
+   'Виконавець розпочинає виконавче провадження на підставі виконавчого документа за заявою стягувача.
+
+Заява подається у письмовій або електронній формі.
+
+{ Частину другу викладено в новій редакції згідно із Законом N 1404-19 }',
+   date '2026-08-01', now() - interval '2 hours', now() - interval '2 hours')
+on conflict (id) do nothing;
+
+-- The queue a lawyer opens (§9.11, §9.16, ADM-46).
+--
+-- Exactly one row, for the one norm seeded as `drifted` — because `drifted`
+-- means "the fingerprint moved and nobody has looked yet", and a norm in that
+-- state with nothing waiting to be looked at is a state that rests on nothing.
+-- The two revisions above are what it pairs, which is the only pair in this file
+-- from which a diff can actually be rendered.
+--
+-- Left `open` rather than resolved, so the triage screen has the state it exists
+-- to render. The four seeded norms that are not drifting have no signal, which is
+-- the other half: a queue that is never empty is a queue nobody trusts.
+insert into public.law_signals
+  (id, norm_id, cause, revision_id, previous_revision_id, raised_at, state, created_at, updated_at)
+values
+  ('a0000000-0000-0000-0000-000000000001', '70000000-0000-0000-0000-000000000005',
+   'drifted',
+   '90000000-0000-0000-0000-000000000004',
+   '90000000-0000-0000-0000-000000000003',
+   now() - interval '2 hours', 'open',
+   now() - interval '2 hours', now() - interval '2 hours')
+on conflict (id) do nothing;
 
 -- Questionnaire fields (ADM-18, ADM-19). Same reason the norms above are here:
 -- the tables ship empty, so `/services/:id/fields` rendered its empty state and

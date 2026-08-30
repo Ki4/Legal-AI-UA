@@ -181,9 +181,10 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
 - Payments, funnel dashboards, pricing — no longer blocked on positioning; they now wait on
   `apps/web` and on real orders.
 - Legislative-change monitoring (ADR-0011, spec §9) — **what is left of it.** The register and the
-  normalisation are no longer deferred (ADM-21 and the offline halves of ADM-41 and ADM-43, on
-  2026-08-15), so the ordering constraint this line warned about — normalise before you schedule —
-  is satisfied rather than pending. Still here: the fetcher with its §9.15 safety conditions
+  normalisation are no longer deferred (ADM-21 and the offline half of ADM-41, on 2026-08-15), so
+  the ordering constraint this line warned about — normalise before you schedule — is satisfied
+  rather than pending. ADM-43 was claimed here on 2026-08-15 and was not built until 2026-08-30:
+  link normalisation is not text normalisation, and neither is a fingerprint store. Still here: the fetcher with its §9.15 safety conditions
   (ADM-42, ADM-43's network half, ADM-50), the scheduler (ADM-44), triage, the calendar and the
   health surfaces (ADM-45…49, ADM-51…53), and ADM-22…24 on the register. It was sequenced after the
   authoring loop and was not built there — going first is what surfaced ADR-0020. The publication

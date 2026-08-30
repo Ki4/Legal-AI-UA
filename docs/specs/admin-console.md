@@ -804,6 +804,16 @@ Two tiers, which is what makes a frequent cadence affordable.
 
 - **Cheap probe** — compare the published revision date, `ETag` or `Last-Modified`. One light
   request, no parsing.
+
+  **Concretely, for `zakon.rada.gov.ua`** (ADR-0023, from reading the live site rather than guessing
+  at it): the act's own page is a JavaScript shell of about 34 KB carrying the redaction date in
+  `span.dat0`, and the text is at `/print`, about 547 KB. So the cheap probe is the shell and its
+  date, and the expensive comparison is the print page — a better signal than the `ETag` this line
+  originally imagined, because it is the publisher stating something about the document rather than a
+  property of an HTTP response. It is act-level, so an amendment anywhere in a code triggers the
+  expensive fetch for every watched article of it; that is the right cost, since the alternative is
+  missing one.
+
 - **Expensive comparison** — only when the probe moved: fetch, extract the article, normalize
   (whitespace, markup, numbering artifacts), hash, compare against the stored fingerprint, produce
   a diff.
@@ -818,7 +828,26 @@ under an issued document moved and never what it used to say — so the diff exi
 it is produced, and the lawyer triaging a signal six months later has the sentence in `relied_on`
 and nothing else. Keeping it also makes our own normalization rules safe to revise: a stored text
 plus its `normalizer_version` is something to recompute from, where a lone hash leaves every norm
-drifting at once with no way to tell our edit from the legislature's. The fetcher is the only thing
+drifting at once with no way to tell our edit from the legislature's.
+
+**Two things that sentence does not give on its own, both found while building the table.**
+
+The first is that keeping the text is necessary and not sufficient. Recomputing under new rules
+produces a fingerprint that differs from the stored one — and a differing fingerprint is every
+downstream reader's definition of a drift, so the morning a normalizer is bumped is still two
+hundred signals with a one-business-day clock each (§9.16) unless a revision can say whose doing it
+was. It can: `law_norm_revisions.origin` is `observed` or `renormalized`, the fetcher asserts it
+because it is the one component that can compare old rules against new, and no signal is raised for
+ours. It is deliberately not inferred from the version having moved, because the case where the
+article changed _and_ the normalizer was bumped between two probes is real, and inferring would hide
+exactly the half a lawyer must see.
+
+The second is a limit rather than a fix. What is stored is the _reduced_ text, so a recomputation
+runs over an already-reduced input and is faithful only where the new rules reduce further —
+tightening whitespace handling recomputes correctly; a rule that needed a distinction the old
+reduction had already thrown away does not. Keeping the raw extraction as well would close it and is
+not proposed: it doubles what is stored to buy a case nobody has met, and the honest move is to know
+the boundary rather than to have quietly assumed it away. The fetcher is the only thing
 that ever holds this text, which is why it is written down before the fetcher is (ADR-0020). Law is
 public, so nothing here touches §7.2 or GDPR, and a few hundred articles cost nothing to store.
 
@@ -953,11 +982,35 @@ Four conditions, in order of how much they matter:
 1. **The parser asserts what it expects to find.** Article heading present, text non-empty,
    revision date parseable. Any assertion failing yields `unreachable` (§9.11) — never
    "no change". This one carries the argument; the rest are support.
+
+   **"Heading present" is too weak, and the gap is the one this section is about.** Presence
+   proves the parser found _an_ article, not _the_ article. §9.13 already names renumbering as a
+   thing that happens — an article inserted ahead of ours shifts every number after it — and a
+   parser keyed on position rather than on the heading would then extract the neighbour, fingerprint
+   it, and report a stable norm forever while the provision the template rests on changes
+   underneath. Nothing fails, nothing is empty, no assertion trips. So the assertion is that the
+   heading **names the article we asked for**, and anything else is `unreachable`.
+
+   **The same applies to which act we are reading.** `canonical_url` is followed, and a redirect is
+   not a failed fetch: acts get consolidated and rada moves them, so the page that answers may
+   honestly belong to a different act than the one in the register. §9.2 lists link rot and answers
+   it with "a failed fetch is its own state", which covers the 404 and not the 301. So the final URL
+   after redirects is checked to still normalize to the act the norm names — the same
+   `normalizeLawLink` the entry form uses, applied to where we actually landed.
+
 2. **Non-empty is an invariant.** An empty or implausibly short extraction is a failure, always.
    This is exactly what broken markup looks like: not an error, silence.
 3. **Fixtures in CI.** A handful of saved pages with known expected output. These catch our own
    regressions when the parser is refactored — they cannot catch the source changing, which is
    what condition 1 is for.
+
+   **Real pages, never written by hand.** `packages/law-refs/fixtures/` holds bytes off the live
+   site with their provenance and the commands to refresh them. A hand-written fixture proves a
+   parser can read what its author imagined, which is precisely the ignorance ADR-0011 set out to
+   remove by building rather than buying. This condition earned its place on the first run: it
+   caught a blank-text assertion that could never fire, in the module written to stop exactly that
+   (ADR-0023).
+
 4. **Periodic human spot-check.** Once a quarter a lawyer verifies two or three norms by hand
    against the source. Cheap, and the only thing that catches a systematic bias the automation
    cannot see in itself.
@@ -984,14 +1037,29 @@ Consequences that follow directly from naming a number:
 - **One business day means business days.** A signal arriving Friday evening, with one lawyer on
   the service and no cover, waits until Monday. This turns the cover question (§14) from
   theoretical into operational.
-- **The service's state while a signal is untriaged.** Proposed: an untriaged signal leaves the
-  service on sale but visibly flagged; a **confirmed impact on a published service pauses it**
-  until a new version ships. That makes "impact confirmed" a consequential decision, which is
-  right. It costs revenue; selling a document we know to be wrong costs more.
-- **What the client is told, and when.** Proposed: told immediately, with the note that an update
-  is being prepared. Waiting until the fix is friendlier and leaves a window in which someone acts
-  on a document we already know is wrong. Open (§14) — this one is a product call, not an
-  engineering one.
+- **The service's state while a signal is untriaged.** An untriaged signal leaves the service on
+  sale but visibly flagged; a **confirmed impact on a published service pauses it** until a new
+  version ships (Q5). That makes "impact confirmed" a consequential decision, which is right. It
+  costs revenue; selling a document we know to be wrong costs more.
+
+  **The pause is spoken, not silent.** The accountable lawyers are notified, and the intake bot
+  tells the caller in words: the service is temporarily paused, this act changed it, it is dated,
+  and they may speak to a lawyer directly — slower and dearer — or wait for the documents to be
+  adapted. A pause the product does not explain reads as a product that is broken.
+
+  A **future-dated** signal is `scheduled`, not `impact_confirmed` (§9.11), so it does not pause
+  anything. The service sells until the date; the pause fires on it if the new version is not ready.
+
+- **What the client is told, and when.** A client holding an issued document is told **as soon as
+  impact is confirmed**, with the note that an update is being prepared (Q6) — not when the fix
+  ships, because remediation may take the week this section allows and that is a week in which
+  somebody may act on a document we already know is wrong. For a change with a known future
+  effective date the client is told **on the day** (Q7): §9.9's advance preparation is the lawyer's,
+  and it stays internal.
+- **A confirmed impact notifies; it does not re-issue by itself** (Q8). §8.4's bulk re-issue is a
+  human's decision, taken with the affected list in front of them. The reverse index of §8.1 is what
+  produces that list, so it is needed either way — what is refused is the last step running
+  unattended over artifacts already delivered.
 
 ## 10. Backlog
 
@@ -1462,6 +1530,11 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
   column on the nearest existing table. It was found by reading ADM-56's dependency list: the row
   claimed to be buildable on the action log alone, which would have shipped break-glass without the
   record that makes it accountable.
+- **A confirmed impact pauses the published service, tells the holders of issued documents at once,
+  and re-issues nothing without a human** (Q5, Q6, Q8) — and a change that has not taken effect yet
+  is `scheduled` rather than confirmed, so it neither pauses nor is announced before the day (Q7).
+  The pause speaks: the intake bot names the act and its date and offers a lawyer directly or a wait.
+  §9.16 carries the operative form, §14 the reasoning.
 - **A client account is a tenant, not a person** (Q21). `clients` is the account; one or more people
   belong to it. A ФОП with an accountant and two employees is an ordinary Ukrainian client, and the
   answer "person" does not refuse that case so much as push it off the platform — a second account
@@ -1494,17 +1567,6 @@ reference to "Q9" written six months ago still points at the same question. Ids 
 - **Q2. Who corrects an extraction — a human in an editor, or the AI on request with the patch
   confirmed by a human?** This decides whether ADM-15 is a full editor or a review surface.
 - **Q3. Does `packages/ui` get a temporary second owner for this wave?** Item 4 of §12.
-
-**Blocking law monitoring (§9)**
-
-- **Q5. Does a published service pause itself when an impact is confirmed?** §9.16 proposes yes.
-  It costs revenue on a false positive and prevents selling a document we know to be wrong.
-- **Q6. Is the client told as soon as an impact is confirmed, or only once the fix ships?** §9.16
-  proposes immediately, with a note that an update is being prepared. A product call.
-- **Q7. When a change has a known future effective date, do we tell affected clients in advance or
-  on the day?** Advance notice is better product and more support load.
-- **Q8. Does a confirmed impact trigger automatic re-issue, or a notification with a human
-  deciding?** §9 stops at the signal; this decides what happens after "impact confirmed".
 
 **Blocking schema design**
 
@@ -1591,6 +1653,39 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   question rather than a detail.
 
 **Already answered, listed so they stop being reopened**
+
+- **Q5–Q8** — answered together on 2026-08-30, because they are one policy seen from four angles:
+  what happens to the shop window, to the person already holding a document, to a change that has not
+  landed yet, and to the documents already issued. Taken separately they would have produced four
+  compatible rules that do not add up to one story a client can be told.
+
+  **Q5 — a confirmed impact pauses the published service, and the pause is spoken.** The lawyers
+  accountable for it are notified, and so are a named few beyond them. What is new here beyond
+  §9.16's proposal is that the intake bot says so in words: the service is temporarily paused, this
+  act changed it, it is dated, and the caller may either speak to a lawyer directly — slower and more
+  expensive — or wait for the documents to be adapted. A silent pause reads as a broken product; a
+  spoken one is the freshness promise being kept in public, and it converts some of the lost sale
+  into consultation work instead of losing all of it.
+
+  **Q6 — a client holding an issued document is told as soon as impact is confirmed**, not when the
+  fix ships. §9.16 gives remediation up to a week, and a week in which somebody may file a document
+  we already know to be wrong is the window this refuses to leave open. It costs a second message.
+
+  **Q7 — a change with a known future effective date reaches the client on the day, not before.**
+  This does not weaken §9.9. §9.9's win is that the _lawyer_ prepares the new version ahead of the
+  date; the calendar and the scheduled signal stay exactly as specified, and remain internal. What is
+  decided here is only who else sees them, and the answer is nobody — telling a client about a rule
+  that does not yet apply invites them to act on it early.
+
+  It also settles an interaction Q5 would otherwise have created: a future-dated signal is
+  `scheduled` (§9.11), not `impact_confirmed`, so it does **not** pause the service. The service sells
+  until the date, and the pause — if the new version is not ready — fires on it.
+
+  **Q8 — a confirmed impact notifies; a human decides on re-issue.** §8.4's bulk re-issue is built
+  and stays manual to trigger. The reverse index (§8.1) still has to exist, because the notification
+  cannot name the affected clients without it; what is refused is the last step running unattended.
+  Re-issuing touches artifacts already delivered to clients, and §9.11 is explicit that most
+  amendments to a large code do not touch the provision a template rests on.
 
 - **Q4** — the promise is a **format, not a deadline**. The client is told that a change was found
   and that we are acting on it; no count of days is quoted. That does not leave §9.8 without a

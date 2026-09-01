@@ -10,6 +10,35 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — a citation confirmed by its own source (2026-09-01b)
+
+**PR #67**: the first `supabase/functions/` in the repository, and the first network request the
+platform has ever made.
+
+- **The confirmation happens before the row exists, not only after it.** §9.5.7 describes it as
+  following the save; `law_norms` grants no delete to anybody, so an article number mistyped and
+  saved first is a row watched forever that will never match anything. §9.6's "cheapest possible
+  moment" is not reachable after the write. The second reading still runs — against the saved norm,
+  recording the first revision — and a text that moved between the two carries no confirmation.
+- **A confirmation is about words, so it travels as their fingerprint.** Never the text itself: a
+  client that sends the article body is a client that decides what the law says.
+- **Two refusals are about us rather than the publisher.** An act-scoped norm has no one article to
+  extract, and a norm left behind by a normalizer bump needs a recomputation pass rather than a
+  probe — recording that as `observed` is how our own edit becomes two hundred signals with a
+  lawyer's day on each. Both refuse loudly instead of guessing.
+- **A failed check writes.** `last_checked_at` moves and the state goes `unreachable`, because a
+  check that left no trace is indistinguishable from one nobody got around to (§9.10).
+- **A tsconfig `include` with a character class matches no file — and a project with no files
+  typechecks clean.** The functions package was green for that reason for one commit. Found with
+  `tsc --listFiles`, and it is now a debt in STATE: nothing asserts that a project sees a file, and
+  a package missing from `pnpm-workspace.yaml` fails the same silent way.
+- **"A gate reported green is not a gate that ran" leaves the debt list**, one session after it
+  arrived. CI is what carries it: it caught #65's claim and it gated this one, which is what a
+  mechanism looks like where a resolution would have been a promise.
+- **ADR-0024: the edge functions are held to the Node lane.** A workspace package, decisions in
+  modules over injected dependencies, sources compiled with `"types": []` so a `node:` import
+  cannot pass. Six new probes; `live.test.ts` reads the real site behind `LAW_LIVE=1` and did.
+
 ## Done — the watcher gets a parser, a queue and a witness (2026-09-01)
 
 **PR #65**: law monitoring gained everything but the network call, and the gate on the gates caught
@@ -52,39 +81,6 @@ behind.
 - **An instruction can be safe under its premise and harmful under the facts.** "Run the ledger
   repair, the line is already there" was correct for one migration; the cloud was missing five, with
   the schema state unknown. Marking those applied would have made `db push` skip them forever.
-
-## Done — the anatomy screen stops overclaiming (2026-08-28)
-
-**Its three findings closed together, as PR #61.** The screen had been written in English, printing
-a review nobody had performed, and dropping two fields the trace was already carrying.
-
-- **A feature excluded from a checker is a rule that stops applying to it.** `check-copy.mjs`
-  exempted `anatomy` because a fixture trace is content rather than copy — true of the block titles
-  and false of every sentence around them, which is how a screen stayed English while a gate stayed
-  green. The exclusion is gone and the checker scans 51 files. Errors leave `useTrace` as a
-  `TranslationKey` mapped from `AppError.code`, because a sentence translated at catch time is
-  frozen in whichever language was active then.
-- **`BlockTrust` and the `confirmed` marker are two axes, and the screen was rendering one as the
-  other.** The schema says trust answers _who wrote the text_; design-system §8.1 says a block flips
-  to `confirmed` when a lawyer _approves_ it. `template` — lawyer-authored text, filled in
-  deterministically — was therefore printing «Підтверджено юристом» over documents nobody had
-  opened. It keeps the marker and says «Із шаблону юриста». Where the approval axis lives is **Q27**
-  rather than a guess: in the trace it is a `trace_version` bump across three runtimes; beside it,
-  a table the review screen owns.
-- **A deferral can be written carefully and still name the wrong screen.** `selected_by` and
-  `tool_calls` were recorded in `types.ts` as belonging to a review screen that does not exist. The
-  condition is the whole of _why a block is in this document_, which is this screen's subject —
-  `VISION.md` had said so before either screen was built, and nobody re-read it. Both render now: a
-  null condition as its own sentence, because "nothing selected this" and "we did not show you what
-  did" look identical when the absence is silent; the calls in the order they ran, keeping both
-  halves of a retry, because a block produced after a tool failed is one a lawyer reads differently.
-- **`started_at` is the one field the view model refuses.** The order is already on screen and is
-  what a reader of a retry needs; a timestamp at minute resolution would answer the same question
-  worse. In the contract, absent from the view — which is the layer working rather than lagging.
-- **Six probes, and the screen's first component test.** Drop a label and the English default
-  returns; swallow the failure and it reads as an ungenerated document; hide the failed calls, let
-  `started_at` ride along on a spread, or render nothing for an unconditional block — each turns one
-  named test red. `pnpm probes anatomy`: 12 run, 12 caught.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -177,9 +173,10 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
   the ordering constraint this line warned about — normalise before you schedule — is satisfied
   rather than pending. ADM-43 was claimed here on 2026-08-15, was not built until 2026-08-30, and landed on `main`
   as PR #65 on 2026-09-01:
-  link normalisation is not text normalisation, and neither is a fingerprint store. Still here: the fetcher with its §9.15 safety conditions
-  (ADM-42, ADM-43's network half, ADM-50), the scheduler (ADM-44), triage, the calendar and the
-  health surfaces (ADM-45…49, ADM-51…53), and ADM-22…24 on the register. It was sequenced after the
+  link normalisation is not text normalisation, and neither is a fingerprint store. The fetcher landed with its §9.15 safety conditions as PR #67 on
+  2026-09-01 — ADM-42 and ADM-43's network half, entry-time confirmation included. Still here:
+  ADM-50, the scheduler (ADM-44), triage, the calendar and the health surfaces (ADM-45…49,
+  ADM-51…53), and ADM-22…24 on the register. It was sequenced after the
   authoring loop and was not built there — going first is what surfaced ADR-0020. The publication
   feed remains deliberately neither built nor bought.
 - GDPR P1: data export, account deletion as anonymization, retention cron, subprocessor list.

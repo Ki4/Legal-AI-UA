@@ -1,21 +1,19 @@
-# State — 2026-08-30, the watcher gets a parser and a queue
+# State — 2026-09-01, the watcher lands and the gate on the gates earns its keep
 
-Written at `24d32d7` on `main`, with **a large uncommitted working tree** — see In flight. If
-`git log` shows commits after it, this file is behind: trust git.
+Written at `776de69` on `main`, clean. If `git log` shows commits after it, this file is behind:
+trust git.
 
 Tier 1: **the only document a session reads to orient.** `pnpm docs:check` caps it at 60 lines.
 
 ## Wave
 
-Wave 1. Law monitoring went from a register nothing watched to a watcher holding every piece but the
-network call: a revision log, a triage queue, two decision layers, and a parser proved against real
-pages from zakon.rada.gov.ua (ADR-0023). 756 tests green — run sequentially; see the debts.
+Wave 1. Law monitoring is on `main` as PR #65: a revision log, a triage queue, two pure decision
+layers, and a parser proved against real pages from zakon.rada.gov.ua (ADR-0023). Both migrations
+applied, 313 SQL scenarios green, 757 tests, 71 probes. Every piece but the network call exists.
 
 ## In flight
 
-- **No code is committed.** Branch `sergey/law-norm-revisions` carries two migrations
-  (`law_norm_revisions`, `law_signals`), four modules in `packages/law-refs` with 124 tests, real
-  fixtures, ADR-0023, the spec edits closing Q5–Q8, and a new `check:sql` rule. No PR yet.
+- Nothing. `main` is clean at `776de69`; #65 merged and its branch is gone.
 
 ## Blocking — the question, and what it stops
 
@@ -28,30 +26,32 @@ pages from zakon.rada.gov.ua (ADR-0023). 756 tests green — run sequentially; s
 - **Q15** → answered in practice by the MVP (tier 1 is `template` + `auto`); §14 has not closed it.
 - **Q9** → the hryvnia amounts. §8's annual-versus-monthly ambiguity is two facts, not one.
 
-Q5–Q8 closed 2026-08-30 after five sessions untouched, which unblocks ADM-46, ADM-52 and ADM-53.
-
 ## Debts — carried since
 
-- **Two migrations never applied, 29 scenarios never run, `packages/db` types not regenerated** —
-  2026-08-30. Docker was down all session. Likely first stumbles: `perform 1 … for update` in a
-  trigger, an enum literal under `search_path = ''`, the pause trigger against
-  `service_versions_freeze`.
-- **`pnpm test` cannot spawn workers on this machine** — 2026-08-30. Fifteen files got none and were
-  reported as failures; `--no-file-parallelism` is green and twice as fast. The default command lies.
+- **A gate reported green is not a gate that ran** — 2026-09-01. #65 was opened on a claim of 71
+  probes passing; CI said 70, and the one it named was a real hole. The claim and the run are
+  distinguishable only by CI, which is the argument for never merging on the claim.
+- **`pnpm test` cannot spawn workers on this machine** — 2026-08-30. Fifteen files get none and are
+  reported as failures; `--no-file-parallelism` is green and twice as fast. The default lies.
 - **The cloud ledger drifted five migrations and nothing noticed** — 2026-08-28. Repaired; every
   gate still verifies against a local stack, so nothing asks the cloud whether it agrees.
-- **`document_blocks` has no seed rows** — 2026-08-28. Today's two tables do have them, which is the
-  point: nothing compares the set of domain tables against `seed.sql`, so it stays a habit.
+- **Nothing compares the domain tables against `seed.sql`** — 2026-08-28. `document_blocks` still
+  has no seed rows; today's two tables do, which is what keeps this a habit rather than a rule.
 - **No screen has been looked at since it changed** — 2026-08-28. Queued rather than skipped.
 - **`law_norms` carries per-watcher judgement on a shared row** — 2026-08-28. `probe_interval`,
   `interval_reason` and `state` are one firm's opinion on the row every firm shares.
 - The access-control review is **a standing condition, not a debt** — recorded 2026-08-04.
 
+Closed: the 2026-08-30 debt is gone — migrations applied, the 29 scenarios ran inside 313 green,
+`packages/db` types regenerated. `vector` never starts on Windows (the CLI points it at TCP 2375,
+which Docker Desktop leaves shut); it costs Studio's Logs tab and nothing else, and
+`supabase/README.md` now carries both that and `--ignore-health-check`.
+
 ## Next candidates
 
-1. **ADM-42 — a pasted citation confirmed by its own text.** §12's ordering rule puts it before the
-   scheduler, and it catches the one mistake the entry form cannot see today: right shape, wrong
-   article. The parser it waited on now exists; the edge function does not.
+1. **ADM-42 — a pasted citation confirmed by its own text.** §12 puts it before the scheduler, and
+   it catches the one mistake the entry form cannot see: right shape, wrong article. It is also the
+   first `supabase/functions/` in the repository, so it stands up the gateway layer ADM-44 needs.
 2. **ADM-44 — the probe scheduler**, once ADM-42 has proved the fetch path end to end.
 
 ## Detail lives in

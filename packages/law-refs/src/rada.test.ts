@@ -119,6 +119,27 @@ describe("extractArticle — against the real print page", () => {
     expect(text.split("\n").length).toBeGreaterThan(3);
   });
 
+  // The assertion above cannot carry this rule alone, and the probe is what said
+  // so. The publisher's markup is indented, so its source already holds a
+  // newline between every pair of paragraphs -- which means a parser that
+  // stripped tags *before* turning block ends into breaks still returns plenty
+  // of lines, and the count above stays green while every break the parser was
+  // supposed to make has been lost. The markup here is one physical line on
+  // purpose: every newline in the result had to come from a `</p>`, so the
+  // assertion depends on the ordering rather than on the fixture's whitespace.
+  it("makes the breaks itself, on markup that carries no newlines of its own", () => {
+    const oneLine =
+      "<p><span class=rvts9>Стаття 8.</span> Назва</p>" +
+      "<p>Перший абзац статті.</p>" +
+      "<p>Другий абзац статті.</p>";
+
+    expect(reduced(oneLine, "8").split("\n")).toEqual([
+      "Стаття 8. Назва",
+      "Перший абзац статті.",
+      "Другий абзац статті.",
+    ]);
+  });
+
   it("decodes the entities the publisher's markup uses", () => {
     const text = reduced(PRINT, "105");
 

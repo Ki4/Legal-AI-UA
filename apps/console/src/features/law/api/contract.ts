@@ -2,6 +2,7 @@
 // both are typed as `LawApi` so a drifting implementation fails to compile
 // rather than failing in a browser (ADR-0012).
 
+import type { ArticleObserveResponse, ArticlePreviewResponse } from "@legal-ai/law-refs";
 import type {
   CadenceChange,
   LawNormListItem,
@@ -49,11 +50,44 @@ export interface LawApi {
    * Throws AppError("conflict") when this service already records this norm,
    * and AppError("forbidden") when the caller may not write for this service.
    *
-   * **Does not fetch the article back for confirmation.** §9.6 asks for that and
-   * ADM-42 is where it lands; until then the link is validated structurally and
-   * nothing has checked that the article exists in the act.
+   * **Does not fetch the article back.** `previewArticle` is what checks that
+   * the article exists in the act, and it runs *before* this — see the note
+   * there for why the order is that way round and not §9.5.7's.
    */
   addReference(input: NewLawReference): Promise<ServiceLawRef>;
+
+  /**
+   * Read the article behind a pasted link, and write nothing (§9.6).
+   *
+   * The screen calls this before it saves, and the reason is the register's
+   * shape rather than a preference: `law_norms` grants no delete to anyone, so a
+   * norm entered by mistake is a row that stays. §9.5.7 describes the
+   * confirmation as following the save, and following the save is also where
+   * `observeArticle` runs — but the *first* look has to come before the row
+   * exists, or a typo in an article number becomes something the register
+   * watches forever and never finds.
+   *
+   * Resolves with `ok: false` when the source answered and the article was not
+   * there: that is an answer, not a failure, and the difference is what lets the
+   * form say "this act has no article 900" instead of "something went wrong".
+   * Throws AppError only when the call itself did not complete.
+   */
+  previewArticle(input: { url: string; article: string }): Promise<ArticlePreviewResponse>;
+
+  /**
+   * Check a norm that exists, record what was read, and say what moved (§9.7).
+   *
+   * The console's second call at entry, and the same call ADM-44's scheduler
+   * will make on a timer. `confirmedFingerprint` carries the fingerprint of the
+   * text a lawyer actually read; when it still matches, the norm becomes
+   * `verified` and `last_verified_at` moves — neither of which the console could
+   * write for itself, because the grant deliberately withholds those columns
+   * (§9.10: a lawyer must not be able to make a norm look freshly checked).
+   */
+  observeArticle(input: {
+    normId: string;
+    confirmedFingerprint?: string;
+  }): Promise<ArticleObserveResponse>;
 
   /**
    * Drop a dependency. Returns the id it removed, so a caller that gets a

@@ -783,8 +783,26 @@ Written for the lawyer entering it. The in-product version is Ukrainian and live
 5. **If the dependency really is the whole act**, mark it as act-level and accept the extra noise.
 6. **Write one line about what you relied on** — "grounds for dissolution of marriage". When a
    diff arrives in six months, this sentence is what tells the reader whether the change matters.
-7. **Confirm the text the system shows you.** After you save, the article is fetched and displayed
-   back. Check it is the norm you meant.
+7. **Confirm the text the system shows you.** Press "show the article text" before you save: the
+   article is fetched from the source and displayed. Check it is the norm you meant. It is fetched
+   again after the save, against the norm as it was recorded, and that second reading is what the
+   register keeps.
+
+**Step 7 happens twice, and the first time is before the save rather than after** — which is a
+change to what this guide said until ADM-42 was built, so the reason is worth stating rather than
+quietly editing. The register grants no delete to anybody: a norm nothing depends on any more still
+carries the history of what documents once rested on it (`20260830120000`). So an article number
+mistyped and saved first is a row watched forever that will never match anything, and §9.6's
+"rejected at the cheapest possible moment" is not satisfiable after the write. The second reading
+still matters and is not a formality: it is taken against the saved norm, it records the first
+revision, and it is what makes the norm `verified` rather than merely entered. If the text moved
+between the two, the confirmation does not carry — the words a lawyer approved are the only words
+the approval is about.
+
+**A whole-act dependency is not confirmed against text.** The article is the tracked unit (§9.4) and
+the parser is article-keyed, so there is nothing to read back; act-level watching is the redaction
+date on the act's shell page, and it belongs to the scheduler. The entry form says so where the
+button would otherwise be.
 
 ### 9.6 Designing for a wrong citation
 
@@ -792,7 +810,10 @@ A lawyer will mistype an article number, cite a repealed provision, or pick the 
 system assumes this rather than trusting the input.
 
 - **Validate on entry.** Fetch the cited article immediately and show it back. A number that does
-  not exist in that act is rejected at the cheapest possible moment.
+  not exist in that act is rejected at the cheapest possible moment — which is **before the row is
+  written**, since the register has no delete path (see §9.5, step 7). Each refusal gets its own
+  sentence: a lawyer who mistyped an article number can fix it in five seconds and one whose source
+  is down cannot fix it at all, and a single "could not check" would teach both to stop reading.
 - **Confirm, don't type.** Where extraction proposes citations from the template text, the lawyer
   confirms a candidate instead of typing an identifier.
 - **A citation can be marked wrong and replaced** without losing the history of what it used to be.

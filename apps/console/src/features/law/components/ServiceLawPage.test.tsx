@@ -20,11 +20,14 @@ import { AppError } from "../../../shared/api/errors";
 import type { ServiceLawPage as ServiceLawPageData, ServiceLawRef } from "../api";
 import { ServiceLawPage } from "./ServiceLawPage";
 
-const { listForService, addReference, removeReference } = vi.hoisted(() => ({
-  listForService: vi.fn<() => Promise<ServiceLawPageData>>(),
-  addReference: vi.fn(),
-  removeReference: vi.fn(),
-}));
+const { listForService, addReference, removeReference, previewArticle, observeArticle } =
+  vi.hoisted(() => ({
+    listForService: vi.fn<() => Promise<ServiceLawPageData>>(),
+    addReference: vi.fn(),
+    removeReference: vi.fn(),
+    previewArticle: vi.fn(),
+    observeArticle: vi.fn(),
+  }));
 
 vi.mock("../api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../api")>();
@@ -35,6 +38,8 @@ vi.mock("../api", async (importOriginal) => {
       listForService,
       addReference,
       removeReference,
+      previewArticle,
+      observeArticle,
       listNorms: () => {
         throw new Error("listNorms is not part of the service law screen");
       },
@@ -95,7 +100,20 @@ beforeEach(() => {
   listForService.mockReset();
   addReference.mockReset();
   removeReference.mockReset();
+  previewArticle.mockReset();
+  observeArticle.mockReset();
 });
+
+/** A reading of article 105, as the fetcher would have returned it. */
+const READING = {
+  actId: "2947-14",
+  article: "105",
+  text: "Стаття 105. Припинення шлюбу внаслідок розірвання шлюбу",
+  fingerprint: `sha256:${"c".repeat(64)}`,
+  normalizerVersion: 1,
+  publishedRevisionDate: "2026-08-05",
+  fetchedAt: "2026-09-01T10:00:00.000Z",
+};
 
 describe("ServiceLawPage", () => {
   it("shows a loading state rather than an empty list", async () => {
@@ -175,11 +193,41 @@ describe("ServiceLawPage", () => {
 describe("the entry form", () => {
   beforeEach(() => {
     listForService.mockResolvedValue(page([]));
+    previewArticle.mockResolvedValue({ ok: true, reading: READING });
+    observeArticle.mockResolvedValue({
+      ok: true,
+      reading: READING,
+      outcome: "first",
+      state: "verified",
+      confirmed: true,
+    });
   });
 
   async function fillLink(url: string) {
     await screen.findByText(text("serviceLaw.add.title"));
     fireEvent.change(screen.getByLabelText(text("serviceLaw.add.url")), { target: { value: url } });
+  }
+
+  function fillArticle(value: string) {
+    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.article")), {
+      target: { value },
+    });
+  }
+
+  /** The step ADM-42 added: read the article back, and wait for it to arrive. */
+  async function readItBack() {
+    fireEvent.click(screen.getByText(text("serviceLaw.check.button")));
+    await screen.findByText(text("serviceLaw.check.title"));
+  }
+
+  /** Everything but the link and the article, which each test supplies. */
+  function fillRest() {
+    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.actTitle")), {
+      target: { value: "Сімейний кодекс України" },
+    });
+    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.reliedOn")), {
+      target: { value: "Grounds for dissolution." },
+    });
   }
 
   it("says what it resolved a pasted link to", async () => {
@@ -225,13 +273,151 @@ describe("the entry form", () => {
     expect(screen.getByText(text("serviceLaw.article.unrecognized"))).toBeDefined();
   });
 
-  // Shipping before the fetcher is a limitation, and the screen says so rather
-  // than letting the entry look verified (§9.6, ADM-42).
-  it("admits that nothing has read the article back", async () => {
+  // §9.4: an act-level dependency has no one article to read back, and the
+  // screen says which of the two kinds of entry this is before the button.
+  it("offers the check for an article and explains its absence for a whole act", async () => {
     renderPage();
     await screen.findByText(text("serviceLaw.add.title"));
 
-    expect(screen.getByText(text("serviceLaw.add.notFetched"))).toBeDefined();
+    expect(screen.getByText(text("serviceLaw.check.button"))).toBeDefined();
+    expect(screen.queryByText(text("serviceLaw.add.actNotFetched"))).toBeNull();
+
+    fireEvent.click(screen.getByLabelText(text("serviceLaw.add.wholeAct")));
+
+    expect(screen.getByText(text("serviceLaw.add.actNotFetched"))).toBeDefined();
+    expect(screen.queryByText(text("serviceLaw.check.button"))).toBeNull();
+  });
+
+  it("shows the article text the source returned, with its revision date", async () => {
+    renderPage();
+    await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
+    fillArticle("105");
+    await readItBack();
+
+    expect(previewArticle).toHaveBeenCalledWith({
+      url: "https://zakon.rada.gov.ua/laws/show/2947-14",
+      article: "105",
+    });
+    expect(screen.getByText(/Припинення шлюбу/)).toBeDefined();
+    expect(
+      screen.getByText(
+        translate(DEFAULT_LOCALE, "serviceLaw.check.redaction", { date: "2026-08-05" }),
+      ),
+    ).toBeDefined();
+  });
+
+  // The mistake the form cannot see for itself: right link, right shape, wrong
+  // article. It reads as its own sentence and not as a broken request.
+  it("names a wrong article number as such, not as a failure to reach the source", async () => {
+    previewArticle.mockResolvedValue({ ok: false, failure: { reason: "heading_mismatch" } });
+    renderPage();
+    await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
+    fillArticle("900");
+    fireEvent.click(screen.getByText(text("serviceLaw.check.button")));
+
+    expect(
+      await screen.findByText(text("serviceLaw.check.failure.heading_mismatch")),
+    ).toBeDefined();
+    expect(screen.queryByText(text("serviceLaw.check.failure.transport"))).toBeNull();
+    expect(screen.queryByText(text("serviceLaw.check.error"))).toBeNull();
+  });
+
+  it("tells a source that did not answer from an article that is not there", async () => {
+    previewArticle.mockResolvedValue({ ok: false, failure: { reason: "transport" } });
+    renderPage();
+    await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
+    fillArticle("105");
+    fireEvent.click(screen.getByText(text("serviceLaw.check.button")));
+
+    expect(await screen.findByText(text("serviceLaw.check.failure.transport"))).toBeDefined();
+    expect(screen.queryByText(text("serviceLaw.check.failure.heading_mismatch"))).toBeNull();
+  });
+
+  // The register has no delete path, so a norm entered by mistake is watched
+  // forever. This is the gate that keeps one from being entered.
+  it("will not save an article nobody has read back", async () => {
+    renderPage();
+    await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
+    fillArticle("105");
+    fillRest();
+
+    fireEvent.click(screen.getByText(text("serviceLaw.add.submit")));
+    expect(addReference).not.toHaveBeenCalled();
+
+    await readItBack();
+    fireEvent.click(screen.getByText(text("serviceLaw.add.submit")));
+    expect(addReference).toHaveBeenCalled();
+  });
+
+  it("stops trusting a reading once the article number is edited under it", async () => {
+    renderPage();
+    await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
+    fillArticle("105");
+    fillRest();
+    await readItBack();
+
+    // Checked 105, then typed 106. The text on screen is no longer about the
+    // article being saved, so the confirmation cannot carry over.
+    fillArticle("106");
+
+    expect(screen.getByText(text("serviceLaw.check.stale"))).toBeDefined();
+    fireEvent.click(screen.getByText(text("serviceLaw.add.submit")));
+    expect(addReference).not.toHaveBeenCalled();
+  });
+
+  it("confirms the saved norm against the text the lawyer actually read", async () => {
+    addReference.mockResolvedValue(ref());
+    renderPage();
+    await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
+    fillArticle("105");
+    fillRest();
+    await readItBack();
+    fireEvent.click(screen.getByText(text("serviceLaw.add.submit")));
+
+    expect(await screen.findByText(text("serviceLaw.check.confirmed"))).toBeDefined();
+    expect(observeArticle).toHaveBeenCalledWith({
+      normId: "norm-1",
+      confirmedFingerprint: READING.fingerprint,
+    });
+  });
+
+  // §9.10: a save that could not be confirmed must not read like one that was.
+  it("says when the article moved between the check and the save", async () => {
+    addReference.mockResolvedValue(ref());
+    observeArticle.mockResolvedValue({
+      ok: true,
+      reading: READING,
+      outcome: "first",
+      state: "unverified",
+      confirmed: false,
+    });
+    renderPage();
+    await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
+    fillArticle("105");
+    fillRest();
+    await readItBack();
+    fireEvent.click(screen.getByText(text("serviceLaw.add.submit")));
+
+    expect(await screen.findByText(text("serviceLaw.check.moved"))).toBeDefined();
+    expect(screen.queryByText(text("serviceLaw.check.confirmed"))).toBeNull();
+  });
+
+  it("says when the norm was saved and the second look failed", async () => {
+    addReference.mockResolvedValue(ref());
+    observeArticle.mockResolvedValue({
+      ok: false,
+      failure: { reason: "transport" },
+      state: "unreachable",
+    });
+    renderPage();
+    await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
+    fillArticle("105");
+    fillRest();
+    await readItBack();
+    fireEvent.click(screen.getByText(text("serviceLaw.add.submit")));
+
+    expect(await screen.findByText(text("serviceLaw.check.unreachable"))).toBeDefined();
+    expect(screen.queryByText(text("serviceLaw.check.confirmed"))).toBeNull();
   });
 
   it("submits a complete entry and clears the form", async () => {
@@ -239,15 +425,9 @@ describe("the entry form", () => {
     renderPage();
 
     await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14/ed20240101");
-    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.actTitle")), {
-      target: { value: "Сімейний кодекс України" },
-    });
-    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.article")), {
-      target: { value: "ст. 105" },
-    });
-    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.reliedOn")), {
-      target: { value: "Grounds for dissolution." },
-    });
+    fillArticle("ст. 105");
+    fillRest();
+    await readItBack();
     fireEvent.click(screen.getByText(text("serviceLaw.add.submit")));
 
     expect(addReference).toHaveBeenCalledWith({
@@ -296,15 +476,9 @@ describe("the entry form", () => {
     renderPage();
 
     await fillLink("https://zakon.rada.gov.ua/laws/show/2947-14");
-    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.actTitle")), {
-      target: { value: "Сімейний кодекс України" },
-    });
-    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.article")), {
-      target: { value: "105" },
-    });
-    fireEvent.change(screen.getByLabelText(text("serviceLaw.add.reliedOn")), {
-      target: { value: "Grounds." },
-    });
+    fillArticle("105");
+    fillRest();
+    await readItBack();
     fireEvent.click(screen.getByText(text("serviceLaw.add.submit")));
 
     expect(await screen.findByText(text("serviceLaw.add.error.conflict"))).toBeDefined();

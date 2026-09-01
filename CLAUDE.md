@@ -35,6 +35,10 @@ Read this before any change. Zone files add detail; this file is the map.
   ternary is correct English and wrong Ukrainian. Adopted everywhere but `design-kit`, which is a
   developer gallery and is excluded from `check:copy` for the same reason.
 - `supabase/` — migrations, edge functions, seed. See `supabase/CLAUDE.md`.
+  `supabase/functions` is a workspace package of its own (`@legal-ai/edge-functions`): TypeScript on
+  Deno, held to the root lint/typecheck/test/probes rather than a second toolchain
+  (`docs/adr/0024-edge-functions-are-held-to-the-node-lane.md`). It is not the exception ADR-0016
+  reserves for Python — a second runtime is not a second language.
 - `docs/` — vision, ADRs, specs (`docs/specs/`), `docs/CONTRIBUTING.md`, session journals. **Sorted
   by when they are read, not by what they are about** — see "Documents have tiers" below.
 - `.claude/` — `/session-start` and `/session-end`, and a SessionStart hook that puts branch

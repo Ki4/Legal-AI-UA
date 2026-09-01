@@ -74,3 +74,33 @@ contained.
 
 `seed.sql` runs after migrations on every `db reset`. Invented data only — never real client
 names, emails, or case details.
+
+## Edge functions
+
+`supabase/functions/law-article` is the article fetcher (ADR-0020, ADM-42). It reads
+zakon.rada.gov.ua, fingerprints one article and — for a norm that exists — records the revision.
+
+Serve it against the local stack:
+
+```bash
+pnpm exec supabase functions serve law-article
+```
+
+It needs `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. Locally the CLI
+supplies all three; in the cloud project the first two are set for you and the service-role key is
+added with `supabase secrets set`. The function refuses to start without them rather than running
+with a client that can read nothing — a fetcher that silently records no revisions is the exact
+failure §9.15 is written against.
+
+The console calls it through `supabase.functions.invoke`, so the caller's JWT travels with the
+request and the function asks the auth server whose it is. Only `admin` and `lawyer` are served.
+
+**Checking the parser against the live site** is a separate, deliberate command, off in CI:
+
+```bash
+LAW_LIVE=1 pnpm exec vitest run supabase/functions/law-article/live.test.ts
+```
+
+If that fails while the rest of the suite passes, the saved fixtures have gone stale against the
+publisher's markup — refresh them per `packages/law-refs/fixtures/README.md` and read the diff
+before touching the parser.

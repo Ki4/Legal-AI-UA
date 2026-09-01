@@ -22,6 +22,18 @@ export { decideProbe } from "./probe.ts";
 export { extractArticle, extractRedactionDate, printUrl } from "./rada.ts";
 export type { RadaDate, RadaExtraction } from "./rada.ts";
 export { decideTriage } from "./triage.ts";
+export { ARTICLE_FUNCTION } from "./wire.ts";
+export type {
+  ArticleFailure,
+  ArticleObserveRequest,
+  ArticleObserveResponse,
+  ArticleOutcome,
+  ArticlePreviewRequest,
+  ArticlePreviewResponse,
+  ArticleReading,
+  ArticleRequest,
+  ArticleResponse,
+} from "./wire.ts";
 export {
   fingerprintArticleText,
   fingerprintRevision,

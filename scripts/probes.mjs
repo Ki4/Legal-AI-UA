@@ -698,4 +698,57 @@ export const PROBES = [
     from: `  return decodeEntities(html.replace(BLOCK_BREAK, "\\n").replace(ANY_TAG, ""));`,
     to: `  return decodeEntities(html.replace(ANY_TAG, "").replace(BLOCK_BREAK, "\\n"));`,
   },
+  {
+    id: "fetcher-follows-a-redirect-onto-another-act",
+    what: "accepts whichever act the source redirected to, so a consolidated act is fingerprinted as the one we cited and never drifts again",
+    file: "supabase/functions/law-article/read.ts",
+    test: "supabase/functions/law-article/read.test.ts",
+    from: `  if (!landedAct.ok || landedAct.link.actId !== wantedAct.link.actId) {`,
+    to: `  if (false) {`,
+  },
+  {
+    id: "failed-check-leaves-no-trace",
+    what: "records nothing when a check fails, so an unreachable norm is indistinguishable from one nobody got around to checking (§9.10)",
+    file: "supabase/functions/law-article/handler.ts",
+    test: "supabase/functions/law-article/handler.test.ts",
+    from: `    await deps.store.markChecked({
+      normId: norm.id,
+      state: "unreachable",`,
+    to: `    await Promise.resolve({
+      normId: norm.id,
+      state: "unreachable",`,
+  },
+  {
+    id: "confirmation-is-taken-on-trust",
+    what: "treats any supplied fingerprint as a confirmation without comparing it, so a lawyer confirms text that moved before the save",
+    file: "supabase/functions/law-article/handler.ts",
+    test: "supabase/functions/law-article/handler.test.ts",
+    from: `    request.confirmedFingerprint !== undefined &&
+    request.confirmedFingerprint === reading.fingerprint;`,
+    to: `    request.confirmedFingerprint !== undefined;`,
+  },
+  {
+    id: "normalizer-bump-probed-as-an-amendment",
+    what: "probes a norm left behind by a normalizer bump, which records our own reduction change as the legislature's (§9.7)",
+    file: "supabase/functions/law-article/handler.ts",
+    test: "supabase/functions/law-article/handler.test.ts",
+    from: `  if (norm.fingerprint !== null && norm.normalizerVersion !== NORMALIZER_VERSION) {`,
+    to: `  if (false) {`,
+  },
+  {
+    id: "form-saves-an-article-nobody-read",
+    what: "drops the requirement that an article-scoped entry was read back, so a mistyped number becomes a permanent row in a register with no delete path",
+    file: "apps/console/src/features/law/components/AddReferenceForm.tsx",
+    test: "apps/console/src/features/law/components/ServiceLawPage.test.tsx",
+    from: `        parsedArticle !== null && parsedArticle.ok && reading !== null);`,
+    to: `        parsedArticle !== null && parsedArticle.ok);`,
+  },
+  {
+    id: "stale-reading-still-counts-as-confirmation",
+    what: "ignores which article a reading was of, so checking 105 and saving 106 confirms text nobody read",
+    file: "apps/console/src/features/law/components/AddReferenceForm.tsx",
+    test: "apps/console/src/features/law/components/ServiceLawPage.test.tsx",
+    from: `    checkedFor !== null && (checkedFor.url !== url.trim() || checkedFor.article !== article.trim());`,
+    to: `    false;`,
+  },
 ];

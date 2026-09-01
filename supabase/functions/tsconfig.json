@@ -1,0 +1,29 @@
+{
+  "extends": "../../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    // The functions import `@legal-ai/law-refs` by name and Deno resolves that
+    // through `deno.json`'s import map, which tsc does not read. Pointing the
+    // same name at the same source keeps one specifier in the files and two
+    // resolvers behind it, rather than a relative path here and an alias there.
+    "paths": {
+      "@legal-ai/law-refs": ["../../packages/law-refs/src/index.ts"]
+    },
+    // **No ambient types at all, and that is the assertion.** This runs on
+    // Deno. `@types/node` here would make `node:fs`, `process` and `Buffer`
+    // compile in a file that has none of them at runtime — a green typecheck
+    // for code that fails on the first request. The one thing the runtime does
+    // provide beyond the web platform is declared in `deno.d.ts`, narrowly.
+    //
+    // The tests are a different project (`tsconfig.test.json`) because they run
+    // under Node and legitimately read fixtures off disk. Splitting them is
+    // what keeps this rule enforceable rather than merely stated.
+    "types": []
+  },
+  // `*/*.ts` and an exclude, rather than a pattern that tries to say
+  // "not a test": tsconfig globs support `*`, `?` and `**` and nothing else, so
+  // a character class here matches no file at all — and a project that includes
+  // no files typechecks clean. That was this file's first version, and it was
+  // green for the worst available reason.
+  "include": ["deno.d.ts", "*/*.ts"],
+  "exclude": ["node_modules", "*/*.test.ts"]
+}

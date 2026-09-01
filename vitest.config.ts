@@ -29,7 +29,16 @@ export default defineConfig({
           // nothing runs is the exact shape of defect they were written to
           // catch. They are `.mjs`, so their tests are too — beside what they
           // test, like every other test in the workspace.
-          include: ["{apps,packages}/*/src/**/*.test.ts", "scripts/**/*.test.mjs"],
+          include: [
+            "{apps,packages}/*/src/**/*.test.ts",
+            "scripts/**/*.test.mjs",
+            // The edge functions (ADR-0020) are TypeScript on a second runtime,
+            // not a second language, so they are held to this runner rather than
+            // to a Deno lane of their own. Their decisions live in modules over
+            // injected dependencies precisely so that this is possible; what is
+            // left in `index.ts` is wiring, and nothing here pretends to reach it.
+            "supabase/functions/*/*.test.ts",
+          ],
           environment: "node",
         },
       },

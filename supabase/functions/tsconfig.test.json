@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // The tests run under the workspace's Vitest on Node, and read the saved
+    // pages of §9.15 condition 3 off disk. That is a Node capability the code
+    // under test deliberately does not have.
+    "types": ["node"]
+  },
+  "include": ["deno.d.ts", "*/*.ts"],
+  "exclude": ["node_modules"]
+}

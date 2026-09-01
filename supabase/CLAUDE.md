@@ -76,6 +76,27 @@ So `pnpm check:sql` now holds it: the last restatement must map every table that
 `audit_change` trigger. **Copy the function from the most recent migration that restates it, never
 from the one you happen to be reading**, and the gate will tell you if you did not.
 
+## Edge functions are a workspace package, not a second toolchain
+
+`supabase/functions/` is TypeScript on Deno (ADR-0020), and it is held to the same `pnpm lint`,
+`pnpm typecheck`, `pnpm test` and `pnpm probes` as everything else — ADR-0024 records why, and what
+that costs. Three rules follow, and they are the ones easy to get wrong:
+
+- **The decisions go in modules over injected dependencies; `index.ts` is wiring only.** A real
+  `fetch`, a real clock, a real client, and nothing that decides anything. It is the one file no
+  test reaches, so what lands there is what nothing checks.
+- **The function sources compile with `"types": []`.** No `@types/node`, so `node:fs`, `process` and
+  `Buffer` fail to compile in a file that would have failed at runtime. Tests are the separate
+  `tsconfig.test.json` project and may use them.
+- **Deno resolves `@legal-ai/law-refs` through `deno.json`'s import map, tsc through `paths`.** Both
+  point at the same source. Adding a package a function imports means adding it in both places, and
+  nothing but `supabase functions serve` will tell you if you forgot the first.
+
+A function that writes as `service_role` bypasses RLS entirely, so **every rule it is subject to is
+written in its own code**. `law-article` is the worked example: it checks the caller's role against
+the auth server rather than decoding the JWT, and it refuses an act-scoped norm and a normalizer
+bump rather than guessing at either.
+
 ## Every policy needs a verification scenario
 
 Not a paragraph in a PR description — a **script**, at `snippets/verify_<area>.sql`. It creates its

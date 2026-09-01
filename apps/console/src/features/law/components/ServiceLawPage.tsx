@@ -94,8 +94,13 @@ export function ServiceLawPage() {
     errorKey,
     adding,
     addErrorKey,
+    checking,
+    check,
+    checkErrorKey,
+    addOutcome,
     removingId,
     removeErrorKey,
+    checkArticle,
     addReference,
     removeReference,
     reload,
@@ -164,6 +169,11 @@ export function ServiceLawPage() {
         serviceId={serviceId ?? ""}
         adding={adding}
         errorKey={addErrorKey}
+        checking={checking}
+        check={check}
+        checkErrorKey={checkErrorKey}
+        addOutcome={addOutcome}
+        onCheck={checkArticle}
         onAdd={addReference}
       />
     </section>

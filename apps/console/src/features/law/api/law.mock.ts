@@ -11,7 +11,13 @@
 // every norm is visible and every write succeeds — the states only a policy
 // produces are asserted at the component, where the api is mocked outright.
 
-import { normalizeArticle, normalizeLawLink } from "@legal-ai/law-refs";
+import {
+  fingerprintRevision,
+  normalizeArticle,
+  normalizeLawLink,
+  NORMALIZER_VERSION,
+} from "@legal-ai/law-refs";
+import type { ArticlePreviewResponse } from "@legal-ai/law-refs";
 import type { LawNormRow, ServiceLawRefRow } from "@legal-ai/db";
 import { AppError } from "../../../shared/api/errors";
 import {
@@ -34,6 +40,60 @@ function dependentsOf(normId: string): NormDependent[] {
       // down (DoD §5).
       serviceTitle: serviceRows.find((service) => service.id === ref.service_id)?.title ?? "",
     }));
+}
+
+/**
+ * The source, as a table.
+ *
+ * Two articles of one act, because the interesting cases are "the article is
+ * there" and "it is not" and a third article would demonstrate neither. The
+ * text is short and obviously synthetic on purpose — a fixture that reads like
+ * real legislation invites somebody to check it against the real thing, and
+ * nothing here is authoritative. The real pages live in
+ * `packages/law-refs/fixtures/` and are what the parser is actually held to.
+ */
+const FIXTURE_SOURCE: Record<string, string> = {
+  "2947-14/105": [
+    "Стаття 105. Припинення шлюбу внаслідок розірвання шлюбу",
+    "",
+    "Шлюб припиняється внаслідок його розірвання за спільною заявою подружжя.",
+  ].join("\n"),
+  "2947-14/106":
+    "Стаття 106. Розірвання шлюбу органом державної реєстрації актів цивільного стану за заявою подружжя, яке не має дітей",
+};
+
+const FIXTURE_REDACTION_DATE = "2026-08-05";
+
+/**
+ * Read an article out of the table above, with the same reduction and the same
+ * fingerprint format the fetcher uses.
+ *
+ * `fingerprintRevision` rather than a made-up string, so the fixture path
+ * produces values that are `sha256:`-prefixed, comparable, and wrong in exactly
+ * the ways the real ones would be wrong. A hand-written "fingerprint" here would
+ * let a screen ship that never actually compares two of them.
+ */
+async function readFixtureArticle(actId: string, article: string): Promise<ArticlePreviewResponse> {
+  const text = FIXTURE_SOURCE[`${actId}/${article}`];
+  if (text === undefined) {
+    return { ok: false, failure: { reason: "heading_mismatch" } };
+  }
+
+  const revision = await fingerprintRevision(text);
+  if (!revision.ok) return { ok: false, failure: { reason: "text_blank" } };
+
+  return {
+    ok: true,
+    reading: {
+      actId,
+      article,
+      text: revision.revision.text,
+      fingerprint: revision.revision.fingerprint,
+      normalizerVersion: revision.revision.normalizerVersion,
+      publishedRevisionDate: FIXTURE_REDACTION_DATE,
+      fetchedAt: new Date().toISOString(),
+    },
+  };
 }
 
 function toNorm(row: LawNormRow): LawNormListItem {
@@ -189,6 +249,70 @@ export const mockLawApi: LawApi = {
     serviceLawRefRows.push(row);
 
     return toRef(row);
+  },
+
+  async previewArticle(input) {
+    await fixtureDelay();
+
+    const link = normalizeLawLink(input.url);
+    if (!link.ok) {
+      throw new AppError("validation", `The link was not recognized: ${link.reason}.`);
+    }
+
+    const article = normalizeArticle(input.article);
+    if (!article.ok) {
+      // The same answer the real fetcher gives an unreadable designator, and it
+      // gives it without a request — there is nothing to look for.
+      return { ok: false, failure: { reason: "heading_mismatch" } };
+    }
+
+    return await readFixtureArticle(link.link.actId, article.article);
+  },
+
+  async observeArticle(input) {
+    await fixtureDelay();
+
+    const row = lawNormRows.find((norm) => norm.id === input.normId);
+    if (row === undefined) throw new AppError("not_found", "No such norm.");
+    if (row.article === null) throw new AppError("validation", "Act-scoped norms are not fetched.");
+
+    const read = await readFixtureArticle(row.act_id, row.article);
+    if (!read.ok) {
+      row.state = "unreachable";
+      row.last_checked_at = new Date().toISOString();
+      return { ok: false, failure: read.failure, state: "unreachable" };
+    }
+
+    const outcome =
+      row.fingerprint === null
+        ? ("first" as const)
+        : row.fingerprint === read.reading.fingerprint
+          ? ("unchanged" as const)
+          : ("changed" as const);
+
+    const confirmed = input.confirmedFingerprint === read.reading.fingerprint;
+
+    // The fixture store has no `law_norms_adopt_revision` trigger, so the
+    // register's fingerprint is carried over by hand here. That is the one place
+    // this implementation reproduces a rule rather than obeying it, and it is
+    // worth a line: the real path cannot get this wrong, because nothing but the
+    // trigger is allowed to write the column.
+    row.fingerprint = read.reading.fingerprint;
+    row.normalizer_version = NORMALIZER_VERSION;
+    row.last_checked_at = read.reading.fetchedAt;
+
+    const state = confirmed
+      ? ("verified" as const)
+      : outcome === "changed"
+        ? ("drifted" as const)
+        : outcome === "first" || row.state === "unreachable"
+          ? ("unverified" as const)
+          : row.state;
+
+    row.state = state;
+    if (state === "verified") row.last_verified_at = read.reading.fetchedAt;
+
+    return { ok: true, reading: read.reading, outcome, state, confirmed };
   },
 
   async removeReference(refId) {

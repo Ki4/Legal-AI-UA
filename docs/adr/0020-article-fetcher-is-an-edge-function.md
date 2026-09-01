@@ -49,6 +49,9 @@ it is built, is core work reached through the gateway like everything else.
   the same `normalizeLawLink`, so they cannot disagree about which act a pasted URL means. Two
   implementations would have failed in the worst available way: a norm that never drifts, which looks
   exactly like a norm that has not changed.
+- **What runs its tests was still open, and is now closed by ADR-0024**: the functions are a
+  workspace package held to the root Node lane, with their decisions in modules over injected
+  dependencies so that `pnpm test` and `pnpm probes` reach them.
 - **A second runtime, not a second language.** Deno is not Node and its differences are real, but the
   code that crosses the boundary is pure functions over strings. `apps/core` remains the one
   non-TypeScript package (ADR-0016), and the Python lane stays unused until the generator needs it.

@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "@legal-ai/law-refs": "../../packages/law-refs/src/index.ts",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@^2.53.0"
+  }
+}

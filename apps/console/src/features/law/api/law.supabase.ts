@@ -16,7 +16,13 @@
 // would leave every second citation looking like an error.
 
 import type { QueryData } from "@supabase/supabase-js";
-import { normalizeArticle, normalizeLawLink } from "@legal-ai/law-refs";
+import { ARTICLE_FUNCTION, normalizeArticle, normalizeLawLink } from "@legal-ai/law-refs";
+import type {
+  ArticleObserveResponse,
+  ArticlePreviewResponse,
+  ArticleRequest,
+  ArticleResponse,
+} from "@legal-ai/law-refs";
 import { supabase } from "../../../app/supabase";
 import { AppError, expectOne } from "../../../shared/api/errors";
 import { fromPostgrest } from "../../../shared/api/postgrest";
@@ -227,6 +233,35 @@ export const supabaseLawApi: LawApi = {
     return { id: row.id, reliedOn: row.relied_on, norm: await normById(normId) };
   },
 
+  async previewArticle(input) {
+    const link = normalizeLawLink(input.url);
+    if (!link.ok) {
+      throw new AppError("validation", `The link was not recognized: ${link.reason}.`);
+    }
+
+    // The canonical URL rather than what was pasted: §9.2's pinned revision is
+    // resolved away here exactly as it is on the write path, so the text a
+    // lawyer confirms is the text the register will be watching — not the
+    // historical revision they happened to be reading.
+    return (await invokeArticle({
+      action: "preview",
+      canonicalUrl: link.link.canonicalUrl,
+      article: input.article,
+    })) as ArticlePreviewResponse;
+  },
+
+  async observeArticle(input) {
+    return (await invokeArticle(
+      input.confirmedFingerprint === undefined
+        ? { action: "observe", normId: input.normId }
+        : {
+            action: "observe",
+            normId: input.normId,
+            confirmedFingerprint: input.confirmedFingerprint,
+          },
+    )) as ArticleObserveResponse;
+  },
+
   async removeReference(refId) {
     const { data, error } = await supabase
       .from("service_law_refs")
@@ -260,6 +295,43 @@ export const supabaseLawApi: LawApi = {
     return normById(change.normId);
   },
 };
+
+/**
+ * The one call in this file that is not PostgREST.
+ *
+ * `functions.invoke` reports a non-2xx as an error object with the body still
+ * inside it, so the two kinds of "not ok" have to be separated here rather than
+ * at the screen: a 200 carrying `ok: false` is the source having answered that
+ * the article is not there, and anything else is the call itself having failed.
+ * Collapsing them would make a mistyped article number and a dead function
+ * produce the same sentence, which is the distinction §9.6 is built on.
+ *
+ * Nothing Supabase-shaped leaves this function (DoD §2, ADR-0012 convention 3).
+ */
+async function invokeArticle(body: ArticleRequest): Promise<ArticleResponse> {
+  const { data, error } = await supabase.functions.invoke<ArticleResponse>(ARTICLE_FUNCTION, {
+    body,
+  });
+
+  if (error) {
+    // A function that answered 403 did so because the caller is neither admin
+    // nor lawyer — the same rule `law_norm_revisions_select_staff` states, and
+    // worth naming rather than folding into "unknown".
+    const status = (error as { context?: { status?: number } }).context?.status;
+    if (status === 403) throw new AppError("forbidden", "Checking the article: not permitted.");
+    if (status === 404) throw new AppError("not_found", "Checking the article: no such norm.");
+    throw new AppError("network", `Checking the article: ${error.message}`, { cause: error });
+  }
+
+  // `invoke` types `data` as possibly null and a body is always sent, so this
+  // is the shape where the function returned something unparseable — which is
+  // not a value any caller can act on.
+  if (data === null || data === undefined) {
+    throw new AppError("unknown", "Checking the article: the fetcher returned nothing.");
+  }
+
+  return data;
+}
 
 /** Refused here as well as by the guard, so the reader is not asked to wait for a round trip. */
 function assertPositiveHours(change: CadenceChange): void {

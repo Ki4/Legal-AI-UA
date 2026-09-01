@@ -1,3 +1,8 @@
 packages:
   - "apps/*"
   - "packages/*"
+  # The Supabase edge functions are a workspace package so that one command
+  # typechecks them with everything else (ADR-0020). They are TypeScript on a
+  # second runtime, not a second language — the exception ADR-0016 reserves for
+  # Python is still Python.
+  - "supabase/functions"

@@ -390,8 +390,39 @@ export const en: Dictionary = {
   "serviceLaw.add.resolved": "We will watch: {act}",
   "serviceLaw.add.revisionStripped":
     "You pasted a fixed revision. We will watch the text in force — a fixed revision never changes, so watching it would never have fired.",
-  "serviceLaw.add.notFetched":
-    "Nobody has read the article back yet: there is no fetcher, so the article number has been checked nowhere but by you.",
+  "serviceLaw.add.actNotFetched":
+    "A whole-act dependency is not confirmed against text: we watch the act's redaction date rather than the words of one article.",
+  "serviceLaw.check.button": "Show the article text",
+  "serviceLaw.check.checking": "Reading the source",
+  "serviceLaw.check.title": "The article, from the source",
+  "serviceLaw.check.instruction":
+    "Read it and make sure this is the norm the service rests on. Saving is possible only after that.",
+  "serviceLaw.check.redaction": "Revision of {date}",
+  "serviceLaw.check.noRedaction": "The source stated no revision date.",
+  "serviceLaw.check.stale":
+    "The link or the article number changed after the check. Show the text again.",
+  "serviceLaw.check.error": "The fetcher could not be reached. Try again.",
+  "serviceLaw.check.forbidden": "Confirming the text is for an admin or a lawyer.",
+  "serviceLaw.check.failure.transport":
+    "The source did not answer. That does not mean the article changed — it means we did not see it.",
+  "serviceLaw.check.failure.http_status": "The act's page returned an error. Check the link.",
+  "serviceLaw.check.failure.act_identity_moved":
+    "The link led to a different act. It has probably been moved — open it on the site and copy the address again.",
+  "serviceLaw.check.failure.heading_missing":
+    "No article headings were found on the page at all. That looks like the source changing its markup — tell the developers.",
+  "serviceLaw.check.failure.heading_mismatch":
+    "The act has no such article. Check the number — this is the one mistake the form cannot see for itself.",
+  "serviceLaw.check.failure.text_blank":
+    "The heading is there and the text under it is not. That looks like broken markup rather than an empty article.",
+  "serviceLaw.check.failure.text_implausibly_short":
+    "The article text is too short to be an article. We would rather say nothing than record a fragment.",
+  "serviceLaw.check.failure.revision_date_unparsable":
+    "The revision date could not be read on the act's page. Without it there is nothing to watch for changes.",
+  "serviceLaw.check.confirmed": "The norm is recorded and confirmed against the source.",
+  "serviceLaw.check.moved":
+    "The norm is recorded, but the article text changed between the check and the save. Open it in the register and confirm again.",
+  "serviceLaw.check.unreachable":
+    "The norm is recorded, but the text could not be confirmed after saving. It stands in the register as unreachable rather than as verified.",
   "serviceLaw.link.not_a_url": "That does not look like a link.",
   "serviceLaw.link.unknown_source": "We watch zakon.rada.gov.ua only.",
   "serviceLaw.link.not_an_act_url": "That link is not to an act's page.",

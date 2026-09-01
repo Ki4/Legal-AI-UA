@@ -10,6 +10,31 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the watcher gets a parser, a queue and a witness (2026-09-01)
+
+**PR #65**: law monitoring gained everything but the network call, and the gate on the gates caught
+the one thing the suite could not.
+
+- **The page our register points at carries no article text.** `/laws/show/2947-14` is a 34 KB
+  JavaScript shell; the text is at `/print`, 547 KB. Extracting from `canonical_url` — which §9.2
+  and the column's own comment describe — would have returned an empty extraction for every norm on
+  the platform. Only a live fetch could have said so.
+- **That split is the cheap probe §9.7 asked for.** The shell carries a redaction date that moves
+  only on amendment, so the 547 KB fetch happens when the date moves and not otherwise.
+- **A parser is named for its source, not parameterised.** `span.rvts9`, `span.dat0` and the
+  `/print` URL are facts about one publisher and none about legislation. A second source gets a
+  second module (ADR-0023).
+- **An assertion measured over the wrong slice cannot fail.** `text_blank` was first checked over a
+  slice that always contains the heading, so the one shape it existed to catch — a publisher who
+  moves the text and leaves the heading — was the one it could not see.
+- **A test asserted against a real fixture can be satisfied by the fixture's whitespace.** The
+  paragraph-break rule was watched by a line count; the publisher's markup is indented, so a parser
+  that lost every break it was supposed to make still returned plenty of lines. `pnpm probes` said
+  so in CI, on a branch whose author had reported it green. The case is hand-written markup on one
+  physical line now, and the expected lines are stated rather than counted.
+- **`check:sql` holds the `audit_change` mapping**, after a restatement copied from an older
+  migration silently dropped one.
+
 ## Done — a template version's blocks (2026-08-28)
 
 **`document_blocks` landed as PR #63**, and the cloud's migration ledger turned out to be two weeks
@@ -60,39 +85,6 @@ a review nobody had performed, and dropping two fields the trace was already car
   returns; swallow the failure and it reads as an ungenerated document; hide the failed calls, let
   `started_at` ride along on a spread, or render nothing for an unconditional block — each turns one
   named test red. `pnpm probes anatomy`: 12 run, 12 caught.
-
-## Done — the contract learns to be called (2026-08-28)
-
-ADM-3's last two passes, as PR #58, and the item is closed. The trace said what the core sends;
-this says how it is called and ships something that answers.
-
-- **A call is accepted, not awaited (ADR-0022).** `startGeneration` answers `202` with the job it
-  created; `getGenerationJob` returns that same object until it is terminal. ADR-0004's own sentence
-  decides it — generation runs long and the gateway is an Edge Function with a wall-clock limit — so
-  a synchronous call is the one that passes every fixture and fails on the first real document. The
-  hybrid was rejected for a smaller reason worth keeping: the flag saying which operations are
-  synchronous is a fact stated in `operations.json` and again at every call site.
-- **A failure is a typed envelope, and the HTTP status stays.** `code` is a closed set of five, so a
-  caller branches on it rather than on prose. No `details` bag — that is where a client answer would
-  sit — and no `retriable`, which is derivable from `code`. RFC 9457 lost because its `type` is a
-  URI: nothing for a bridge to grip, so the closed set would be layered on top anyway.
-- **`operations.json` is what ADR-0021 §1 promised in place of OpenAPI, and it is checked.** Its
-  operation set must equal `CoreClient`'s keys, every `$ref` must resolve through ajv's registry,
-  every error code must have exactly one home, and the submission must answer `202`. That last one
-  is the ADR made falsifiable: the decision is a line a test fails on, not a paragraph to remember.
-- **The trace stopped existing three times.** The console's `anatomy.mock.ts` held a copy no schema
-  and no test reached; it now holds a mapper and no data. A runtime copy is unavoidable — ADR-0021
-  §8 forbids reading a file from that graph — but an unwatched one was not, and a test compares the
-  constant against the file ajv validates. The 2026-08-28 debt closed the day after it opened.
-- **A test read stronger than it was, and only an injection said so.** "Produces the same job twice"
-  compares two runs inside one process, which a module-level `Date.now()` satisfies: the epoch is
-  read once and both runs share it. Nineteen injections, eighteen red, that one green. The timeline
-  is asserted against written-down instants now — a determinism claim is only as strong as a value
-  written down, because a second run is not an independent witness.
-- **Sixteen of the nineteen became probes**, `pnpm probes` going from ten to twenty-six. The other
-  three were called inexpressible and were not: two needed a second watcher — a probe may name a
-  package and be run against its `tsc` — and the third's patch reaches `globalThis`. Closing this
-  session found the hole underneath: nothing runs `pnpm probes`. Both closed on 2026-08-28.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -183,7 +175,8 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
 - Legislative-change monitoring (ADR-0011, spec §9) — **what is left of it.** The register and the
   normalisation are no longer deferred (ADM-21 and the offline half of ADM-41, on 2026-08-15), so
   the ordering constraint this line warned about — normalise before you schedule — is satisfied
-  rather than pending. ADM-43 was claimed here on 2026-08-15 and was not built until 2026-08-30:
+  rather than pending. ADM-43 was claimed here on 2026-08-15, was not built until 2026-08-30, and landed on `main`
+  as PR #65 on 2026-09-01:
   link normalisation is not text normalisation, and neither is a fingerprint store. Still here: the fetcher with its §9.15 safety conditions
   (ADM-42, ADM-43's network half, ADM-50), the scheduler (ADM-44), triage, the calendar and the
   health surfaces (ADM-45…49, ADM-51…53), and ADM-22…24 on the register. It was sequenced after the

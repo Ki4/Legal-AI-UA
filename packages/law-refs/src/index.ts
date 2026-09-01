@@ -18,11 +18,42 @@
 
 export { normalizeLawLink } from "./link.ts";
 export { normalizeArticle } from "./article.ts";
+export { decideProbe } from "./probe.ts";
+export { extractArticle, extractRedactionDate, printUrl } from "./rada.ts";
+export type { RadaDate, RadaExtraction } from "./rada.ts";
+export { decideTriage } from "./triage.ts";
+export {
+  fingerprintArticleText,
+  fingerprintRevision,
+  MIN_PLAUSIBLE_ARTICLE_LENGTH,
+  NORMALIZER_VERSION,
+  normalizeArticleText,
+} from "./text.ts";
+export type {
+  IntakeNotice,
+  NotifiedParty,
+  NotifyWhen,
+  OwedNotification,
+  TriageChoice,
+  TriageDecision,
+  TriagedSignal,
+  TriageInput,
+  TriageRejection,
+  TriageResult,
+} from "./triage.ts";
+export type { ProbeDecision, ProbedNorm, ProbeInput, ProbeOutcome, ProbeVerdict } from "./probe.ts";
 export type {
   ArticleRejection,
   ArticleResult,
+  ArticleRevision,
+  ArticleRevisionResult,
+  ArticleTextRejection,
+  ArticleTextResult,
   LawLinkRejection,
   LawLinkResult,
+  LawNormState,
   LawSource,
   NormalizedLawLink,
+  ProbeFailure,
+  RevisionOrigin,
 } from "./types.ts";

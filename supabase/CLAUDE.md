@@ -60,6 +60,22 @@ Two consequences, both cheap and both easy to skip:
   checks the migration applies to an _empty_ database, which is the case every fresh environment is
   and no incremental apply ever tests.
 
+## Restating `audit_change` is how a mapping gets lost
+
+`audit_change` raises for a table it has no mapping for, which is what makes the mapping impossible
+to forget. Adding a table means restating the whole function with `create or replace`, and **that
+restatement is the hazard**: every one is a copy of some earlier version, and a copy taken from
+before a mapping was added silently removes it. Only the last `create or replace` survives.
+
+The loss is invisible in review — the diff shows a function being added, not a branch being dropped
+— and it surfaces as every write to that table raising `audit_change has no entity mapping`, which
+is the feature not working at all. It happened on 2026-08-30: a migration copied the function from
+`20260815140000` and dropped `document_blocks`, added eleven days earlier.
+
+So `pnpm check:sql` now holds it: the last restatement must map every table that carries an
+`audit_change` trigger. **Copy the function from the most recent migration that restates it, never
+from the one you happen to be reading**, and the gate will tell you if you did not.
+
 ## Every policy needs a verification scenario
 
 Not a paragraph in a PR description — a **script**, at `snippets/verify_<area>.sql`. It creates its

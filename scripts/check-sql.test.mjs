@@ -32,7 +32,7 @@ begin
 end $$;
 `;
 
-function tree({ migrations = [], ledger, snippets = {} } = {}) {
+function tree({ migrations = [], ledger, snippets = {}, bodies = {} } = {}) {
   const root = mkdtempSync(join(tmpdir(), "sql-check-"));
   roots.push(root);
 
@@ -48,7 +48,9 @@ function tree({ migrations = [], ledger, snippets = {} } = {}) {
     ...Object.fromEntries(
       Object.entries(snippets).map(([name, body]) => [`supabase/snippets/${name}`, body]),
     ),
-    ...Object.fromEntries(migrations.map((file) => [`supabase/migrations/${file}`, "select 1;\n"])),
+    ...Object.fromEntries(
+      migrations.map((file) => [`supabase/migrations/${file}`, bodies[file] ?? "select 1;\n"]),
+    ),
   };
 
   mkdirSync(join(root, "supabase/migrations"), { recursive: true });
@@ -186,5 +188,94 @@ describe("what it counts", () => {
 
     expect(result.blockCount).toBe(3);
     expect(result.problems).toEqual([]);
+  });
+});
+
+describe("3. the surviving audit_change knows every audited table", () => {
+  const FIRST = "20260101120000_blocks.sql";
+  const SECOND = "20260102120000_signals.sql";
+
+  /** A restatement of the function mapping exactly the tables named. */
+  function declares(tables) {
+    const arms = tables.map((table) => `    when '${table}' then\n      v_entity := null;`);
+    return [
+      "create or replace function public.audit_change ()",
+      "returns trigger as $fn$",
+      "begin",
+      "  case tg_table_name",
+      ...arms,
+      "    else",
+      "      raise exception 'no mapping';",
+      "  end case;",
+      "end;",
+      "$fn$;",
+      "",
+    ].join("\n");
+  }
+
+  function auditTrigger(table) {
+    return [
+      `create trigger ${table}_audit`,
+      `after insert or update or delete on public.${table}`,
+      "for each row execute function public.audit_change ();",
+      "",
+    ].join("\n");
+  }
+
+  it("passes when the last restatement still maps everything audited", () => {
+    const bodies = {
+      [FIRST]: declares(["blocks"]) + auditTrigger("blocks"),
+      [SECOND]: declares(["blocks", "signals"]) + auditTrigger("signals"),
+    };
+
+    expect(problems({ migrations: [FIRST, SECOND], bodies })).toEqual([]);
+  });
+
+  // The failure this rule exists for, in miniature. Only the last
+  // `create or replace` survives, so a copy taken before `blocks` was added
+  // removes it — and the diff that did it looks like a function being added
+  // rather than a branch being dropped.
+  it("fails a restatement that dropped a mapping an earlier migration added", () => {
+    const bodies = {
+      [FIRST]: declares(["blocks"]) + auditTrigger("blocks"),
+      [SECOND]: declares(["signals"]) + auditTrigger("signals"),
+    };
+
+    const found = matching(problems({ migrations: [FIRST, SECOND], bodies }), "no mapping for");
+
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain("blocks");
+    expect(found[0]).toContain(SECOND);
+  });
+
+  // The bug this checker itself shipped with, kept as a case: a pattern reaching
+  // from `create trigger` to the next `audit_change` anywhere in the file walks
+  // through unrelated triggers and blames whichever table the first one named.
+  it("does not mistake a neighbouring trigger for an audited table", () => {
+    const decoy = [
+      "create trigger blocks_touch",
+      "before update on public.timestamps_only",
+      "for each row execute function public.touch_updated_at ();",
+      "",
+    ].join("\n");
+
+    const bodies = { [FIRST]: declares(["blocks"]) + decoy + auditTrigger("blocks") };
+
+    expect(problems({ migrations: [FIRST], bodies })).toEqual([]);
+  });
+
+  it("counts the audited tables it found, so a silent drop-out is visible", () => {
+    const bodies = {
+      [FIRST]: declares(["blocks", "signals"]) + auditTrigger("blocks") + auditTrigger("signals"),
+    };
+
+    expect(checkSql(tree({ migrations: [FIRST], bodies })).auditedTableCount).toBe(2);
+  });
+
+  it("says so when tables are audited and nothing defines the function", () => {
+    const bodies = { [FIRST]: auditTrigger("blocks") };
+    const found = matching(problems({ migrations: [FIRST], bodies }), "no migration defines");
+
+    expect(found).toHaveLength(1);
   });
 });

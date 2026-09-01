@@ -133,12 +133,83 @@ export function checkSql(root) {
     });
   }
 
-  return { problems, migrationCount: migrations.length, blockCount };
+  // 3. The surviving audit_change knows every table that is audited -------------
+  //
+  // `audit_change` is restated in full by every migration that adds a table to
+  // it, because it raises for a table it has no mapping for and that refusal is
+  // the whole reason the mapping cannot be forgotten. The restatement is also
+  // the hazard: each one is a copy of some earlier version, and a copy taken
+  // from before a mapping was added silently **removes** it. Only the last
+  // `create or replace` survives, so the loss is invisible in review — the diff
+  // shows a function being added, not a branch being dropped — and it surfaces
+  // as every write to that table raising "no entity mapping", which is to say
+  // the feature stops working entirely.
+  //
+  // This happened on 2026-08-30: a migration restated the function from the
+  // copy in `20260815140000` and dropped `document_blocks`, which had been added
+  // eleven days earlier.
+
+  const audited = new Map();
+  let lastRestatement = null;
+
+  for (const migration of [...migrations].sort((a, b) => a.version.localeCompare(b.version))) {
+    const sql = readFileSync(resolve(migrationsDir, migration.file), "utf8");
+
+    // Each trigger is bounded by its own statement, and that matters more than
+    // it looks: a pattern reaching from `create trigger` to the next
+    // `audit_change` anywhere in the file walks straight through unrelated
+    // triggers and reports whichever table the *first* of them named. This
+    // checker's first draft did exactly that and accused `audit_events` and
+    // `plans`, neither of which is audited. A trigger statement holds no
+    // semicolon of its own, so the terminator is a safe fence.
+    for (const match of sql.matchAll(/create trigger\s+\w+([\s\S]*?);/g)) {
+      const statement = match[1];
+      if (!/execute function public\.audit_change\s*\(\)/.test(statement)) continue;
+
+      const on = /on public\.(\w+)/.exec(statement);
+      if (on !== null) audited.set(on[1], migration.file);
+    }
+
+    if (/create or replace function public\.audit_change\s*\(\)/.test(sql)) {
+      lastRestatement = { file: migration.file, sql };
+    }
+  }
+
+  if (audited.size > 0 && lastRestatement === null) {
+    problems.push(
+      `${audited.size} table(s) carry an audit_change trigger and no migration defines the function.`,
+    );
+  }
+
+  if (lastRestatement !== null) {
+    const mapped = new Set(
+      [...lastRestatement.sql.matchAll(/when '(\w+)' then/g)].map((match) => match[1]),
+    );
+
+    for (const [table, addedBy] of audited) {
+      if (!mapped.has(table)) {
+        problems.push(
+          `supabase/migrations/${lastRestatement.file}: the last restatement of audit_change has no ` +
+            `mapping for \`${table}\`, which ${addedBy} gives an audit trigger. ` +
+            `A restatement copied from before that mapping existed drops it, and every write to ` +
+            `${table} then raises "audit_change has no entity mapping" — the table stops working, ` +
+            `and the diff that did it looks like a function being added rather than a branch removed.`,
+        );
+      }
+    }
+  }
+
+  return {
+    problems,
+    migrationCount: migrations.length,
+    blockCount,
+    auditedTableCount: audited.size,
+  };
 }
 
 function main() {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-  const { problems, migrationCount, blockCount } = checkSql(root);
+  const { problems, migrationCount, blockCount, auditedTableCount } = checkSql(root);
 
   for (const problem of problems) console.error(`ERROR  ${problem}`);
 
@@ -150,7 +221,8 @@ ${problems.length} problem(s) in supabase/.`);
 
   console.log(
     `sql: ${migrationCount} migration(s) listed for repair, ` +
-      `${blockCount} verification block(s) declaring their own identity.`,
+      `${blockCount} verification block(s) declaring their own identity, ` +
+      `${auditedTableCount} audited table(s) still mapped.`,
   );
 }
 

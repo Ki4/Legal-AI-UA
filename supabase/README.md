@@ -22,6 +22,22 @@ Point the console at the sandbox by putting the values from `supabase status` in
 restart the dev server. Swap back to the cloud values to work against the shared project.
 Local Studio UI: http://127.0.0.1:54323.
 
+### Two things the first boot of the day will do to you
+
+**A cold `start` can time out and roll the whole stack back.** If Docker Desktop has only just
+come up, `storage-api` and `studio` are slow enough that the health check gives up, and the CLI
+tears down every container and reports `LegacyHealthCheckTimeoutError` — which reads as "these
+services are broken" when they were only late. Start it again; they come up healthy. To keep the
+containers and read their logs instead of guessing, use `pnpm exec supabase start
+--ignore-health-check`, which leaves an unhealthy service running rather than rolling back.
+
+**`vector` restarts forever on Windows, and that is expected here.** The CLI points it at
+`DOCKER_HOST=http://host.docker.internal:2375`, and Docker Desktop ships with "Expose daemon on
+tcp://localhost:2375 without TLS" switched off, so it cannot list containers and exits. It feeds
+logflare, which is the Logs tab in Studio; migrations, `verify:sql`, tests and the gates do not
+touch it. The fix is that Docker Desktop setting, which opens the daemon over TCP with no TLS —
+a real widening of what the machine exposes, so it is a deliberate choice, not a default.
+
 Break the sandbox freely — `db reset` rebuilds it in seconds. The cloud database is treated
 as production: it only ever changes by applying merged migration files.
 

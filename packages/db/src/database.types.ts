@@ -264,6 +264,50 @@ export type Database = {
           },
         ];
       };
+      law_norm_revisions: {
+        Row: {
+          content: string;
+          created_at: string;
+          fingerprint: string;
+          id: string;
+          norm_id: string;
+          normalizer_version: number;
+          observed_at: string;
+          origin: Database["public"]["Enums"]["law_revision_origin"];
+          published_revision_date: string | null;
+        };
+        Insert: {
+          content: string;
+          created_at?: string;
+          fingerprint: string;
+          id?: string;
+          norm_id: string;
+          normalizer_version: number;
+          observed_at?: string;
+          origin?: Database["public"]["Enums"]["law_revision_origin"];
+          published_revision_date?: string | null;
+        };
+        Update: {
+          content?: string;
+          created_at?: string;
+          fingerprint?: string;
+          id?: string;
+          norm_id?: string;
+          normalizer_version?: number;
+          observed_at?: string;
+          origin?: Database["public"]["Enums"]["law_revision_origin"];
+          published_revision_date?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "law_norm_revisions_norm_id_fkey";
+            columns: ["norm_id"];
+            isOneToOne: false;
+            referencedRelation: "law_norms";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       law_norms: {
         Row: {
           act_id: string;
@@ -329,6 +373,79 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      law_signals: {
+        Row: {
+          cause: Database["public"]["Enums"]["law_signal_cause"];
+          created_at: string;
+          effective_date: string | null;
+          id: string;
+          norm_id: string;
+          previous_revision_id: string | null;
+          raised_at: string;
+          remediation_due: string | null;
+          resolution_note: string | null;
+          revision_id: string;
+          state: Database["public"]["Enums"]["law_signal_state"];
+          triaged_at: string | null;
+          triaged_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          cause: Database["public"]["Enums"]["law_signal_cause"];
+          created_at?: string;
+          effective_date?: string | null;
+          id?: string;
+          norm_id: string;
+          previous_revision_id?: string | null;
+          raised_at?: string;
+          remediation_due?: string | null;
+          resolution_note?: string | null;
+          revision_id: string;
+          state?: Database["public"]["Enums"]["law_signal_state"];
+          triaged_at?: string | null;
+          triaged_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          cause?: Database["public"]["Enums"]["law_signal_cause"];
+          created_at?: string;
+          effective_date?: string | null;
+          id?: string;
+          norm_id?: string;
+          previous_revision_id?: string | null;
+          raised_at?: string;
+          remediation_due?: string | null;
+          resolution_note?: string | null;
+          revision_id?: string;
+          state?: Database["public"]["Enums"]["law_signal_state"];
+          triaged_at?: string | null;
+          triaged_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "law_signals_norm_id_fkey";
+            columns: ["norm_id"];
+            isOneToOne: false;
+            referencedRelation: "law_norms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "law_signals_previous_revision_id_fkey";
+            columns: ["previous_revision_id"];
+            isOneToOne: false;
+            referencedRelation: "law_norm_revisions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "law_signals_revision_id_fkey";
+            columns: ["revision_id"];
+            isOneToOne: false;
+            referencedRelation: "law_norm_revisions";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       orders: {
         Row: {
@@ -824,6 +941,10 @@ export type Database = {
       law_norm_scope: "article" | "act";
       law_norm_state:
         "unverified" | "verified" | "drifted" | "under_review" | "impact_confirmed" | "unreachable";
+      law_revision_origin: "observed" | "renormalized";
+      law_signal_cause: "drifted" | "drifted_indeterminate";
+      law_signal_state:
+        "open" | "under_review" | "resolved_no_impact" | "impact_confirmed" | "scheduled";
       law_source: "zakon_rada";
       order_status:
         | "intake"
@@ -990,6 +1111,15 @@ export const Constants = {
         "under_review",
         "impact_confirmed",
         "unreachable",
+      ],
+      law_revision_origin: ["observed", "renormalized"],
+      law_signal_cause: ["drifted", "drifted_indeterminate"],
+      law_signal_state: [
+        "open",
+        "under_review",
+        "resolved_no_impact",
+        "impact_confirmed",
+        "scheduled",
       ],
       law_source: ["zakon_rada"],
       order_status: [

@@ -198,6 +198,46 @@ frontend or git.
   comments, commits, PRs, issues, ADRs, journals — is always English. See the language rule in
   the root `CLAUDE.md`.
 
+### Delegating to subagents
+
+The lead assistant is an architect and orchestrator; mechanical execution is delegated. The
+directive is old and the record of it is not — it lived in one assistant's private memory until
+2026-09-02, which is to say it survived only as long as that memory was recalled, was invisible to
+review, and did not exist at all for a different tool. It is repository policy, so it lives here.
+
+**What is never delegated.** Security boundaries, the data model, contracts and migrations are
+designed in the main thread. Those are the decisions ADR-0012's six conventions and
+`supabase/CLAUDE.md` exist to constrain, and a subagent that gets one wrong hands back a diff that
+compiles.
+
+**What a delegated task carries.** Goal, context, acceptance criteria, boundaries, and the shape of
+the answer to return. The last is not politeness. An agent given no return format answers the way it
+answers in a chat, and the thread that reads it pays for the prose — the same reason §9 of the DoD
+makes criteria observable rather than narrative, applied to a machine.
+
+**What comes back is checked in three passes:** the machine gate (compiles, lints, tests), the
+contract gate (meets the criteria it was handed), and a reading of the diff. The verification rule
+above applies to subagents unamended — a subagent's report that it did something is a hypothesis,
+and the file is the evidence.
+
+**Running several at once, learned on 2026-08-14:**
+
+- **Write any file all of them need yourself, before dispatch, and forbid them from touching it.**
+  Three agents in one checkout editing one shared file — there, the i18n dictionary — clobber each
+  other. Worktree isolation is not the fix: a fresh worktree has no `node_modules`, so an agent
+  inside one cannot run the gates it is being asked to pass.
+- **Give each a disjoint file list, and let it run only `npx tsc --noEmit`.** Agents racing
+  `pnpm lint` and `pnpm test` fight over the Turborepo cache. The full gates run once, in the main
+  thread, after merging.
+- **Expect the zone boundaries to produce duplication no agent can see.** Two screens handed out as
+  one zone came back with `authErrorKey` written twice, identically, because the shared module would
+  have been a third file nobody owned. Removing it is the merge step's job, not a failure of the
+  agents.
+- **One checkout has one HEAD.** A second session working in this directory shares it: branching
+  moves HEAD under whatever else is running, and its next commit lands on the new branch. Check
+  `git status` before `git checkout -b`, not only at the start of a session — this was caught on
+  2026-09-01 with a second session mid-way through ADM-42.
+
 ## Roles (reference)
 
 `admin` and `lawyer` roles live in JWT `app_metadata`, set server-side only via the `approve_user`

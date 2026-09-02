@@ -245,6 +245,22 @@ can check without reading the diff — not implementation.
   where it is used" is as much a requirement as the happy path.
 - The four screen states from §4 are assumed on every screen task and need not be repeated.
 
+**Criteria come before the test, and the test before the code.**
+
+The order carries one specific protection. A test written from finished code inherits the code's
+mistakes: where the implementation is wrong, the assertion records the wrong behaviour and passes
+forever after. Deriving the test from the criterion gives it an authority the code cannot supply —
+the criterion was agreed with a reader before either existed.
+
+`pnpm probes` does not cover this and cannot. A probe proves a test **can** fail, by breaking the
+source and watching it go red; a test that faithfully asserts the wrong thing goes red on that break
+exactly like a correct one. The two answer different questions, and this repository has only ever
+had the second. It is the same gap §8 names from the other side — three green gates over eight
+defects.
+
+This binds new work and is a habit rather than a gate: nothing mechanical can tell which of two
+green tests was written first.
+
 ### Worked example — ADM-7, service list on live data
 
 ```markdown

@@ -15,6 +15,7 @@ on:
       - "supabase/**"
       - "scripts/*sql*"
       - ".github/workflows/sql.yml"
+  workflow_dispatch:
 
 concurrency:
   group: sql-${{ github.ref }}
@@ -75,3 +76,51 @@ jobs:
 
       - name: Verification scenarios
         run: pnpm verify:sql
+
+  # Asks the cloud whether it agrees with supabase/migrations/. Deliberately not
+  # a job in `verify` above and deliberately not run on pull requests.
+  #
+  # A pull request that adds a migration has, correctly, not applied it to the
+  # cloud yet — that is what merging is for. Running this check on a PR would
+  # paint every correct migration PR red, and a gate that is red when the work
+  # is right gets ignored within a week. The claim it can actually make is about
+  # `main`: what has landed is what the cloud has. So it runs on push to main
+  # and on demand, and nowhere else.
+  #
+  # On 2026-08-28 the cloud was found five migrations behind, with no record of
+  # when it fell behind. It was repaired by hand and nothing was left watching.
+  # On 2026-09-02 the same drift was found again — the two tables ADM-42's
+  # fetcher writes to did not exist in the cloud while the feature writing to
+  # them was already in main. Twice is a gate.
+  #
+  # It needs a credential, and absence of that credential is a failure rather
+  # than a skip: see the comment at the top of `check-cloud-ledger.mjs`. A gate
+  # that quietly skips itself in CI is the defect this repository has recorded
+  # twice under other names.
+  cloud-ledger:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Link the project
+        run: pnpm exec supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
+
+      - name: Cloud ledger agrees with supabase/migrations/
+        run: pnpm check:cloud-ledger

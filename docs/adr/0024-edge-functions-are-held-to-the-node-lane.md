@@ -75,3 +75,6 @@ request going red for a slow government website is a gate people learn to ignore
 - **Vendoring `law-refs` into the functions directory** so Deno needs no import map. That is two
   copies of the one definition ADR-0020 exists to keep single, and the failure it produces is the
   one that section warns about: a norm that never drifts.
+  Revisited by ADR-0025 on 2026-09-02, when the import map turned out not to work at all: the
+  objection holds against a copy that is committed, and not against one that is regenerated on the
+  way into every command and never persists.

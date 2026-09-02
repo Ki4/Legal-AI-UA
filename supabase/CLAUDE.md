@@ -139,12 +139,20 @@ that costs. Three rules follow, and they are the ones easy to get wrong:
 - **The function sources compile with `"types": []`.** No `@types/node`, so `node:fs`, `process` and
   `Buffer` fail to compile in a file that would have failed at runtime. Tests are the separate
   `tsconfig.test.json` project and may use them.
-- **Deno resolves `@legal-ai/law-refs` through `deno.json`'s import map, tsc through `paths`.** Both
-  point at the same source. Adding a package a function imports means adding it in both places, and
-  nothing but `supabase functions serve` will tell you if you forgot the first.
+- **A shared package reaches Deno as a generated copy, in three places rather than two.** The edge
+  runtime mounts this directory and nothing above it, so `deno.json`'s import map points at
+  `./_shared/<name>/index.ts` — a git-ignored copy that `scripts/sync-edge-shared.mjs` rebuilds on
+  the way into `pnpm functions:serve` and `pnpm functions:deploy` (ADR-0025). tsc still resolves the
+  original through `paths`. Importing a new package means the sync list, the import map and the
+  tsconfig, and only running the function will tell you if you missed one. **Serve with
+  `pnpm functions:serve`, never the bare CLI command** — the bare one skips the copy.
 
 A function that writes as `service_role` bypasses RLS entirely, so **every rule it is subject to is
-written in its own code**. `law-article` is the worked example: it checks the caller's role against
+written in its own code** — and it holds no privileges by default either. The tables here are owned
+by `postgres`, where the platform's default grants to `service_role` never reach, so a backend
+identity gets `select`, `insert` and `update` from a migration of its own or it gets
+`permission denied` on its first real request (`20260902120000` is the worked example; RLS being
+bypassed says nothing about privileges, which is how this went unnoticed for three days). `law-article` is the worked example: it checks the caller's role against
 the auth server rather than decoding the JWT, and it refuses an act-scoped norm and a normalizer
 bump rather than guessing at either.
 

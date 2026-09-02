@@ -14,8 +14,11 @@
 //
 // Three ways this check can be wrong, and what each costs:
 //
-//   1. A migration in the repository the cloud has not applied. The 2026-08-28
-//      case. `db push` fixes it, and the message says so.
+//   1. A migration in the repository with no ledger row. The 2026-08-28 case,
+//      and again 2026-09-02. The ledger cannot say whether it never ran or was
+//      run through the SQL editor, which leaves the objects and no row — and
+//      `db push` closes the first while dying on the second. The message sends
+//      the reader to the schema query rather than prescribing either.
 //   2. A migration the cloud has that no file matches. Worse, and `db push`
 //      is exactly the wrong response: somebody changed the schema by hand and
 //      the change exists nowhere anybody can reproduce.
@@ -60,7 +63,10 @@ export function compareLedger(rows) {
       pending.push(local);
       problems.push(
         `${local} is in supabase/migrations/ but not applied to the linked project. ` +
-          "The repository describes a schema the cloud does not have; `supabase db push` is what closes it.",
+          "The ledger cannot say which of two this is: a migration that never ran anywhere, or one " +
+          "run through the dashboard's SQL editor, which leaves the objects in place and no row. " +
+          "`db push` closes the first and dies on the second. Ask the schema what it holds before " +
+          "choosing: the query and the three branches are in supabase/CLAUDE.md.",
       );
     } else if (remote !== "") {
       untracked.push(remote);

@@ -57,6 +57,22 @@ describe("compareLedger", () => {
     expect(problems.filter((p) => p.includes("by hand"))).toHaveLength(1);
   });
 
+  // 2026-09-02: the message for this direction used to end "`supabase db push`
+  // is what closes it". That day both migrations were already in the cloud,
+  // run through the dashboard's SQL editor, and a push would have died on the
+  // first `create type ... already exists`. A missing ledger row does not say
+  // which of the two happened, so the message may not choose for the reader —
+  // while the other direction, where the evidence is unambiguous, still must.
+  it("defers on a missing ledger row and still directs on a hand-made change", () => {
+    const { problems } = compareLedger([pending("20260830120000"), untracked("20260829120000")]);
+
+    const [unapplied, handMade] = problems;
+
+    expect(unapplied).toContain("never ran anywhere");
+    expect(unapplied).toContain("supabase/CLAUDE.md");
+    expect(handMade).toContain("recover the SQL first");
+  });
+
   it("treats an empty ledger as a failure rather than a clean run", () => {
     // Nothing local and nothing remote is not agreement. It is the shape a
     // wrong `--workdir`, an unlinked project, or a silently-empty response

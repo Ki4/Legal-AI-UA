@@ -117,6 +117,14 @@ export const PROBES = [
       problems.push(`,
   },
   {
+    id: "edge-shared-copy-goes-stale",
+    what: "leaves a previous sync's files in place, so the copy Deno loads can outlive its source",
+    file: "scripts/sync-edge-shared.mjs",
+    test: "scripts/sync-edge-shared.test.mjs",
+    from: `  rmSync(target, { recursive: true, force: true });`,
+    to: `  mkdirSync(target, { recursive: true });`,
+  },
+  {
     id: "job-status-enum-drifts-from-its-bridge",
     what: "adds a status to the schema that the TypeScript union has never heard of",
     file: "packages/core-client/schema/job.schema.json",

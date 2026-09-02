@@ -60,6 +60,57 @@ Two consequences, both cheap and both easy to skip:
   checks the migration applies to an _empty_ database, which is the case every fresh environment is
   and no incremental apply ever tests.
 
+Since 2026-09-02 something asks rather than nobody: `pnpm check:cloud-ledger` compares
+`supabase migration list --linked` against the files, on every push to `main`. It found the same
+drift a second time on the day it was written.
+
+**It compares the ledger, not the schema, and that difference is the whole trap.** A migration run
+by hand through the dashboard's SQL editor leaves the objects in place and no ledger row, so the
+checker reports it identically to one that was never applied anywhere. The two need opposite
+responses, and guessing wrong is expensive in both directions: `db push` against a hand-applied
+migration dies on the first `create type ... already exists`, and `migration repair` against one
+that genuinely never ran records a lie that `db push` will then skip forever.
+
+So ask the database what it actually holds before choosing. Docker is not needed for this — it runs
+in the dashboard's SQL editor, which is also where a hand-applied migration was run in the first
+place:
+
+```sql
+-- Replace the table list with the tables the disputed migrations create.
+with t (name) as (values ('law_norm_revisions'), ('law_signals'))
+select 'type' as kind, typname as name
+  from pg_type join pg_namespace n on n.oid = typnamespace
+ where n.nspname = 'public' and typtype = 'e'
+union all
+select 'index', indexname from pg_indexes
+ where schemaname = 'public' and tablename in (select name from t)
+union all
+select 'policy', policyname from pg_policies
+ where schemaname = 'public' and tablename in (select name from t)
+union all
+select 'rls', relname || ' = ' || relrowsecurity::text
+  from pg_class join pg_namespace n on n.oid = relnamespace
+ where n.nspname = 'public' and relname in (select name from t)
+union all
+select 'constraint', conname
+  from pg_constraint join pg_class c on c.oid = conrelid
+  join pg_namespace n on n.oid = c.relnamespace
+ where n.nspname = 'public' and c.relname in (select name from t)
+union all
+select 'ledger', version from supabase_migrations.schema_migrations
+ order by 1, 2;
+```
+
+Read it against the migration file, not against memory — the enums, indexes, policies and named
+check constraints are the parts a partial hand-run drops, and they are exactly the parts no ERD
+screenshot shows. Then:
+
+- **everything the file declares is there** — `supabase migration repair --status applied <version>`
+  for each. The schema is right; only the record of it is missing.
+- **some of it is there** — finish the missing objects by hand from the same file, verify with the
+  query again, and only then repair. A repair over a half-applied migration is the lie above.
+- **none of it is there** — `supabase db push`, which is the ordinary case this section is not about.
+
 ## Restating `audit_change` is how a mapping gets lost
 
 `audit_change` raises for a table it has no mapping for, which is what makes the mapping impossible

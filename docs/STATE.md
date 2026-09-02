@@ -39,18 +39,18 @@ serve` never ran: the import map and all of `index.ts` are held by the compiler 
   session used `--no-file-parallelism`. The default lies.
 - **No screen has been looked at since it changed** — 2026-08-28, and this session widened it: the
   check panel and its eight refusal sentences exist only as passing tests.
-- **The cloud lacks `law_norm_revisions` and `law_signals`** — 2026-09-02, second drift after
-  2026-08-28. ADM-42's fetcher is in `main` and writes to both. `check:cloud-ledger` now asks and
-  stays red until `db push`. No edge-function secrets are set either.
+- **Two migrations are applied by hand and absent from the ledger** — 2026-09-02, second drift
+  after 2026-08-28. The tables exist; the record does not, so `check:cloud-ledger` stays red and
+  `db push` would fail. No edge-function secrets are set either. Procedure: `supabase/CLAUDE.md`.
 - **Nothing compares the domain tables against `seed.sql`** — 2026-08-28.
 - **`law_norms` carries per-watcher judgement on a shared row** — 2026-08-28.
 - The access-control review is **a standing condition, not a debt** — recorded 2026-08-04.
 
 ## Next candidates
 
-1. **Run it against a live stack.** Docker up, `supabase functions serve law-article`, one entry
-   end to end. The only thing that closes the top debt, and the first row `law_norm_revisions`
-   would ever hold.
+1. **Reconcile the cloud, then run it against a live stack.** In order: Docker up; the schema query
+   in `supabase/CLAUDE.md`; `migration repair` and _not_ `db push` — the tables are already there;
+   function secrets; one entry end to end. Closes the two top debts at once.
 2. **ADM-44 — the probe scheduler.** The fetch path is proved and the cheap probe, the shell's
    redaction date, is already the half it needs.
 

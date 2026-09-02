@@ -751,4 +751,30 @@ export const PROBES = [
     from: `    checkedFor !== null && (checkedFor.url !== url.trim() || checkedFor.article !== article.trim());`,
     to: `    false;`,
   },
+  // The cloud-ledger checker's own worst failure is not a wrong message, it is
+  // reporting agreement when it was told nothing. `compareLedger([])` is the
+  // shape an unlinked project or a wrong --workdir produces, and without the
+  // guard it returns zero problems and prints a clean line. This probe removes
+  // the guard.
+  {
+    id: "empty-cloud-ledger-reads-as-agreement",
+    what: "lets a ledger with no migrations at all pass as if the cloud agreed",
+    file: "scripts/check-cloud-ledger.mjs",
+    test: "scripts/check-cloud-ledger.test.mjs",
+    from: `  if (rows.length === 0) {`,
+    to: `  if (rows.length === -1) {`,
+  },
+  // The other half: the two directions of drift must stay distinguishable. If
+  // an unapplied migration were reported with the hand-edit wording, the
+  // message would send a reader to recover SQL that is sitting in the
+  // repository — and if a hand edit were reported as unapplied it would send
+  // them to `db push`, which is how a hand-made schema change gets buried.
+  {
+    id: "drift-directions-collapse-into-one-message",
+    what: "reports a migration the cloud has and the repository lacks as if it were merely unpushed",
+    file: "scripts/check-cloud-ledger.mjs",
+    test: "scripts/check-cloud-ledger.test.mjs",
+    from: `        "Somebody changed the schema by hand, and that change exists nowhere it can be reproduced from. " +`,
+    to: `        "The repository describes a schema the cloud does not have. " +`,
+  },
 ];

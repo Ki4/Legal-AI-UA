@@ -10,6 +10,28 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the fetcher runs, and finds two ways it could not have (2026-09-02b)
+
+**PR #70**: `law-article` executed outside a compiler for the first time, three days after it
+landed. Docker had been down on the day it was written, so nothing had ever run it.
+
+- **A mount is a fact about a runtime that no compiler can see.** The edge runtime mounts
+  `supabase/functions` and nothing above it. Four tools agreed the import map into `packages/` was
+  fine — `tsc`, Vitest, the console, `deno run` on the host. The one that runs the code did not.
+- **Two copies drift only if both persist.** ADR-0024 rejected vendoring on that ground, and the
+  ground holds for a committed copy. One deleted and rebuilt by every command has no state to go
+  stale, so ADR-0025 adopts the rejected alternative in the form the rejection did not consider.
+- **A package joins the Deno copy on the day something imports it.** `core-client` was added ahead
+  of its first import and brought `schema-walk.ts`, which opens `node:fs` — a module that cannot
+  load, in a bundle nothing loads, waiting for whoever first wires the gateway up.
+- **Bypassing RLS says nothing about privileges.** `service_role` held `Dxtm` and none of the four
+  verbs: this repository's tables are owned by `postgres`, where the platform's default grants
+  never reach. `20260813120000` had written that down and named the gateway as what would come due.
+- **A comment becomes an invariant when it becomes a grant.** `fingerprint` is the adopt trigger's
+  and `origin` is not a probe's to assert — both were prose in `index.ts`, both are privileges now.
+- **A prediction is not a mechanism.** Both defects were foretold in writing, correctly and with a
+  date, by ADR-0024 and by a migration comment. Neither could notice the day it came true.
+
 ## Done — the cloud is asked, and made to agree (2026-09-02)
 
 **PRs #68 and #69**: the two rules this repository followed without writing down, and the first gate
@@ -60,31 +82,6 @@ platform has ever made.
 - **ADR-0024: the edge functions are held to the Node lane.** A workspace package, decisions in
   modules over injected dependencies, sources compiled with `"types": []` so a `node:` import
   cannot pass. Six new probes; `live.test.ts` reads the real site behind `LAW_LIVE=1` and did.
-
-## Done — the watcher gets a parser, a queue and a witness (2026-09-01)
-
-**PR #65**: law monitoring gained everything but the network call, and the gate on the gates caught
-the one thing the suite could not.
-
-- **The page our register points at carries no article text.** `/laws/show/2947-14` is a 34 KB
-  JavaScript shell; the text is at `/print`, 547 KB. Extracting from `canonical_url` — which §9.2
-  and the column's own comment describe — would have returned an empty extraction for every norm on
-  the platform. Only a live fetch could have said so.
-- **That split is the cheap probe §9.7 asked for.** The shell carries a redaction date that moves
-  only on amendment, so the 547 KB fetch happens when the date moves and not otherwise.
-- **A parser is named for its source, not parameterised.** `span.rvts9`, `span.dat0` and the
-  `/print` URL are facts about one publisher and none about legislation. A second source gets a
-  second module (ADR-0023).
-- **An assertion measured over the wrong slice cannot fail.** `text_blank` was first checked over a
-  slice that always contains the heading, so the one shape it existed to catch — a publisher who
-  moves the text and leaves the heading — was the one it could not see.
-- **A test asserted against a real fixture can be satisfied by the fixture's whitespace.** The
-  paragraph-break rule was watched by a line count; the publisher's markup is indented, so a parser
-  that lost every break it was supposed to make still returned plenty of lines. `pnpm probes` said
-  so in CI, on a branch whose author had reported it green. The case is hand-written markup on one
-  physical line now, and the expected lines are stated rather than counted.
-- **`check:sql` holds the `audit_change` mapping**, after a restatement copied from an older
-  migration silently dropped one.
 
 ## Now — wave 1 (parallel, no file overlap)
 

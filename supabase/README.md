@@ -83,8 +83,15 @@ zakon.rada.gov.ua, fingerprints one article and — for a norm that exists — r
 Serve it against the local stack:
 
 ```bash
-pnpm exec supabase functions serve law-article
+pnpm functions:serve
 ```
+
+**Not `supabase functions serve` directly**, and the difference is the one thing worth knowing here.
+The edge runtime mounts `supabase/functions` and nothing above it, so the import map cannot point
+into `packages/`; `pnpm functions:serve` first copies the shared package's runtime source into a
+git-ignored `_shared/` where the container can see it, then serves (ADR-0025). The bare CLI command
+skips the copy and answers `worker boot error: Module not found`. `pnpm functions:deploy` does the
+same for the cloud.
 
 It needs `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. Locally the CLI
 supplies all three; in the cloud project the first two are set for you and the service-role key is

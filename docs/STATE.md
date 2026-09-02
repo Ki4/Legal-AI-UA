@@ -39,10 +39,10 @@ serve` never ran: the import map and all of `index.ts` are held by the compiler 
   session used `--no-file-parallelism`. The default lies.
 - **No screen has been looked at since it changed** — 2026-08-28, and this session widened it: the
   check panel and its eight refusal sentences exist only as passing tests.
-- **The cloud ledger drifted five migrations and nothing noticed** — 2026-08-28. Repaired; nothing
-  asks the cloud whether it agrees.
-- **Nothing compares the domain tables against `seed.sql`** — 2026-08-28. `law_norm_revisions` is
-  still empty there, and now has a writer.
+- **The cloud lacks `law_norm_revisions` and `law_signals`** — 2026-09-02, second drift after
+  2026-08-28. ADM-42's fetcher is in `main` and writes to both. `check:cloud-ledger` now asks and
+  stays red until `db push`. No edge-function secrets are set either.
+- **Nothing compares the domain tables against `seed.sql`** — 2026-08-28.
 - **`law_norms` carries per-watcher judgement on a shared row** — 2026-08-28.
 - The access-control review is **a standing condition, not a debt** — recorded 2026-08-04.
 

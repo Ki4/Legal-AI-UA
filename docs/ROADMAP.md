@@ -10,6 +10,28 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the cloud is asked, and made to agree (2026-09-02)
+
+**PRs #68 and #69**: the two rules this repository followed without writing down, and the first gate
+that looks outside the repository.
+
+- **A missing ledger row does not mean a missing schema.** `migration list` compares the ledger, not
+  the database. A migration run through the dashboard's SQL editor leaves every object in place and
+  no row, and reports identically to one that never ran anywhere — while `db push` closes the second
+  and dies on the first. Both of ADM-42's tables were the first case.
+- **So the gate stops prescribing where it cannot know.** The message for that direction names both
+  causes and sends the reader to the schema query; the other direction, where the evidence is
+  unambiguous, still directs. A probe restores the old prescription, so the test is held to it.
+- **A PR body is falsified by its own branch.** #69's description said the cloud lacked the tables
+  and `db push` would close it. A later commit on the same branch proved otherwise, and the body
+  stood wrong until it was rewritten before merge. A description is a claim, and claims decay.
+- **The gate cost more privilege than it uses.** `migration list --linked` mints a login role
+  through a POST endpoint, so read-only tokens get 403 — proved twice in CI before widening. The CI
+  secret now carries `Database: Read-write` for a job that only reads; it is a debt in STATE.
+- **The first run of a gate belongs somewhere other than `main`.** `workflow_dispatch` on the branch
+  ran the job for real while the PR's own copy stayed skipped, so three failed attempts cost
+  nothing. A gate whose first real execution is the merge is a gate tested on production.
+
 ## Done — a citation confirmed by its own source (2026-09-01b)
 
 **PR #67**: the first `supabase/functions/` in the repository, and the first network request the
@@ -63,24 +85,6 @@ the one thing the suite could not.
   physical line now, and the expected lines are stated rather than counted.
 - **`check:sql` holds the `audit_change` mapping**, after a restatement copied from an older
   migration silently dropped one.
-
-## Done — a template version's blocks (2026-08-28)
-
-**`document_blocks` landed as PR #63**, and the cloud's migration ledger turned out to be two weeks
-behind.
-
-- **The block tree is MVP work, not tier-2 groundwork.** ADR-0013 makes the bot's question order a
-  projection of block conditions, so the table that looked like preparation for `block_assembly` is
-  what drives the tier-1 intake `VISION.md` puts the proof of concept at.
-- **A freeze that guards the version row and leaves its blocks writable is a freeze in name.** The
-  guard is a trigger rather than a policy, because the writer that matters most holds `service_role`
-  and RLS does not apply to it at all.
-- **`version_is_frozen` raises for a version that is not there.** Without `security definer` the
-  lookup returns null for an invisible row, the check reads "not frozen", and the write goes through
-  — a freeze that fails open while reading as protection.
-- **An instruction can be safe under its premise and harmful under the facts.** "Run the ledger
-  repair, the line is already there" was correct for one migration; the cloud was missing five, with
-  the schema state unknown. Marking those applied would have made `db push` skip them forever.
 
 ## Now — wave 1 (parallel, no file overlap)
 

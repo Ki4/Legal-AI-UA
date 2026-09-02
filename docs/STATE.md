@@ -1,19 +1,20 @@
-# State — 2026-09-01b, the fetcher makes its first request
+# State — 2026-09-02, the cloud is asked, and made to agree
 
-Written at `a089cfe` on `main`, clean. If `git log` shows commits after it, this file is behind:
+Written at `e1899e4` on `main`, clean. If `git log` shows commits after it, this file is behind:
 trust git.
 
 Tier 1: **the only document a session reads to orient.** `pnpm docs:check` caps it at 60 lines.
 
 ## Wave
 
-Wave 1. ADM-42 landed as PR #67: the first `supabase/functions/`, an article read from
-zakon.rada.gov.ua and shown to a lawyer before the row exists, then read again against the saved
-norm. 794 tests, 77 probes, and the live site read on the day it was written.
+Wave 1. #68 made the delegation protocol repository policy and gave tests an order. #69 added
+`check:cloud-ledger`, which asks the linked project whether it agrees with `supabase/migrations/`;
+the drift it found is repaired and the job is green on `main` — 17 migrations, agreement, on a
+schema read against the files before anything was written.
 
 ## In flight
 
-- Nothing. `main` is clean at `a089cfe`; #67 merged and its branch is gone.
+- Nothing. `main` is clean at `e1899e4`; both branches merged and deleted.
 
 ## Blocking — the question, and what it stops
 
@@ -30,27 +31,26 @@ norm. 794 tests, 77 probes, and the live site read on the day it was written.
 
 - **The fetcher has never run under Deno** — 2026-09-01. Docker was down, so `supabase functions
 serve` never ran: the import map and all of `index.ts` are held by the compiler and nothing else.
-  `LAW_LIVE=1` proves the parser against the live site and is out of CI, so nothing holds its
-  cadence either (§9.15 condition 4).
-- **A project that sees no files typechecks clean** — 2026-09-01. The functions' first tsconfig
-  `include` matched nothing and was green; found by hand. A package missing from the workspace file
-  fails the same silent way.
-- **`pnpm test` cannot spawn workers on this machine** — 2026-08-30. Confirmed again: every run this
-  session used `--no-file-parallelism`. The default lies.
-- **No screen has been looked at since it changed** — 2026-08-28, and this session widened it: the
-  check panel and its eight refusal sentences exist only as passing tests.
-- **Two migrations are applied by hand and absent from the ledger** — 2026-09-02, second drift
-  after 2026-08-28. The tables exist; the record does not, so `check:cloud-ledger` stays red and
-  `db push` would fail. No edge-function secrets are set either. Procedure: `supabase/CLAUDE.md`.
+  `LAW_LIVE=1` is out of CI, so nothing holds its cadence either (§9.15 condition 4). And no
+  edge-function secrets exist: `supabase secrets list` returned `[]` again on 2026-09-02.
+- **A project that sees no files typechecks clean** — 2026-09-01. A package missing from the
+  workspace file fails the same silent way the functions' first tsconfig did.
+- **`pnpm test` cannot spawn workers on this machine** — 2026-08-30. Three sessions of
+  `--no-file-parallelism` is a decision nobody stated.
+- **No screen has been looked at since it changed** — 2026-08-28.
+- **Nothing compares the cloud's schema against the migration that claims it** — 2026-09-02.
+  `check:cloud-ledger` compares the ledger; today's repair rested on a schema read by hand, once.
+- **The CI token is wider than the gate it serves** — 2026-09-02. `migration list --linked` mints a
+  login role, so a read-only token gets 403 and the secret carries `Database: Read-write` for a job
+  that only reads. Reading `…/database/migrations` directly would need no CLI, no link and no write.
 - **Nothing compares the domain tables against `seed.sql`** — 2026-08-28.
 - **`law_norms` carries per-watcher judgement on a shared row** — 2026-08-28.
 - The access-control review is **a standing condition, not a debt** — recorded 2026-08-04.
 
 ## Next candidates
 
-1. **Reconcile the cloud, then run it against a live stack.** In order: Docker up; the schema query
-   in `supabase/CLAUDE.md`; `migration repair` and _not_ `db push` — the tables are already there;
-   function secrets; one entry end to end. Closes the two top debts at once.
+1. **Run the fetcher under Deno.** Docker up, `supabase functions serve law-article`, the function
+   secrets set, one entry end to end. The ledger half landed today; this is the other half.
 2. **ADM-44 — the probe scheduler.** The fetch path is proved and the cheap probe, the shell's
    redaction date, is already the half it needs.
 

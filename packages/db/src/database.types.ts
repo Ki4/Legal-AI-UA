@@ -918,6 +918,19 @@ export type Database = {
       is_assigned_to: { Args: { target_service: string }; Returns: boolean };
       is_primary_for: { Args: { target_service: string }; Returns: boolean };
       jwt_role: { Args: never; Returns: string };
+      law_norms_due_for_probe: {
+        Args: { batch_limit?: number };
+        Returns: {
+          article: string;
+          canonical_url: string;
+          fingerprint: string;
+          id: string;
+          last_checked_at: string;
+          normalizer_version: number;
+          probe_interval: string;
+          state: Database["public"]["Enums"]["law_norm_state"];
+        }[];
+      };
       max_probe_interval: { Args: never; Returns: string };
       norm_behind_published_service: {
         Args: { target_norm: string };

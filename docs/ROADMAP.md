@@ -10,6 +10,31 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the register says what is due (2026-09-07)
+
+**PR #70 merged and PR #71 opened**: the migration reached the cloud before the merge, and ADM-44's
+first half — the batch query, and the sweeper that walks it — landed on a branch.
+
+- **A cadence counts attempts; an alarm counts successes.** `20260815140000` named the scheduler's
+  reader in three comments and sorted its index on `last_verified_at`. That column is right about
+  staleness and wrong about due-ness: a schedule driven by it re-probes an unreachable norm on every
+  sweep forever, hammering a publisher that is already down and starving the batch behind it. The
+  two timestamps exist because they are two facts, and this is the first caller that had to choose.
+- **An exclusion can be load-bearing.** Act-scoped norms cannot be checked, so their
+  `last_checked_at` stays null — and null sorts first. A handful of them would occupy the head of
+  every batch permanently, and the symptom would be a register that quietly stops being swept.
+- **A shared decision is shared by import or it is not shared.** `observe` was split into a value
+  and the status code that wraps it, so the sweeper runs the same `checkNorm` a lawyer's form does.
+  The alternative was the function parsing its own JSON back, or a second copy of §9.7.
+- **A gate that prints the fix costs a minute; one that prints a complaint costs a session.** The
+  new function made `database.types.ts` stale and Docker was down, so `pnpm db:types` could not run.
+  The SQL job printed its own regeneration diff into the log, and it was applied verbatim rather
+  than guessed at.
+- **Two halves were deferred out loud.** No cron, because the cloud holds no edge-function secret
+  and a schedule that 401s hourly is worse than none; no cheap tier, because the act's redaction
+  date has nowhere to be stored. Both are debts with today's date, so the absence reads as a
+  decision.
+
 ## Done — the fetcher runs, and finds two ways it could not have (2026-09-02b)
 
 **PR #70**: `law-article` executed outside a compiler for the first time, three days after it
@@ -53,35 +78,6 @@ that looks outside the repository.
 - **The first run of a gate belongs somewhere other than `main`.** `workflow_dispatch` on the branch
   ran the job for real while the PR's own copy stayed skipped, so three failed attempts cost
   nothing. A gate whose first real execution is the merge is a gate tested on production.
-
-## Done — a citation confirmed by its own source (2026-09-01b)
-
-**PR #67**: the first `supabase/functions/` in the repository, and the first network request the
-platform has ever made.
-
-- **The confirmation happens before the row exists, not only after it.** §9.5.7 describes it as
-  following the save; `law_norms` grants no delete to anybody, so an article number mistyped and
-  saved first is a row watched forever that will never match anything. §9.6's "cheapest possible
-  moment" is not reachable after the write. The second reading still runs — against the saved norm,
-  recording the first revision — and a text that moved between the two carries no confirmation.
-- **A confirmation is about words, so it travels as their fingerprint.** Never the text itself: a
-  client that sends the article body is a client that decides what the law says.
-- **Two refusals are about us rather than the publisher.** An act-scoped norm has no one article to
-  extract, and a norm left behind by a normalizer bump needs a recomputation pass rather than a
-  probe — recording that as `observed` is how our own edit becomes two hundred signals with a
-  lawyer's day on each. Both refuse loudly instead of guessing.
-- **A failed check writes.** `last_checked_at` moves and the state goes `unreachable`, because a
-  check that left no trace is indistinguishable from one nobody got around to (§9.10).
-- **A tsconfig `include` with a character class matches no file — and a project with no files
-  typechecks clean.** The functions package was green for that reason for one commit. Found with
-  `tsc --listFiles`, and it is now a debt in STATE: nothing asserts that a project sees a file, and
-  a package missing from `pnpm-workspace.yaml` fails the same silent way.
-- **"A gate reported green is not a gate that ran" leaves the debt list**, one session after it
-  arrived. CI is what carries it: it caught #65's claim and it gated this one, which is what a
-  mechanism looks like where a resolution would have been a promise.
-- **ADR-0024: the edge functions are held to the Node lane.** A workspace package, decisions in
-  modules over injected dependencies, sources compiled with `"types": []` so a `node:` import
-  cannot pass. Six new probes; `live.test.ts` reads the real site behind `LAW_LIVE=1` and did.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -176,8 +172,9 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
   as PR #65 on 2026-09-01:
   link normalisation is not text normalisation, and neither is a fingerprint store. The fetcher landed with its §9.15 safety conditions as PR #67 on
   2026-09-01 — ADM-42 and ADM-43's network half, entry-time confirmation included. Still here:
-  ADM-50, the scheduler (ADM-44), triage, the calendar and the health surfaces (ADM-45…49,
-  ADM-51…53), and ADM-22…24 on the register. It was sequenced after the
+  ADM-50, triage, the calendar and the health surfaces (ADM-45…49, ADM-51…53), and ADM-22…24 on
+  the register. ADM-44 is half done as PR #71 — the batch query and the sweeper exist; nothing
+  calls them on a schedule, and that half waits on a cloud credential rather than on code. It was sequenced after the
   authoring loop and was not built there — going first is what surfaced ADR-0020. The publication
   feed remains deliberately neither built nor bought.
 - GDPR P1: data export, account deletion as anonymization, retention cron, subprocessor list.

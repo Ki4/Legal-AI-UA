@@ -15,8 +15,10 @@
 
 import { NORMALIZER_VERSION } from "@legal-ai/law-refs";
 import type {
+  ArticleFailure,
   ArticleObserveRequest,
   ArticleOutcome,
+  ArticleReading,
   ArticleRequest,
   ArticleResponse,
   LawNormState,
@@ -127,15 +129,74 @@ async function preview(
 }
 
 async function observe(deps: HandlerDeps, request: ArticleObserveRequest): Promise<Response> {
+  const check = await checkNorm(deps, request);
+
+  switch (check.kind) {
+    case "not_found":
+      return json(404, { error: "not_found" });
+    case "act_scope_unsupported":
+      return json(422, { error: "act_scope_unsupported" });
+    case "normalizer_mismatch":
+      return json(500, {
+        error: "normalizer_mismatch",
+        detail: `norm is at normalizer ${check.normNormalizerVersion}, this fetcher is at ${NORMALIZER_VERSION}; a bump needs a recomputation pass, not a probe`,
+      });
+    case "unreachable":
+      return json(200, { ok: false, failure: check.failure, state: "unreachable" });
+    case "read":
+      return json(200, {
+        ok: true,
+        reading: check.reading,
+        outcome: check.outcome,
+        state: check.state,
+        confirmed: check.confirmed,
+      });
+  }
+}
+
+/**
+ * What one check of one norm did. The same work `observe` answers a request
+ * with, as a value rather than as a `Response`.
+ *
+ * **Why this shape exists.** ADM-44's sweeper checks norms nobody asked about
+ * over HTTP: there is no request to answer and no status code to choose, and it
+ * needs to know what happened to each of a hundred norms in order to report on
+ * the batch. Before this split it had two options, and both were wrong — call
+ * the function over HTTP and parse its own JSON back, or keep a second copy of
+ * the rules below. §9.7's check is one thing, so it is written once and the
+ * status code is what `observe` adds on top.
+ */
+export type NormCheck =
+  /** No such row is visible. */
+  | { kind: "not_found" }
+  /** A whole-act watch, which is the redaction date and not this (§9.5). */
+  | { kind: "act_scope_unsupported" }
+  /** Our own rules moved; a recomputation pass owes this norm an answer, not a probe. */
+  | { kind: "normalizer_mismatch"; normNormalizerVersion: number }
+  /** Nothing usable came back. The register was still told a check happened. */
+  | { kind: "unreachable"; failure: ArticleFailure }
+  /** The article was read, and here is what that did to the register. */
+  | {
+      kind: "read";
+      reading: ArticleReading;
+      outcome: ArticleOutcome;
+      state: LawNormState;
+      confirmed: boolean;
+    };
+
+export async function checkNorm(
+  deps: HandlerDeps,
+  request: ArticleObserveRequest,
+): Promise<NormCheck> {
   const norm = await deps.store.load(request.normId);
-  if (norm === null) return json(404, { error: "not_found" });
+  if (norm === null) return { kind: "not_found" };
 
   // §9.4 makes the article the tracked unit and marks act-level scope as the
   // exception; the parser is article-keyed, so an act-scoped norm has nothing
   // for it to extract. Refused loudly rather than answered with a shrug: the
   // act-level watch is the redaction date on the shell page and it belongs to
   // the scheduler (ADM-44), where the cheap probe already lives.
-  if (norm.article === null) return json(422, { error: "act_scope_unsupported" });
+  if (norm.article === null) return { kind: "act_scope_unsupported" };
 
   // A normalizer bump is a recomputation pass over the whole register, not
   // something a probe discovers one norm at a time. §9.7 is explicit that the
@@ -150,10 +211,7 @@ async function observe(deps: HandlerDeps, request: ArticleObserveRequest): Promi
   // edit from the legislature's. So it refuses, loudly, and the norm keeps its
   // stale `last_checked_at` — which §9.10 will raise on its own.
   if (norm.fingerprint !== null && norm.normalizerVersion !== NORMALIZER_VERSION) {
-    return json(500, {
-      error: "normalizer_mismatch",
-      detail: `norm is at normalizer ${norm.normalizerVersion}, this fetcher is at ${NORMALIZER_VERSION}; a bump needs a recomputation pass, not a probe`,
-    });
+    return { kind: "normalizer_mismatch", normNormalizerVersion: norm.normalizerVersion };
   }
 
   const read = await readArticle(deps, {
@@ -174,7 +232,7 @@ async function observe(deps: HandlerDeps, request: ArticleObserveRequest): Promi
       verifiedAt: null,
     });
 
-    return json(200, { ok: false, failure: read.failure, state: "unreachable" });
+    return { kind: "unreachable", failure: read.failure };
   }
 
   const { reading } = read;
@@ -220,7 +278,7 @@ async function observe(deps: HandlerDeps, request: ArticleObserveRequest): Promi
     verifiedAt,
   });
 
-  return json(200, { ok: true, reading, outcome, state, confirmed });
+  return { kind: "read", reading, outcome, state, confirmed };
 }
 
 /**

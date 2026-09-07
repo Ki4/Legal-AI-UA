@@ -744,6 +744,26 @@ export const PROBES = [
     to: `  if (false) {`,
   },
   {
+    id: "sweep-dies-on-one-bad-norm",
+    what: "lets one norm's exception end the whole batch, so the most overdue row starves every row behind it on every run (ADM-44)",
+    file: "supabase/functions/law-sweep/sweep.ts",
+    test: "supabase/functions/law-sweep/sweep.test.ts",
+    from: `    return {
+      normId,
+      verdict: "errored",
+      detail: error instanceof Error ? error.message : String(error),
+    };`,
+    to: `    throw error;`,
+  },
+  {
+    id: "sweep-ignores-its-budget",
+    what: "keeps starting norms past the time budget, so the runtime kills the run mid-norm and it reports nothing at all (ADM-44)",
+    file: "supabase/functions/law-sweep/sweep.ts",
+    test: "supabase/functions/law-sweep/sweep.test.ts",
+    from: `    if (deps.now().getTime() - startedAt >= budgetMs) {`,
+    to: `    if (false) {`,
+  },
+  {
     id: "form-saves-an-article-nobody-read",
     what: "drops the requirement that an article-scoped entry was read back, so a mistyped number becomes a permanent row in a register with no delete path",
     file: "apps/console/src/features/law/components/AddReferenceForm.tsx",

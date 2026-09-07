@@ -1,21 +1,20 @@
 # State — 2026-09-07, the register says what is due
 
-Written at `e6b7bf9` on `sergey/probe-scheduler`, with **PR #71 open and green**. If `git log`
-shows commits after it, this file is behind: trust git.
+Written at `c5cb641` on `main`, with **#71 merged and the cloud reconciled**. If `git log` shows
+commits after it, this file is behind: trust git.
 
 Tier 1: **the only document a session reads to orient.** `pnpm docs:check` caps it at 60 lines.
 
 ## Wave
 
-Wave 1. #70 merged and its migration is in the cloud. #71 is ADM-44's first half: the batch query
-and the sweeper. Nothing calls it on a schedule — that half waits on a credential, not on code.
+Wave 1. #71 merged: ADM-44's first half, the batch query and the sweeper. Nothing calls it on a
+schedule — that half waits on a credential, not on code.
 
 ## In flight
 
-- **PR #71**, `sergey/probe-scheduler`, unmerged. `verify`, `probes` and the SQL job green.
-- **The cloud does not have `20260907120000`.** Same shape and deadline as last session:
-  `check:cloud-ledger` is on `main` only, so it reddens on the merge unless the migration goes
-  first. The merge step, not a debt.
+- Nothing unmerged. `main` is green on both CI and SQL, cloud ledger agrees at 19 migrations.
+- **`20260907120000` was applied by hand and repaired, not pushed.** The SQL editor had run the
+  whole file correctly and recorded that nowhere; `supabase/CLAUDE.md` now says where to say so.
 
 ## Blocking — the question, and what it stops
 
@@ -39,6 +38,7 @@ and the sweeper. Nothing calls it on a schedule — that half waits on a credent
 - **A project that sees no files typechecks clean** — 2026-09-01. A missing workspace entry too.
 - **`LAW_LIVE=1` is out of CI** — 2026-09-01, §9.15 condition 4. Last green run 2026-09-02.
 - **Nothing compares the cloud's schema against its migration** — 2026-09-02. Only the ledger is.
+  `check:cloud-ledger` sends the reader to a query; `db dump --linked` would answer it — 2026-09-07.
 - **The CI token is wider than the gate it serves** — 2026-09-02. Read-write for a job that reads.
 - **No screen has been looked at since it changed** — 2026-08-28. Neither a task nor a decision.
 - **Nothing compares the domain tables against `seed.sql`** — 2026-08-28.

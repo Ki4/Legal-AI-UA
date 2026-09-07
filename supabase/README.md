@@ -102,6 +102,25 @@ failure §9.15 is written against.
 The console calls it through `supabase.functions.invoke`, so the caller's JWT travels with the
 request and the function asks the auth server whose it is. Only `admin` and `lawyer` are served.
 
+`supabase/functions/law-sweep` is the scheduler's endpoint (ADM-44). It asks
+`law_norms_due_for_probe` which norms are owed a check, then runs the _same_ check — `checkNorm`,
+imported from `law-article` rather than reimplemented — over each of them in turn, and answers with
+a count of what happened. Nothing calls it on a schedule yet: it is invoked by hand, or by whatever
+holds the service-role key.
+
+Two of its rules are worth knowing before reading the code, because both are about a queue rather
+than about law. One norm's exception ends that norm and not the batch — otherwise the most overdue
+row, which is the one at the head of every run, would silently stop the whole register from ever
+being checked again. And a time budget stops it starting new norms rather than letting the runtime
+kill it mid-run: every norm it did check has a fresh `last_checked_at` and has moved to the back of
+the queue, so the next run resumes where this one stopped and no cursor is stored anywhere.
+
+It is authorized for two callers and they authenticate differently: an `admin`, established through
+the auth server exactly as `law-article` does it, and the service-role key presented as a bearer,
+which is the credential a scheduled caller will actually hold. A `lawyer` is refused — a sweep
+writes to every norm it touches and costs the publisher a request per article, and the question a
+lawyer has is about one citation.
+
 **Checking the parser against the live site** is a separate, deliberate command, off in CI:
 
 ```bash

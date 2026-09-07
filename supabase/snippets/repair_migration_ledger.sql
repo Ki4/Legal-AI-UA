@@ -54,7 +54,8 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260828120000', 'document_blocks'),
   ('20260830120000', 'law_norm_revisions'),
   ('20260830130000', 'law_signals'),
-  ('20260902120000', 'law_fetcher_service_role_grants')
+  ('20260902120000', 'law_fetcher_service_role_grants'),
+  ('20260907120000', 'law_norms_due_for_probe')
 on conflict (version) do nothing;
 
 -- Confirm. One row per file in supabase/migrations/, and no more.

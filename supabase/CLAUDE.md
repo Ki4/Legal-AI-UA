@@ -111,6 +111,28 @@ screenshot shows. Then:
   query again, and only then repair. A repair over a half-applied migration is the lie above.
 - **none of it is there** — `supabase db push`, which is the ordinary case this section is not about.
 
+### A hand-applied migration that says so costs a minute; one that stays quiet costs a dump
+
+It happened again on 2026-09-07, and differently from the first two times. `20260907120000` was
+applied through the SQL editor **completely and correctly** — function, index, comment, revoke and
+grant, byte for byte — and the only thing missing was the ledger row. Nothing anywhere recorded
+that it had been done: not the PR, not the journal written that same evening, not STATE. The next
+session found `db push` dying on `create index ... already exists` and had to start Docker and
+`supabase db dump --linked` to establish what the previous session already knew.
+
+Two things follow, and the second matters more than the first.
+
+**Say it where the next reader is.** A migration applied out of band is written down in the PR that
+carries the file and in STATE — one line, naming the version and what was run. The three branches
+above are a diagnosis, and a diagnosis is what you need when the fact was not recorded.
+
+**The diagnosis is mechanisable, and that is the better fix.** `supabase db dump --linked` answers
+all three branches without a dashboard and without judgement — it prints the objects the cloud
+actually holds, and comparing them against the file is exactly what a reader does by eye. Yesterday's
+journal named the property this wants: a gate that prints the correction turns a blocked session
+into a two-minute edit. `check-cloud-ledger.mjs` currently prints where to look; it could print the
+answer. That it does not is a debt in STATE, dated the day this happened.
+
 ## Restating `audit_change` is how a mapping gets lost
 
 `audit_change` raises for a table it has no mapping for, which is what makes the mapping impossible

@@ -1511,7 +1511,8 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 - Inside the catalogue the split is commercial versus professional, not senior versus junior. An
   admin decides what is on sale, at what price, and when it is published; the assigned lawyer owns
   the draft of their own service, `review_mode` included, because they are the only person who can
-  judge whether a document needs a lawyer in the loop (ADR-0005, §4.3).
+  judge whether a document needs a lawyer in the loop (ADR-0005, §4.3). Q28 asks whether the last of those —
+  publication — is one act or two, and the split itself is not what is in question.
 - A client is two tables, not one: `clients` is a pseudonymous anchor holding no personal data, and
   `client_identities` is the mapping ADR-0010 requires to live in exactly one place. Everything
   client-bearing keys on the anchor, so it can be read, joined and counted without touching a
@@ -1635,18 +1636,6 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   lawyer in the loop for the other two modes.
 - **Q16. Invitations or self-registration?** ADM-34 either exists or does not.
 - **Q17. Deactivation: soft disable or account deletion?**
-- **Q25. Can one person be a lawyer and an admin at once?** Today they cannot: the role is a single
-  value in `app_metadata`, `approve_user` accepts one of two, and **75 sites** compare
-  `jwt_role()` against a literal. An admin cannot review an order — `orders_lifecycle` requires
-  `profiles.role = 'lawyer'` — and a lawyer cannot publish or price. For a firm of three, a partner
-  who both sells and practises is the normal case rather than the exception, so the model as it
-  stands describes a larger firm than this one. The fix is mechanical and large: roles become a set,
-  `jwt_role()` becomes `has_role()`, and every verification scenario is re-run in both directions.
-  It is cheapest while there is one user and almost no data; a year from now it is the same
-  migration plus every live token and a forced sign-out. Decide it before the access-control pass,
-  not during — and note that the pass is the same 75 sites, so doing both at once costs one
-  traversal of the riskiest area in the schema instead of two.
-
 - **Q26. What shape is a questionnaire `select` option?** The migration says only "a non-empty jsonb
   array", and ADM-18 was the first thing that had to write one, so it chose: a flat list of strings.
   That is a decision the screen made, not a reading of the schema, and it is worth revisiting before
@@ -1672,6 +1661,28 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   review screen exists costs a paragraph; deciding it after costs whatever that screen was built on.
   The trust surface is the product's flagship claim (`VISION.md`), which is what makes this a
   question rather than a detail.
+
+- **Q28. Who publishes a service version?** Opened on 2026-09-07 by the answer to Q25, and it is
+  not the same question. §13 records a decision in one line: "inside the catalogue the split is
+  commercial versus professional, **not senior versus junior**" — an admin decides what is on sale,
+  at what price and when, and the assigned lawyer owns the draft including `review_mode`, because
+  only they can judge whether a document needs a lawyer in the loop (ADR-0005, §4.3). The product
+  owner's position is that a lawyer should be accountable for a service entering the catalogue at
+  all, because the domain expertise is theirs — but not every lawyer, which is why the co-owners are
+  advocates. Read literally that is the senior-versus-junior split §13 rejected, and it would want a
+  third role.
+
+  It probably does not, and the recommended answer is that **publication is two acts, not one**: the
+  accountable lawyer releases a version as professionally ready, and an admin puts it on sale. §13's
+  line survives intact — the split stays commercial versus professional — and nothing reaches a
+  client that a lawyer has not released. "Not every lawyer" is then carried by **assignment**, which
+  already exists, is already audited and is already the axis ADR-0014 uses, rather than by seniority,
+  which the schema has no word for and would need a role to acquire.
+
+  What it costs is that publishing stops being one button in §4.3 and becomes two rights on two
+  columns, and three user stories there are rewritten. What deciding late costs is ADM-31 built
+  against the wrong owner. It blocks ADM-31 and nothing else; ADR-0026 is deliberately written so
+  that either answer changes the publish site alone.
 
 **Already answered, listed so they stop being reopened**
 
@@ -1728,6 +1739,14 @@ reference to "Q9" written six months ago still points at the same question. Ids 
 - **Q21** — a client account is a tenant. `clients` is that account; membership is ADM-68 and lands
   with `apps/web`. It turned out to block nothing: ADM-62 built the anchor to hold no personal data,
   so `orders` keys on `clients.id` under either answer (§13).
+- **Q25** — yes, and the mechanism is not the one the question proposed. Staff hold a **set** of
+  roles and the token carries **one active role**, so `jwt_role()` keeps its meaning and all 88
+  sites that compare it against a literal are left alone (ADR-0026, 2026-09-07). The union the
+  question assumed would have broken four of those sites silently — guards where `= 'lawyer'` means
+  "only a lawyer" — and would have cost `audit_events.actor_role` its meaning in an append-only log.
+  The held set lives in a `user_roles` table rather than a jsonb array, which closes the missing
+  audit row ADR-0018 recorded. Switching roles is explicit. Who may publish turned out to be a
+  separate question and is Q28.
 
 - One-off versus subscription — both (§8).
 - Currency — UAH (§8). The amounts themselves are still open.

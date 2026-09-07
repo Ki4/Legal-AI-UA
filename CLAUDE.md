@@ -19,7 +19,11 @@ Read this before any change. Zone files add detail; this file is the map.
   (ADR-0016). The hand-written types are held to the schema by the bridge constants beside them and
   the test that compares the two — see `docs/adr/0021-core-contract-is-json-schema-with-bridge-tests.md`,
   which also records why the drift argument that looks sufficient is not. Dependency-free at
-  runtime, like `packages/law-refs` and for the same reason: the Deno gateway will import it.
+  runtime, like `packages/law-refs` and for the same reason: the Deno gateway will import it. That
+  is necessary and not sufficient — Deno also has to be able to _see_ the file, and the edge
+  runtime's container mounts `supabase/functions` and nothing above it, so a shared package reaches
+  it as a generated, git-ignored copy under `_shared/` (ADR-0025). `pnpm functions:serve` and
+  `pnpm functions:deploy` build that copy; a bare `supabase functions serve` does not.
   `features/anatomy` is its first consumer — it renders a trace these types describe, through a
   mapper in its own `api/`, so the console meets the core's shape before the core exists.
 - `packages/ui` — the design system (the design-system zone). Console features consume

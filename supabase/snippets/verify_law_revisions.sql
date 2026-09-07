@@ -403,4 +403,83 @@ begin
   perform set_config('request.jwt.claims', '', true);
 end $$;
 
+-- The fetcher's own privileges ----------------------------------------------------
+--
+-- Scenarios 16-19 prove that a person cannot write the machine columns. That is
+-- half a rule, and on 2026-09-02 the other half turned out to be false: nobody
+-- could write them at all. `service_role` bypasses RLS, so "the fetcher writes
+-- as service_role" had read as "the fetcher can write" — but privileges are the
+-- other axis, and the tables this repository creates are owned by `postgres`,
+-- where the platform's default grants to `service_role` never reach. The first
+-- real request the function ever served answered `permission denied for table
+-- law_norms`. `20260902120000` grants what it needs; these scenarios are why
+-- the day it is revoked again will be a red script rather than a silent fetcher.
+
+do $$
+declare
+  v_fingerprint text;
+  v_state public.law_norm_state;
+begin
+  set local role service_role;
+
+  ------------------------------------- 20. the fetcher can read the register
+  perform 1 from public.law_norms where id = '00000000-0000-0000-0000-0000000e0001';
+  raise notice 'PASS 20. service_role can read law_norms';
+
+  --------------------------------- 21. and is the revision log's one author
+  insert into public.law_norm_revisions
+    (norm_id, fingerprint, normalizer_version, content, published_revision_date)
+  values ('00000000-0000-0000-0000-0000000e0001',
+          'sha256:5555555555555555555555555555555555555555555555555555555555555555',
+          1, 'Стаття 42. What the fetcher read today.', '2026-08-05');
+  raise notice 'PASS 21. service_role can write a revision';
+
+  ------------------------------ 22. and may say what the check found, and when
+  update public.law_norms
+  set state = 'drifted', last_checked_at = now(), last_verified_at = now()
+  where id = '00000000-0000-0000-0000-0000000e0001';
+  raise notice 'PASS 22. service_role can write state and the two timestamps';
+
+  ------------------ 23. but not the fingerprint, which is the trigger's to carry
+  --
+  -- `index.ts` says so in a comment. Here it is a privilege, so the register and
+  -- the log cannot be made to state two different things by a fetcher with a bug.
+  begin
+    update public.law_norms
+    set fingerprint = 'sha256:0000000000000000000000000000000000000000000000000000000000000000'
+    where id = '00000000-0000-0000-0000-0000000e0001';
+    raise notice 'FAIL 23. the fetcher can overwrite the fingerprint the log derives';
+  exception when insufficient_privilege then
+    raise notice 'PASS 23. fingerprint stays the adopt trigger''s to write';
+  end;
+
+  ------------------------- 24. nor claim a revision is our own renormalization
+  --
+  -- §9.7's distinction, held by a grant rather than by a comment: `observed` is
+  -- the only origin an observation is entitled to, and the default supplies it.
+  -- A recomputation pass will be granted this column by name, on purpose.
+  begin
+    insert into public.law_norm_revisions
+      (norm_id, fingerprint, normalizer_version, content, origin)
+    values ('00000000-0000-0000-0000-0000000e0001',
+            'sha256:6666666666666666666666666666666666666666666666666666666666666666',
+            1, 'Стаття 42. Reduced under new rules.', 'renormalized');
+    raise notice 'FAIL 24. a probe asserted renormalized, which it cannot know';
+  exception when insufficient_privilege then
+    raise notice 'PASS 24. origin is not a probe''s to assert';
+  end;
+
+  --------------- 25. and the trigger did carry the fingerprint of what 21 wrote
+  select fingerprint, state into v_fingerprint, v_state
+  from public.law_norms where id = '00000000-0000-0000-0000-0000000e0001';
+  raise notice '% 25. the register adopted the revision the fetcher wrote (% / %)',
+    case when v_fingerprint =
+      'sha256:5555555555555555555555555555555555555555555555555555555555555555'
+      and v_state = 'drifted' then 'PASS' else 'FAIL' end,
+    coalesce(v_fingerprint, 'null'), coalesce(v_state::text, 'null');
+
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+end $$;
+
 rollback;

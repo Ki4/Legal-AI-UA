@@ -1,28 +1,26 @@
-# State — 2026-09-07, the register says what is due
+# State — 2026-09-07b, the roles decide their own shape
 
-Written at `c5cb641` on `main`, with **#71 merged and the cloud reconciled**. If `git log` shows
-commits after it, this file is behind: trust git.
+Written at `878fc16` on `main`, nothing unmerged. If `git log` shows commits after it, this file
+is behind: trust git.
 
 Tier 1: **the only document a session reads to orient.** `pnpm docs:check` caps it at 60 lines.
 
 ## Wave
 
-Wave 1. #71 merged: ADM-44's first half, the batch query and the sweeper. Nothing calls it on a
-schedule — that half waits on a credential, not on code.
+Wave 1. #71 merged — ADM-44's first half; nothing sweeps on a schedule, and that half waits on a
+credential, not code. #72 — ADR-0026 answers Q25, still a decision and not a migration.
 
 ## In flight
 
 - Nothing unmerged; `main` green on CI and SQL, cloud ledger agrees at 19.
-- **`20260907120000` was applied by hand and repaired, not pushed** — correctly, and recorded
-  nowhere. `supabase/CLAUDE.md` now says where such a thing gets said.
 
 ## Blocking — the question, and what it stops
 
+- **Q28** → who publishes a service version. Fell out of ADR-0026, blocks ADM-31, touches §13.
 - **Q27** → where a block's approval lives: in the trace at the cost of a `trace_version` bump
   across three runtimes, or beside it in a console table. Belongs with ADM-65.
 - **Q22–Q24** are commercial; the last — does the PoC charge — decides whether `entitlements` is
   on the critical path.
-- **Q28** → who publishes a service version; it fell out of answering Q25 (ADR-0026) and blocks ADM-31.
 - **Q20** → ADM-60's shape: a competence is the shop window, so its evidence is a public claim.
 - **Q15** → answered in practice by the MVP (tier 1 is `template` + `auto`); §14 has not closed it.
 - **Q9** → the hryvnia amounts. §8's annual-versus-monthly ambiguity is two facts, not one.
@@ -33,6 +31,8 @@ schedule — that half waits on a credential, not on code.
 - **Nothing runs or deploys an edge function automatically** — 2026-09-02. No `deno check` in CI,
   and nothing notices a function that is in the repository and not in the cloud.
 - **The cheap tier of §9.7 has nowhere to be stored** — 2026-09-07. Its date needs an act-level row.
+- **ADR-0026's `roles_available` gate is specified and unbuilt** — 2026-09-07. Until `check:sql`
+  holds it, one policy reintroduces the union the ADR refused.
 - **A new shared package needs three places and only a rule checks it** — 2026-09-02.
 - **`text_blank` is asserted by a test and by no probe** — 2026-09-02.
 - **A project that sees no files typechecks clean** — 2026-09-01. A missing workspace entry too.
@@ -51,8 +51,7 @@ schedule — that half waits on a credential, not on code.
    ADM-44's second half, and it closes the oldest thing now blocking work.
 2. **ADR-0026 phase 1** — `user_roles` and the token hook, behaviour unchanged; it closes
    ADR-0018's missing audit row on the way past.
-3. **ADM-45 — diff production and signal creation.** `decideProbe` says when one is owed; nothing
-   writes it.
+3. **ADM-45 — diff production and signal creation.** `decideProbe` says when one is owed.
 
 ## Detail lives in
 

@@ -13,7 +13,7 @@ hook enabled; the auth settings a stray `config push` moved were put back in the
 
 ## In flight
 
-- Nothing unmerged. `main` is green on CI; `cloud-ledger` is red for the credential reason below.
+- Nothing unmerged. `main` is green on CI and SQL; the cloud-ledger job is parked, see debts.
 
 ## Blocking — the question, and what it stops
 
@@ -28,22 +28,22 @@ hook enabled; the auth settings a stray `config push` moved were put back in the
 
 ## Debts — carried since
 
-- **`SUPABASE_ACCESS_TOKEN` in CI no longer links the project** — 2026-09-17. `cloud-ledger` is
-  red on `main` ("does not have the necessary privileges"); green on 09-07, and the ledger agrees.
+- **`cloud-ledger` is parked (`if: false` in `sql.yml`)** — 2026-09-17. Fine-grained tokens cannot
+  mint the login role; the way back is a DB password in CI. Until then: `migration repair` by hand.
 - **No edge-function secrets in the cloud** — 2026-09-01. A cron on `law-sweep` would 401 hourly.
 - **Nothing runs or deploys an edge function automatically** — 2026-09-02. No `deno check` in CI,
   and nothing notices a function that is in the repository and not in the cloud.
 - **The cheap tier of §9.7 has nowhere to be stored** — 2026-09-07. Its date needs an act-level row.
-- **A new shared package needs three places and only a rule checks it** — 2026-09-02.
-- **`text_blank` is asserted by a test and by no probe** — 2026-09-02.
+- **Two gate holes** — 2026-09-02: a new shared package needs three places and only a rule checks
+  it; `text_blank` is asserted by a test and by no probe.
 - **A project that sees no files typechecks clean** — 2026-09-01. A missing workspace entry too.
 - **`LAW_LIVE=1` is out of CI** — 2026-09-01, §9.15 condition 4. Last green run 2026-09-02.
 - **Nothing compares the cloud's schema against its migration** — 2026-09-02. The ledger is; and
   `check:cloud-ledger` prints a query where `db dump --linked` would print the answer — 2026-09-07.
 - **The CI token is wider than the gate it serves** — 2026-09-02. Read-write for a job that reads.
 - **No screen has been looked at since it changed** — 2026-08-28. Neither a task nor a decision.
-- **Nothing compares the domain tables against `seed.sql`** — 2026-08-28.
-- **`law_norms` carries per-watcher judgement on a shared row** — 2026-08-28.
+- **Two from 2026-08-28**: nothing compares the domain tables against `seed.sql`; `law_norms`
+  carries per-watcher judgement on a shared row.
 - The access-control review is **a standing condition, not a debt** — 2026-08-04. #74 joins its list.
 
 ## Next candidates

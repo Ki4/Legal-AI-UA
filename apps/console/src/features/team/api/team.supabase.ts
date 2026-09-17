@@ -61,9 +61,10 @@ export const supabaseTeamApi: TeamApi = {
 
     // Re-read rather than trust: `approve_user` returns void, and convention 5
     // asks a mutation for the updated entity. It writes to two places —
-    // `auth.users.app_metadata`, which is what access control reads, and
-    // `public.profiles.role`, which is the display mirror — so this select is
-    // also the only confirmation available that the mirror moved with it.
+    // `public.user_roles`, which the token hook mints the role from
+    // (ADR-0026), and `public.profiles.role`, which is the display mirror — so
+    // this select is also the only confirmation available that the mirror
+    // moved with it.
     const { data, error: readError } = await teamQuery().eq("id", memberId);
 
     if (readError) throw fromPostgrest(readError, "Reading back the approved member");

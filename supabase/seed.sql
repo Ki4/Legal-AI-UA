@@ -23,6 +23,14 @@ where id = '10000000-0000-0000-0000-000000000001';
 update public.profiles set full_name = 'Taras Bondarenko', role = 'lawyer'
 where id = '10000000-0000-0000-0000-000000000002';
 
+-- The profile is the display mirror; the role itself is a `user_roles` row
+-- (ADR-0026). The token hook reads this table and nothing else, so a seeded
+-- user whose role reached only the profile could sign in and do nothing.
+insert into public.user_roles (user_id, role) values
+  ('10000000-0000-0000-0000-000000000001', 'lawyer'),
+  ('10000000-0000-0000-0000-000000000002', 'lawyer')
+on conflict do nothing;
+
 -- Two areas across three services, deliberately: a catalogue where every service
 -- sits in the same area cannot demonstrate grouping, and one where each sits in
 -- its own cannot demonstrate a group with more than one card in it.
@@ -167,7 +175,7 @@ values
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-00000000000a',
    'authenticated', 'authenticated', 'admin@example.test',
    extensions.crypt('sandbox', extensions.gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"],"role":"admin"}'::jsonb, '{}'::jsonb, now(), now(),
+   '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now(),
    '', '', '', '', '', '', ''),
   -- A lawyer attached to no service at all, which is the only way to see the
   -- state §4.15 is careful about: an empty list that is the policy rather than
@@ -176,7 +184,7 @@ values
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-00000000000b',
    'authenticated', 'authenticated', 'unattached@example.test',
    extensions.crypt('sandbox', extensions.gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"],"role":"lawyer"}'::jsonb, '{}'::jsonb, now(), now(),
+   '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now(),
    '', '', '', '', '', '', '')
 on conflict (id) do nothing;
 
@@ -184,6 +192,11 @@ update public.profiles set full_name = 'Sandbox Admin', role = 'admin'
 where id = '10000000-0000-0000-0000-00000000000a';
 update public.profiles set full_name = 'Unattached Lawyer', role = 'lawyer'
 where id = '10000000-0000-0000-0000-00000000000b';
+
+insert into public.user_roles (user_id, role) values
+  ('10000000-0000-0000-0000-00000000000a', 'admin'),
+  ('10000000-0000-0000-0000-00000000000b', 'lawyer')
+on conflict do nothing;
 
 -- Olena gets a password too, and the reason is one specific screen.
 --
@@ -194,9 +207,9 @@ where id = '10000000-0000-0000-0000-00000000000b';
 -- to the service the orders sit on — and Olena is accountable for it, while
 -- `unattached@example.test` deliberately is not.
 --
--- Her role has to reach `app_metadata` as well as `profiles`: the JWT is what
--- `RequireAuth` and every policy read, and the profile row is the display
--- mirror (ADR-0018).
+-- Her role reached `user_roles` above, which is what the token hook mints the
+-- JWT from; the profile row is the display mirror (ADR-0018, ADR-0026). Nothing
+-- about the role is written here.
 -- `instance_id` is not decoration: GoTrue filters by it, and a row without one
 -- is answered "wrong email or password" no matter how correct the password is.
 -- The lawyers above were inserted with an id and an email and nothing else,
@@ -213,7 +226,7 @@ set instance_id = '00000000-0000-0000-0000-000000000000',
   updated_at = now(),
   aud = 'authenticated',
   role = 'authenticated',
-  raw_app_meta_data = '{"provider":"email","providers":["email"],"role":"lawyer"}'::jsonb,
+  raw_app_meta_data = '{"provider":"email","providers":["email"]}'::jsonb,
   confirmation_token = '',
   recovery_token = '',
   email_change = '',

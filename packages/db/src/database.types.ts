@@ -890,6 +890,24 @@ export type Database = {
           },
         ];
       };
+      user_roles: {
+        Row: {
+          granted_at: string;
+          role: string;
+          user_id: string;
+        };
+        Insert: {
+          granted_at?: string;
+          role: string;
+          user_id: string;
+        };
+        Update: {
+          granted_at?: string;
+          role?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -903,6 +921,7 @@ export type Database = {
         Args: { target_client: string; target_service: string };
         Returns: boolean;
       };
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json };
       effective_probe_interval: {
         Args: { target_norm: string };
         Returns: string;

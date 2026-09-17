@@ -2,7 +2,16 @@
 
 Migrations in `migrations/` are the only way the schema changes — for the cloud project and
 for every local sandbox alike. Nobody edits a database by hand; the single exception is the
-one-time first-admin bootstrap documented inside `20260730120000_auth_profiles.sql`.
+one-time first-admin bootstrap, which since ADR-0026 is one row rather than the jsonb update the
+header of `20260730120000_auth_profiles.sql` still shows:
+
+```sql
+insert into public.user_roles (user_id, role)
+select id, 'admin' from auth.users where email = 'YOUR_EMAIL';
+update public.profiles set role = 'admin' where email = 'YOUR_EMAIL';
+```
+
+No sign-out needed: the token hook re-reads the table on the next refresh.
 
 ## Local sandbox (Docker required)
 
@@ -70,10 +79,38 @@ in step with the filenames in `migrations/`. A version recorded there that was n
 worse than an unrecorded one: `db push` will skip it, and the schema silently lacks whatever it
 contained.
 
+## Roles reach the token through a hook
+
+A member's role is a `public.user_roles` row, and `auth.hook.custom_access_token` in `config.toml`
+points GoTrue at `public.custom_access_token_hook`, which stamps it into `app_metadata.role` on
+every token it signs (ADR-0026). Two consequences for the sandbox:
+
+- **A change to `config.toml`'s `[auth.*]` needs `supabase stop` and `start`, not `db reset`.**
+  `db reset` restarts the database; the auth container keeps the environment it booted with. The
+  day the hook landed, every token minted after `db reset` carried no role until the stack was
+  restarted, and nothing said why.
+- **`verify:sql` cannot prove GoTrue calls the hook**, only that the function behaves and that
+  `supabase_auth_admin` holds the privileges it needs. The proof is a sign-in against the running
+  stack, and it is one request:
+
+  ```bash
+  curl -s -X POST "http://127.0.0.1:54321/auth/v1/token?grant_type=password"     -H "apikey: <anon key from supabase status>" -H "Content-Type: application/json"     -d '{"email":"admin@example.test","password":"sandbox"}'
+  ```
+
+  Decode the middle segment of `access_token`: `app_metadata.role` must read `admin`. The `user`
+  object in the same response will **not** carry it — GoTrue builds that from the jsonb the role no
+  longer lives in — which is why the console reads its role from the token and not from
+  `session.user` (`apps/console/src/app/claims.ts`).
+
+In the cloud the hook is enabled by `supabase config push` after the migration is pushed; the
+migration's header records the order and what happens between the two steps.
+
 ## Seed
 
 `seed.sql` runs after migrations on every `db reset`. Invented data only — never real client
-names, emails, or case details.
+names, emails, or case details. The sandbox accounts (`admin@example.test`,
+`unattached@example.test`, `olena@example.test`, password `sandbox`) get their roles as
+`user_roles` rows, like everyone else.
 
 ## Edge functions
 

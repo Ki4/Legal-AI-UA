@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Static checks over supabase/. No database — that is `verify:sql`.
 //
-// Both checks here exist because of the same failure, seen twice in one day on
-// 2026-08-12: something new leaned on something old, and nothing noticed until a
-// person happened to add a check nearby.
+// The first two checks here exist because of the same failure, seen twice in
+// one day on 2026-08-12: something new leaned on something old, and nothing
+// noticed until a person happened to add a check nearby. The third and fourth
+// arrived later, for the reasons written beside them.
 //
 //   1. `repair_migration_ledger.sql` lists every migration by hand. It listed
 //      seven while the repository shipped eight, so running it would have
@@ -196,6 +197,40 @@ export function checkSql(root) {
             `and the diff that did it looks like a function being added rather than a branch removed.`,
         );
       }
+    }
+  }
+
+  // 4. The database never reads `roles_available` ------------------------------
+  //
+  // ADR-0026: the token carries one active role, which `jwt_role()` reads, and
+  // — from phase 2 — the set of roles the person could switch to, which only
+  // the console's switcher reads. A policy, a guard or a function written
+  // against `roles_available` would be union semantics smuggled back in, with
+  // both defects the ADR refused: a guard meaning "only a lawyer" that lets an
+  // admin-who-is-also-a-lawyer through, and an audit row with nothing single
+  // to record. It would look entirely reasonable in a diff.
+  //
+  // The one place the word belongs is the hook that mints the claim, so the
+  // body of `custom_access_token_hook` is exempt and nothing else is. The
+  // check is lexical on purpose: a comment mentioning the claim is a problem
+  // too, because the next reader copies what the comment describes.
+
+  for (const migration of migrations) {
+    const sql = readFileSync(resolve(migrationsDir, migration.file), "utf8");
+    if (!/roles_available/.test(sql)) continue;
+
+    const outsideHook = sql.replace(
+      /create or replace function public\.custom_access_token_hook[\s\S]*?\$\$[\s\S]*?\$\$;/g,
+      "",
+    );
+
+    if (/roles_available/.test(outsideHook)) {
+      problems.push(
+        `supabase/migrations/${migration.file}: mentions \`roles_available\` outside the token hook. ` +
+          `The database reads the active role and never the held set (ADR-0026) — a policy or guard ` +
+          `written against the set is union semantics, which the ADR refused because "only a lawyer" ` +
+          `stops meaning that and the audit log has nothing single to record.`,
+      );
     }
   }
 

@@ -178,6 +178,24 @@ bypassed says nothing about privileges, which is how this went unnoticed for thr
 the auth server rather than decoding the JWT, and it refuses an act-scoped norm and a normalizer
 bump rather than guessing at either.
 
+## A role is a `user_roles` row; the token carries one
+
+Since ADR-0026 the held roles live in `public.user_roles` and a custom access token hook stamps
+`app_metadata.role` into every token GoTrue signs. Three things follow for anything written here:
+
+- **`jwt_role()` is still the only thing a policy reads.** It returns the role the caller is acting
+  in, one value, exactly as before. A policy that wants "does this person hold X at all" is asking
+  the held set, and `pnpm check:sql` refuses a migration that reads the set's claim outside the
+  hook — that is union semantics, and the ADR explains what it breaks. `orders.sql:282` is the one
+  legitimate statement about a person rather than a capability, and phase 2 moves it to the table.
+- **`auth.users.raw_app_meta_data.role` is dead.** Nothing writes it, the backfill removed it, and
+  the hook removes a value found there from the claims rather than passing it on. A fixture that
+  puts a role in the jsonb is testing the world before 2026-09-17; put it in `user_roles`.
+- **`supabase_auth_admin` runs the hook and bypasses nothing.** It holds `execute` on the hook,
+  `select` on `user_roles` and a policy of its own. A table the hook comes to read in phase 2 needs
+  the same three, and `verify_approve_user.sql` scenario 15b is where that is asserted from the ACL,
+  because `postgres` cannot `set role` to the auth admin in a verification script.
+
 ## Every policy needs a verification scenario
 
 Not a paragraph in a PR description — a **script**, at `snippets/verify_<area>.sql`. It creates its

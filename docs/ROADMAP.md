@@ -10,6 +10,27 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the roles have a table, and the token has a hook (2026-09-17)
+
+**PR #74, #75, #76**: ADR-0026 phase 1 reached `main` and the cloud on the same day; the
+cloud-ledger gate was parked on purpose.
+
+- **A hook rewrites the claim, not the user.** GoTrue builds `session.user.app_metadata` from the
+  jsonb, so a console reading the role there saw "no role" for an admin whose token said `admin`.
+  The claims are what every policy reads, so the console now reads them too (`claims.ts`).
+- **A config file has a scope, and `config push` does not know it.** `supabase/config.toml` is the
+  local stack's configuration. Pushed to enable one hook, it carried `site_url`, the redirect list
+  and MFA with it, then failed on a paid-tier storage feature — and it applied `[auth]` before the
+  prompt, because stdin was not a terminal. Cloud auth settings are dashboard clicks.
+- **`db reset` restarts the database, not the auth container.** A `[auth.*]` change in
+  `config.toml` needs `supabase stop` and `start`, or every token minted afterwards is stale.
+- **A gate that is red for the wrong reason is worse than a parked one.** Fine-grained access
+  tokens cannot mint the login role `migration list --linked` needs; rather than a `main` that is
+  red while the ledger agrees, the job is `if: false` with a dated comment, a dated debt, and the
+  manual discipline written where a migration is applied.
+- **The gate caught its author first.** `check:sql` rule 4 refuses `roles_available` outside the
+  hook; its first catch was the header comment of the migration that introduced it.
+
 ## Done — a set of roles that activates one (2026-09-07b)
 
 **PR #71 merged and PR #72**: ADM-44's first half reached `main`, and Q25 got an answer that costs
@@ -55,28 +76,6 @@ first half — the batch query, and the sweeper that walks it — landed on a br
   and a schedule that 401s hourly is worse than none; no cheap tier, because the act's redaction
   date has nowhere to be stored. Both are debts with today's date, so the absence reads as a
   decision.
-
-## Done — the fetcher runs, and finds two ways it could not have (2026-09-02b)
-
-**PR #70**: `law-article` executed outside a compiler for the first time, three days after it
-landed. Docker had been down on the day it was written, so nothing had ever run it.
-
-- **A mount is a fact about a runtime that no compiler can see.** The edge runtime mounts
-  `supabase/functions` and nothing above it. Four tools agreed the import map into `packages/` was
-  fine — `tsc`, Vitest, the console, `deno run` on the host. The one that runs the code did not.
-- **Two copies drift only if both persist.** ADR-0024 rejected vendoring on that ground, and the
-  ground holds for a committed copy. One deleted and rebuilt by every command has no state to go
-  stale, so ADR-0025 adopts the rejected alternative in the form the rejection did not consider.
-- **A package joins the Deno copy on the day something imports it.** `core-client` was added ahead
-  of its first import and brought `schema-walk.ts`, which opens `node:fs` — a module that cannot
-  load, in a bundle nothing loads, waiting for whoever first wires the gateway up.
-- **Bypassing RLS says nothing about privileges.** `service_role` held `Dxtm` and none of the four
-  verbs: this repository's tables are owned by `postgres`, where the platform's default grants
-  never reach. `20260813120000` had written that down and named the gateway as what would come due.
-- **A comment becomes an invariant when it becomes a grant.** `fingerprint` is the adopt trigger's
-  and `origin` is not a probe's to assert — both were prose in `index.ts`, both are privileges now.
-- **A prediction is not a mechanism.** Both defects were foretold in writing, correctly and with a
-  date, by ADR-0024 and by a migration comment. Neither could notice the day it came true.
 
 ## Now — wave 1 (parallel, no file overlap)
 

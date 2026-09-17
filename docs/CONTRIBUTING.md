@@ -110,25 +110,31 @@ existed and nobody could see the shape of it. Here is the shape. Every migration
 changed a policy, a grant, or something `jwt_role()` reads, and every one was merged under this
 clause with no second human.
 
-| Migration                                  | What it decides                                                   | Its verification script           |
-| ------------------------------------------ | ----------------------------------------------------------------- | --------------------------------- |
-| `20260730120000_auth_profiles`             | roles, the JWT mirror, the first policies                         | `verify_approve_user.sql`         |
-| `20260801120000_explicit_client_grants`    | strips the default grants (ADR-0007)                              | `verify_grants.sql`               |
-| `20260811120000_catalogue_services`        | who reads and writes the catalogue                                | `verify_catalogue.sql`            |
-| `20260811130000_questionnaire_fields`      | the dictionary, admin and assigned lawyer                         | `verify_questionnaire_fields.sql` |
-| `20260811150000_audit_event_log`           | who may read the log, and who may never write it                  | `verify_audit_events.sql`         |
-| `20260811160000_service_assignments`       | what "assigned" means everywhere else                             | `verify_service_assignments.sql`  |
-| `20260812120000_practice_areas`            | reference data an admin edits at runtime                          | `verify_practice_areas.sql`       |
-| `20260813120000_explicit_sequence_grants`  | the half of ADR-0007 that was missed first time                   | `verify_grants.sql`               |
-| `20260814120000_approve_user_grants_only`  | ADR-0018: approval grants, never re-roles                         | `verify_approve_user.sql`         |
-| `20260814130000_client_identity`           | the table with no authorised reader at all                        | `verify_client_identity.sql`      |
-| `20260815120000_entitlements`              | who may see that somebody paid                                    | `verify_entitlements.sql`         |
-| `20260815130000_orders`                    | the lifecycle, and who may move it                                | `verify_orders.sql`               |
-| `20260815140000_law_norm_register`         | a shared register both staff roles read                           | `verify_law_refs.sql`             |
-| `20260917120000_user_roles_and_token_hook` | ADR-0026 phase 1: the held set, and the hook that mints the claim | `verify_approve_user.sql`         |
+| Migration                                        | What it decides                                                   | Its verification script           |
+| ------------------------------------------------ | ----------------------------------------------------------------- | --------------------------------- |
+| `20260730120000_auth_profiles`                   | roles, the JWT mirror, the first policies                         | `verify_approve_user.sql`         |
+| `20260801120000_explicit_client_grants`          | strips the default grants (ADR-0007)                              | `verify_grants.sql`               |
+| `20260811120000_catalogue_services`              | who reads and writes the catalogue                                | `verify_catalogue.sql`            |
+| `20260811130000_questionnaire_fields`            | the dictionary, admin and assigned lawyer                         | `verify_questionnaire_fields.sql` |
+| `20260811150000_audit_event_log`                 | who may read the log, and who may never write it                  | `verify_audit_events.sql`         |
+| `20260811160000_service_assignments`             | what "assigned" means everywhere else                             | `verify_service_assignments.sql`  |
+| `20260812120000_practice_areas`                  | reference data an admin edits at runtime                          | `verify_practice_areas.sql`       |
+| `20260813120000_explicit_sequence_grants`        | the half of ADR-0007 that was missed first time                   | `verify_grants.sql`               |
+| `20260814120000_approve_user_grants_only`        | ADR-0018: approval grants, never re-roles                         | `verify_approve_user.sql`         |
+| `20260814130000_client_identity`                 | the table with no authorised reader at all                        | `verify_client_identity.sql`      |
+| `20260815120000_entitlements`                    | who may see that somebody paid                                    | `verify_entitlements.sql`         |
+| `20260815130000_orders`                          | the lifecycle, and who may move it                                | `verify_orders.sql`               |
+| `20260815140000_law_norm_register`               | a shared register both staff roles read                           | `verify_law_refs.sql`             |
+| `20260828120000_document_blocks`                 | a version's blocks, read and written like it                      | `verify_document_blocks.sql`      |
+| `20260830120000_law_norm_revisions`              | what the fetcher may write, and who may read it                   | `verify_law_revisions.sql`        |
+| `20260830130000_law_signals`                     | raised only by the fetcher, triaged column by column              | `verify_law_signals.sql`          |
+| `20260902120000_law_fetcher_service_role_grants` | the privileges `service_role` never had                           | `verify_law_revisions.sql`        |
+| `20260907120000_law_norms_due_for_probe`         | the sweeper's batch query, as a grant                             | `verify_law_due.sql`              |
+| `20260917120000_user_roles_and_token_hook`       | ADR-0026 phase 1: the held set, and the hook that mints the claim | `verify_approve_user.sql`         |
 
-Fourteen migrations and the scripts between them — which is the substitute doing its job and is
-**not** the review. What a script cannot ask is the question a reviewer asks: not
+Nineteen migrations and the scripts between them — which is the substitute doing its job and is
+**not** the review. Five of the rows were added on 2026-09-17, a month after the last one added in
+step: nothing holds this table to `supabase/migrations/`, and it had quietly stopped. What a script cannot ask is the question a reviewer asks: not
 "does this policy do what it says", but "is this the right policy, and what does it let through that
 nobody thought to test". `verify_grants.sql` scenario 7 is the shape of the answer arriving late —
 it sweeps every table for `anon` privileges, and it was written six weeks after the grants it checks.

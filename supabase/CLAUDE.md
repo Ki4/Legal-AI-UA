@@ -64,6 +64,15 @@ Since 2026-09-02 something asks rather than nobody: `pnpm check:cloud-ledger` co
 `supabase migration list --linked` against the files, on every push to `main`. It found the same
 drift a second time on the day it was written.
 
+**Parked since 2026-09-17 — read this before applying a migration.** The CI job is `if: false`
+(the comment above it in `.github/workflows/sql.yml` says why: fine-grained access tokens cannot
+mint the login role the CLI needs without a database password). While it is parked, nothing in CI
+watches the cloud, so the discipline is manual and belongs to the same session that applies a
+migration: the product owner runs the file in the SQL editor, and the assistant then runs
+`pnpm exec supabase migration repair --status applied <version>` and confirms with
+`migration list --linked` — the local CLI is linked and holds a token that can. A migration applied
+and not repaired is exactly the drift the job was written for, now with nothing to catch it.
+
 **It compares the ledger, not the schema, and that difference is the whole trap.** A migration run
 by hand through the dashboard's SQL editor leaves the objects in place and no ledger row, so the
 checker reports it identically to one that was never applied anywhere. The two need opposite

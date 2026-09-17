@@ -97,8 +97,23 @@ jobs:
   # than a skip: see the comment at the top of `check-cloud-ledger.mjs`. A gate
   # that quietly skips itself in CI is the defect this repository has recorded
   # twice under other names.
+  #
+  # PARKED 2026-09-17, deliberately — not skipped by accident. The fine-grained
+  # access tokens Supabase now issues cannot create the temporary login role
+  # `migration list --linked` needs without a database password (403 on
+  # "Initialising login role", even with Database JIT write); the legacy token
+  # that could has been retired. The two ways back are a `SUPABASE_DB_PASSWORD`
+  # secret (a full database credential in CI — wider than the read the job does)
+  # or a token permission set that opens the login-role endpoint, which nobody
+  # has found yet. Until one is chosen the job would be red for a credential
+  # reason while the ledger itself agrees, and a `main` that is red when the
+  # work is right teaches everyone to stop looking — which is the failure this
+  # job exists to catch. Meanwhile the ledger is kept by hand: every migration
+  # applied through the SQL editor is followed by `migration repair` in the same
+  # session (supabase/CLAUDE.md), and docs/STATE.md carries this as a dated debt
+  # so it cannot quietly become permanent. Re-enable by deleting `false &&`.
   cloud-ledger:
-    if: github.event_name != 'pull_request'
+    if: false && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

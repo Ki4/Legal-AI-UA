@@ -38,12 +38,21 @@
 -- read from the access token's claims and not from `session.user.app_metadata`,
 -- which GoTrue builds from the jsonb — see `apps/console/src/app/claims.ts`.
 --
--- Deploying this to the cloud is two steps and the order matters: `db push`
--- first, then `supabase config push` to enable the hook. Between them a
--- freshly minted token carries no role and the console shows the pending
--- screen; existing tokens keep working until they refresh. The other order
--- fails louder — a hook pointing at a function that does not exist yet is a
--- sign-in error for everyone — and neither order needs a user to sign out.
+-- Deploying this to the cloud is two steps and the order matters: the
+-- migration first, then enabling the hook — Dashboard, Authentication, Hooks,
+-- "Customize Access Token (JWT) Claims", Postgres function
+-- `public.custom_access_token_hook`. Between them a freshly minted token
+-- carries no role and the console shows the pending screen; existing tokens
+-- keep working until they refresh. The other order fails louder — a hook
+-- pointing at a function that does not exist yet is a sign-in error for
+-- everyone — and neither order needs a user to sign out.
+--
+-- Not `supabase config push`. It pushes the whole of `config.toml`, and that
+-- file is the *local* stack's configuration — its `site_url`, its redirect
+-- list, its MFA and rate-limit settings — so the hook would arrive with a
+-- dozen other changes nobody reviewed. Found on 2026-09-17 by doing exactly
+-- that: the `[auth]` section went up in one piece, and the `[storage]`
+-- section then failed on a paid-tier feature.
 
 -- The held set --------------------------------------------------------------
 

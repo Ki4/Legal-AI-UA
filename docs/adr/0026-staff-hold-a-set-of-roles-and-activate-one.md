@@ -81,7 +81,9 @@ audit log and to every join, and would leave that debt exactly where it is.
 The claim is written by a Supabase **custom access token hook**, declared in `supabase/config.toml`
 so the local stack, the SQL job in CI and the cloud all mint the same token. The hook is the
 documented mechanism for this and it re-runs on refresh, so a role change propagates without a
-forced sign-out.
+forced sign-out. (Phase 1, 2026-09-17: "declared in `config.toml`" holds for the local stack and
+CI; the cloud is enabled in the dashboard, because `config push` carries the whole file and the
+file is local configuration — `supabase/README.md` has the detail.)
 
 **4. The token also carries `roles_available`, and the database may never read it.** The switcher in
 `AppShell` has to know what the person can switch to; nothing else does. A policy written against

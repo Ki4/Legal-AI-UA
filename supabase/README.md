@@ -102,8 +102,13 @@ every token it signs (ADR-0026). Two consequences for the sandbox:
   longer lives in — which is why the console reads its role from the token and not from
   `session.user` (`apps/console/src/app/claims.ts`).
 
-In the cloud the hook is enabled by `supabase config push` after the migration is pushed; the
-migration's header records the order and what happens between the two steps.
+In the cloud the hook is enabled in the dashboard — Authentication → Hooks → Customize Access
+Token (JWT) Claims → Postgres function `public.custom_access_token_hook` — after the migration is
+in; the migration's header records the order and what happens between the two steps. **Not by
+`supabase config push`**: that pushes the whole of `config.toml`, which is the local stack's
+configuration, and every `[auth]` value in it lands on the cloud project together with the hook.
+It was run once, on 2026-09-17, before that was understood; the cloud's `site_url`,
+`additional_redirect_urls`, MFA and email-frequency settings have been the local file's since.
 
 ## Seed
 

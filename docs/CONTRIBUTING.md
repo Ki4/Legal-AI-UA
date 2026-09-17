@@ -110,24 +110,25 @@ existed and nobody could see the shape of it. Here is the shape. Every migration
 changed a policy, a grant, or something `jwt_role()` reads, and every one was merged under this
 clause with no second human.
 
-| Migration                                 | What it decides                                  | Its verification script           |
-| ----------------------------------------- | ------------------------------------------------ | --------------------------------- |
-| `20260730120000_auth_profiles`            | roles, the JWT mirror, the first policies        | `verify_approve_user.sql`         |
-| `20260801120000_explicit_client_grants`   | strips the default grants (ADR-0007)             | `verify_grants.sql`               |
-| `20260811120000_catalogue_services`       | who reads and writes the catalogue               | `verify_catalogue.sql`            |
-| `20260811130000_questionnaire_fields`     | the dictionary, admin and assigned lawyer        | `verify_questionnaire_fields.sql` |
-| `20260811150000_audit_event_log`          | who may read the log, and who may never write it | `verify_audit_events.sql`         |
-| `20260811160000_service_assignments`      | what "assigned" means everywhere else            | `verify_service_assignments.sql`  |
-| `20260812120000_practice_areas`           | reference data an admin edits at runtime         | `verify_practice_areas.sql`       |
-| `20260813120000_explicit_sequence_grants` | the half of ADR-0007 that was missed first time  | `verify_grants.sql`               |
-| `20260814120000_approve_user_grants_only` | ADR-0018: approval grants, never re-roles        | `verify_approve_user.sql`         |
-| `20260814130000_client_identity`          | the table with no authorised reader at all       | `verify_client_identity.sql`      |
-| `20260815120000_entitlements`             | who may see that somebody paid                   | `verify_entitlements.sql`         |
-| `20260815130000_orders`                   | the lifecycle, and who may move it               | `verify_orders.sql`               |
-| `20260815140000_law_norm_register`        | a shared register both staff roles read          | `verify_law_refs.sql`             |
+| Migration                                  | What it decides                                                   | Its verification script           |
+| ------------------------------------------ | ----------------------------------------------------------------- | --------------------------------- |
+| `20260730120000_auth_profiles`             | roles, the JWT mirror, the first policies                         | `verify_approve_user.sql`         |
+| `20260801120000_explicit_client_grants`    | strips the default grants (ADR-0007)                              | `verify_grants.sql`               |
+| `20260811120000_catalogue_services`        | who reads and writes the catalogue                                | `verify_catalogue.sql`            |
+| `20260811130000_questionnaire_fields`      | the dictionary, admin and assigned lawyer                         | `verify_questionnaire_fields.sql` |
+| `20260811150000_audit_event_log`           | who may read the log, and who may never write it                  | `verify_audit_events.sql`         |
+| `20260811160000_service_assignments`       | what "assigned" means everywhere else                             | `verify_service_assignments.sql`  |
+| `20260812120000_practice_areas`            | reference data an admin edits at runtime                          | `verify_practice_areas.sql`       |
+| `20260813120000_explicit_sequence_grants`  | the half of ADR-0007 that was missed first time                   | `verify_grants.sql`               |
+| `20260814120000_approve_user_grants_only`  | ADR-0018: approval grants, never re-roles                         | `verify_approve_user.sql`         |
+| `20260814130000_client_identity`           | the table with no authorised reader at all                        | `verify_client_identity.sql`      |
+| `20260815120000_entitlements`              | who may see that somebody paid                                    | `verify_entitlements.sql`         |
+| `20260815130000_orders`                    | the lifecycle, and who may move it                                | `verify_orders.sql`               |
+| `20260815140000_law_norm_register`         | a shared register both staff roles read                           | `verify_law_refs.sql`             |
+| `20260917120000_user_roles_and_token_hook` | ADR-0026 phase 1: the held set, and the hook that mints the claim | `verify_approve_user.sql`         |
 
-Thirteen migrations, thirteen scripts, 252 scenarios between them — which is the substitute doing
-its job and is **not** the review. What a script cannot ask is the question a reviewer asks: not
+Fourteen migrations and the scripts between them — which is the substitute doing its job and is
+**not** the review. What a script cannot ask is the question a reviewer asks: not
 "does this policy do what it says", but "is this the right policy, and what does it let through that
 nobody thought to test". `verify_grants.sql` scenario 7 is the shape of the answer arriving late —
 it sweeps every table for `anon` privileges, and it was written six weeks after the grants it checks.
@@ -245,9 +246,10 @@ and the file is the evidence.
 
 ## Roles (reference)
 
-`admin` and `lawyer` roles live in JWT `app_metadata`, set server-side only via the `approve_user`
-RPC (`supabase/migrations/20260730120000_auth_profiles.sql`). `user_metadata` is user-editable
-and must never gate access. "Main admin" (the first admin, bootstrapped manually — see the
-comment at the top of the auth migration) is an organizational fact, not a third role. A
+`admin` and `lawyer` roles are `public.user_roles` rows, granted server-side only via the
+`approve_user` RPC, and reach the JWT's `app_metadata` through the access token hook (ADR-0026,
+`supabase/migrations/20260917120000_user_roles_and_token_hook.sql`). `user_metadata` is
+user-editable and must never gate access. "Main admin" (the first admin, bootstrapped manually —
+see `supabase/README.md`) is an organizational fact, not a third role. A
 `superadmin` role is a deliberate deferral: add it only when a real capability exists that only
 one person may hold, not preemptively.

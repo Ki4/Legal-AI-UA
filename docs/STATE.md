@@ -1,18 +1,18 @@
-# State — 2026-09-07b, the roles decide their own shape
+# State — 2026-09-17, the roles have a table and the token has a hook
 
-Written at `878fc16` on `main`, nothing unmerged. If `git log` shows commits after it, this file
-is behind: trust git.
+Written on `sergey/adr-0026-phase-1` (PR #74) ahead of its merge. If `git log` shows commits after
+#74, this file is behind: trust git.
 
 Tier 1: **the only document a session reads to orient.** `pnpm docs:check` caps it at 60 lines.
 
 ## Wave
 
-Wave 1. #71 merged — ADM-44's first half; nothing sweeps on a schedule, and that half waits on a
-credential, not code. #72 — ADR-0026 answers Q25, still a decision and not a migration.
+Wave 1. PR #74 is ADR-0026 phase 1: `user_roles`, the access token hook, `approve_user` on the
+table, the audit row ADR-0018 left missing, and `check:sql` rule 4. In the cloud, by hand, complete.
 
 ## In flight
 
-- Nothing unmerged; `main` green on CI and SQL, cloud ledger agrees at 19.
+- **PR #74** — green on CI and SQL, awaiting merge; the cloud already holds its migration.
 
 ## Blocking — the question, and what it stops
 
@@ -27,12 +27,13 @@ credential, not code. #72 — ADR-0026 answers Q25, still a decision and not a m
 
 ## Debts — carried since
 
+- **The cloud's auth config is the local `config.toml`'s** — 2026-09-17. `config push`, run to
+  preview, applied `[auth]` whole: `site_url` → `localhost:5173`, a redirect URL, MFA TOTP off,
+  one `[auth.email]` hunk unseen. Revert is three dashboard settings; the hook stays on.
 - **No edge-function secrets in the cloud** — 2026-09-01. A cron on `law-sweep` would 401 hourly.
 - **Nothing runs or deploys an edge function automatically** — 2026-09-02. No `deno check` in CI,
   and nothing notices a function that is in the repository and not in the cloud.
 - **The cheap tier of §9.7 has nowhere to be stored** — 2026-09-07. Its date needs an act-level row.
-- **ADR-0026's `roles_available` gate is specified and unbuilt** — 2026-09-07. Until `check:sql`
-  holds it, one policy reintroduces the union the ADR refused.
 - **A new shared package needs three places and only a rule checks it** — 2026-09-02.
 - **`text_blank` is asserted by a test and by no probe** — 2026-09-02.
 - **A project that sees no files typechecks clean** — 2026-09-01. A missing workspace entry too.
@@ -43,15 +44,15 @@ credential, not code. #72 — ADR-0026 answers Q25, still a decision and not a m
 - **No screen has been looked at since it changed** — 2026-08-28. Neither a task nor a decision.
 - **Nothing compares the domain tables against `seed.sql`** — 2026-08-28.
 - **`law_norms` carries per-watcher judgement on a shared row** — 2026-08-28.
-- The access-control review is **a standing condition, not a debt** — recorded 2026-08-04.
+- The access-control review is **a standing condition, not a debt** — 2026-08-04. #74 joins its list.
 
 ## Next candidates
 
-1. **A service-role secret in the cloud, then deploy both functions and schedule the sweep.**
-   ADM-44's second half, and it closes the oldest thing now blocking work.
-2. **ADR-0026 phase 1** — `user_roles` and the token hook, behaviour unchanged; it closes
-   ADR-0018's missing audit row on the way past.
-3. **ADM-45 — diff production and signal creation.** `decideProbe` says when one is owed.
+1. **Walk the ten screens in a browser** — the 08-28 debt. Sandbox accounts are in `supabase/README.md`.
+2. **A service-role secret in the cloud, then deploy both functions and schedule the sweep.**
+   ADM-44's second half, and the oldest thing now blocking work.
+3. **ADR-0026 phase 2** — `active_role`, the switcher, `orders.sql:282` onto the held set. Rule 4
+   already waits for the hook that mints the second claim.
 
 ## Detail lives in
 

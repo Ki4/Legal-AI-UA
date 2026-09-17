@@ -279,3 +279,62 @@ describe("3. the surviving audit_change knows every audited table", () => {
     expect(found).toHaveLength(1);
   });
 });
+
+describe("4. the database never reads roles_available", () => {
+  const MIGRATION = "20260101120000_roles.sql";
+
+  const HOOK = [
+    "create or replace function public.custom_access_token_hook (event jsonb)",
+    "returns jsonb",
+    "language plpgsql",
+    "stable",
+    "as $$",
+    "begin",
+    "  return jsonb_set(event, '{claims,roles_available}', '[]'::jsonb);",
+    "end;",
+    "$$;",
+    "",
+  ].join("\n");
+
+  const POLICY = [
+    'create policy "orders_review_any_held" on public.orders',
+    "  for update to authenticated",
+    "  using ((auth.jwt () -> 'roles_available') ? 'lawyer');",
+    "",
+  ].join("\n");
+
+  it("passes a migration that does not mention the claim", () => {
+    const bodies = { [MIGRATION]: "select public.jwt_role ();\n" };
+    expect(problems({ migrations: [MIGRATION], bodies })).toEqual([]);
+  });
+
+  it("passes the hook that mints the claim", () => {
+    const bodies = { [MIGRATION]: HOOK };
+    expect(problems({ migrations: [MIGRATION], bodies })).toEqual([]);
+  });
+
+  // The defect ADR-0026 refused, in the form it would arrive: one policy that
+  // asks the held set rather than the active role, and reads perfectly well.
+  it("fails a policy written against the held set", () => {
+    const bodies = { [MIGRATION]: POLICY };
+    const found = matching(problems({ migrations: [MIGRATION], bodies }), "roles_available");
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain(MIGRATION);
+    expect(found[0]).toContain("ADR-0026");
+  });
+
+  it("fails the policy even when the hook is in the same file", () => {
+    // The exemption is the hook's body, not the file the hook lives in.
+    const bodies = { [MIGRATION]: HOOK + POLICY };
+    expect(matching(problems({ migrations: [MIGRATION], bodies }), "roles_available")).toHaveLength(
+      1,
+    );
+  });
+
+  it("fails a comment that names the claim, because the next reader copies it", () => {
+    const bodies = { [MIGRATION]: "-- compare against roles_available here\nselect 1;\n" };
+    expect(matching(problems({ migrations: [MIGRATION], bodies }), "roles_available")).toHaveLength(
+      1,
+    );
+  });
+});

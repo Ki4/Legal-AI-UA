@@ -691,6 +691,14 @@ export const PROBES = [
     to: `      if (false) {`,
   },
   {
+    id: "held-set-reaches-a-policy",
+    what: "stops refusing a migration that reads roles_available outside the token hook, so union semantics can come back one policy at a time",
+    file: "scripts/check-sql.mjs",
+    test: "scripts/check-sql.test.mjs",
+    from: `    if (/roles_available/.test(outsideHook)) {`,
+    to: `    if (false) {`,
+  },
+  {
     id: "parser-accepts-any-article-heading",
     what: "matches the first article heading instead of the one asked for, so renumbering makes the fetcher track the neighbouring provision forever",
     file: "packages/law-refs/src/rada.ts",

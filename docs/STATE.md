@@ -1,18 +1,19 @@
 # State — 2026-09-17, the roles have a table and the token has a hook
 
-Written on `sergey/adr-0026-phase-1` (PR #74) ahead of its merge. If `git log` shows commits after
-#74, this file is behind: trust git.
+Written at `b47439a` on `main` (PR #74 merged). If `git log` shows commits after it, this file is
+behind: trust git.
 
 Tier 1: **the only document a session reads to orient.** `pnpm docs:check` caps it at 60 lines.
 
 ## Wave
 
 Wave 1. PR #74 is ADR-0026 phase 1: `user_roles`, the access token hook, `approve_user` on the
-table, the audit row ADR-0018 left missing, and `check:sql` rule 4. In the cloud, by hand, complete.
+table, the audit row ADR-0018 left missing, and `check:sql` rule 4. In the cloud by hand, complete,
+hook enabled; the auth settings a stray `config push` moved were put back in the dashboard.
 
 ## In flight
 
-- **PR #74** — green on CI and SQL, awaiting merge; the cloud already holds its migration.
+- Nothing unmerged. `main` is green on CI; `cloud-ledger` is red for the credential reason below.
 
 ## Blocking — the question, and what it stops
 
@@ -27,9 +28,8 @@ table, the audit row ADR-0018 left missing, and `check:sql` rule 4. In the cloud
 
 ## Debts — carried since
 
-- **The cloud's auth config is the local `config.toml`'s** — 2026-09-17. `config push`, run to
-  preview, applied `[auth]` whole: `site_url` → `localhost:5173`, a redirect URL, MFA TOTP off,
-  one `[auth.email]` hunk unseen. Revert is three dashboard settings; the hook stays on.
+- **`SUPABASE_ACCESS_TOKEN` in CI no longer links the project** — 2026-09-17. `cloud-ledger` is
+  red on `main` ("does not have the necessary privileges"); green on 09-07, and the ledger agrees.
 - **No edge-function secrets in the cloud** — 2026-09-01. A cron on `law-sweep` would 401 hourly.
 - **Nothing runs or deploys an edge function automatically** — 2026-09-02. No `deno check` in CI,
   and nothing notices a function that is in the repository and not in the cloud.

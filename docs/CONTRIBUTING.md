@@ -42,6 +42,11 @@ zone owner's review, regardless of the review matrix below.
 - One PR = one module. Keep it small — roughly 400 lines max. Split larger work into a sequence
   of PRs rather than one big one.
 - Commit messages follow Conventional Commits; `commitlint` enforces this locally via Husky.
+- **A PR description is re-read before merge, and a new gate runs once off `main` first.** A body is
+  a claim, and a later commit on the same branch can falsify it — #69's said the cloud lacked the
+  tables and that `db push` would close it, and it stood wrong until it was rewritten (2026-09-02).
+  A gate whose first real execution is the merge is a gate tested on production; `workflow_dispatch`
+  on the branch is what it is for.
 
 **Do not stack pull requests.** The 2026-08-04 journal concluded that stacking is safe if the base
 branch is deleted on merge. Tried on 2026-08-11 with four stacked PRs, and it is not: deleting the

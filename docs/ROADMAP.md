@@ -10,6 +10,27 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — a set of roles that activates one (2026-09-07b)
+
+**PR #71 merged and PR #72**: ADM-44's first half reached `main`, and Q25 got an answer that costs
+the 88 sites nothing.
+
+- **A ledger disagreement has three branches, and the cheap one was not the case.**
+  `20260907120000` had been applied through the SQL editor completely and correctly and recorded
+  nowhere, so `db push` died on an index that already existed. `migration repair` was right, and
+  finding that out cost a Docker start and a `db dump --linked` — which is also the command that
+  could have printed the answer without being asked.
+- **A union is not the only way to make roles plural, and it is the expensive way.** Four of the 88
+  `jwt_role()` sites are guards where `= 'lawyer'` means _only_ a lawyer; under a union an advocate
+  who also holds `admin` is refused a change they are entitled to make, with valid SQL and green
+  tests. Holding a set and activating one role leaves all 88 alone.
+- **An append-only column cannot be rescued afterwards.** `audit_events.actor_role` records the role
+  at the moment of the write, and ADR-0010 means it is never restated. A set in the token gives it
+  nothing to record, so the shape had to be chosen before the first row rather than after.
+- **An answer can collide with a decision already recorded.** Asked who should publish a service,
+  the product owner's answer was the senior-versus-junior split §13 had explicitly rejected. It
+  became Q28 with a recommended answer, not a silent rewrite of §13.
+
 ## Done — the register says what is due (2026-09-07)
 
 **PR #70 merged and PR #71 opened**: the migration reached the cloud before the merge, and ADM-44's
@@ -56,28 +77,6 @@ landed. Docker had been down on the day it was written, so nothing had ever run 
   and `origin` is not a probe's to assert — both were prose in `index.ts`, both are privileges now.
 - **A prediction is not a mechanism.** Both defects were foretold in writing, correctly and with a
   date, by ADR-0024 and by a migration comment. Neither could notice the day it came true.
-
-## Done — the cloud is asked, and made to agree (2026-09-02)
-
-**PRs #68 and #69**: the two rules this repository followed without writing down, and the first gate
-that looks outside the repository.
-
-- **A missing ledger row does not mean a missing schema.** `migration list` compares the ledger, not
-  the database. A migration run through the dashboard's SQL editor leaves every object in place and
-  no row, and reports identically to one that never ran anywhere — while `db push` closes the second
-  and dies on the first. Both of ADM-42's tables were the first case.
-- **So the gate stops prescribing where it cannot know.** The message for that direction names both
-  causes and sends the reader to the schema query; the other direction, where the evidence is
-  unambiguous, still directs. A probe restores the old prescription, so the test is held to it.
-- **A PR body is falsified by its own branch.** #69's description said the cloud lacked the tables
-  and `db push` would close it. A later commit on the same branch proved otherwise, and the body
-  stood wrong until it was rewritten before merge. A description is a claim, and claims decay.
-- **The gate cost more privilege than it uses.** `migration list --linked` mints a login role
-  through a POST endpoint, so read-only tokens get 403 — proved twice in CI before widening. The CI
-  secret now carries `Database: Read-write` for a job that only reads; it is a debt in STATE.
-- **The first run of a gate belongs somewhere other than `main`.** `workflow_dispatch` on the branch
-  ran the job for real while the PR's own copy stayed skipped, so three failed attempts cost
-  nothing. A gate whose first real execution is the merge is a gate tested on production.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -173,8 +172,9 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
   link normalisation is not text normalisation, and neither is a fingerprint store. The fetcher landed with its §9.15 safety conditions as PR #67 on
   2026-09-01 — ADM-42 and ADM-43's network half, entry-time confirmation included. Still here:
   ADM-50, triage, the calendar and the health surfaces (ADM-45…49, ADM-51…53), and ADM-22…24 on
-  the register. ADM-44 is half done as PR #71 — the batch query and the sweeper exist; nothing
-  calls them on a schedule, and that half waits on a cloud credential rather than on code. It was sequenced after the
+  the register. ADM-44 is half done and merged as PR #71 on 2026-09-07 — the batch query and the
+  sweeper exist; nothing calls them on a schedule, and that half waits on a cloud credential rather
+  than on code. It was sequenced after the
   authoring loop and was not built there — going first is what surfaced ADR-0020. The publication
   feed remains deliberately neither built nor bought.
 - GDPR P1: data export, account deletion as anonymization, retention cron, subprocessor list.

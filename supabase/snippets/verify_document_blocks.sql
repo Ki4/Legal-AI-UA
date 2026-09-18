@@ -74,10 +74,11 @@ values
    'draft', 'template', 'auto');
 
 insert into public.service_versions
-  (id, service_id, version, status, generation_mode, review_mode, published_at, published_by)
+  (id, service_id, version, status, generation_mode, review_mode, published_at, published_by,
+   released_at)
 values
   ('00000000-0000-0000-0000-0000000bc002', '00000000-0000-0000-0000-0000000ba001', 2,
-   'published', 'template', 'auto', now(), '00000000-0000-0000-0000-0000000b001a');
+   'published', 'template', 'auto', now(), '00000000-0000-0000-0000-0000000b001a', now());
 
 -- The shape of a block (§4.5, §5.1) ----------------------------------------------
 
@@ -222,7 +223,7 @@ begin
           'closing', 'Closing', 'Signed at...');
 
   update public.service_versions
-  set status = 'published', published_at = now(),
+  set status = 'published', published_at = now(), released_at = now(),
       published_by = '00000000-0000-0000-0000-0000000b001a'
   where id = '00000000-0000-0000-0000-0000000bc004';
 

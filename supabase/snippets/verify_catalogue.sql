@@ -44,7 +44,8 @@ begin
   set local role postgres;
 
   ------------------------------------------------------------------ 1. publish
-  update public.service_versions set status = 'published'
+  -- Sale requires a signature (ADR-0027); the fixture stamps one out of band.
+  update public.service_versions set status = 'published', released_at = now()
   where id = '00000000-0000-0000-0000-0000000000c1';
 
   select published_at is not null
@@ -88,7 +89,7 @@ begin
   end;
 
   ------------------------------------ 6. publishing v2 archives the live slot
-  update public.service_versions set status = 'published'
+  update public.service_versions set status = 'published', released_at = now()
   where id = '00000000-0000-0000-0000-0000000000c2';
 
   select status = 'archived' into ok
@@ -108,7 +109,7 @@ begin
   values ('00000000-0000-0000-0000-0000000000c3', '00000000-0000-0000-0000-0000000000b2', 1,
           'template', 'auto');
   begin
-    update public.service_versions set status = 'published'
+    update public.service_versions set status = 'published', released_at = now()
     where id = '00000000-0000-0000-0000-0000000000c3';
     raise notice 'FAIL 7. published a service with no assigned lawyer';
   exception when others then

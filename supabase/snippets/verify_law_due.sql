@@ -160,7 +160,7 @@ begin
     ('00000000-0000-0000-0000-0000000ed001', '00000000-0000-0000-0000-0000000ea001',
      '00000000-0000-0000-0000-0000000ec005', 'the transitional provision');
 
-  update public.service_versions set status = 'published'
+  update public.service_versions set status = 'published', released_at = now()
   where id = '00000000-0000-0000-0000-0000000eb001';
 
   select count(*) into n from public.law_norms_due_for_probe (50)

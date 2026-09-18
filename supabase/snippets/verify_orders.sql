@@ -69,13 +69,14 @@ insert into public.service_assignments (service_id, lawyer_id, is_primary) value
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000001b', true),
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-00000000001b', true);
 
-insert into public.service_versions (id, service_id, version, status, generation_mode, review_mode) values
+insert into public.service_versions
+  (id, service_id, version, status, generation_mode, review_mode, released_at) values
   ('00000000-0000-0000-0000-00000000abc1', '00000000-0000-0000-0000-0000000000a1', 1,
-   'published', 'template', 'auto'),
+   'published', 'template', 'auto', now()),
   ('00000000-0000-0000-0000-00000000abc2', '00000000-0000-0000-0000-0000000000a2', 1,
-   'published', 'full_generation', 'lawyer_required'),
+   'published', 'full_generation', 'lawyer_required', now()),
   ('00000000-0000-0000-0000-00000000abc3', '00000000-0000-0000-0000-0000000000a1', 2,
-   'draft', 'template', 'auto');
+   'draft', 'template', 'auto', null);
 
 insert into public.clients (id) values
   ('00000000-0000-0000-0000-0000000000d1'),

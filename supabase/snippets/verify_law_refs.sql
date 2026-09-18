@@ -71,11 +71,12 @@ insert into public.service_assignments (service_id, lawyer_id, is_primary) value
   ('00000000-0000-0000-0000-0000000fa001', '00000000-0000-0000-0000-0000000f001b', true),
   ('00000000-0000-0000-0000-0000000fa002', '00000000-0000-0000-0000-0000000f001d', true);
 
-insert into public.service_versions (id, service_id, version, status, generation_mode, review_mode) values
+insert into public.service_versions
+  (id, service_id, version, status, generation_mode, review_mode, released_at) values
   ('00000000-0000-0000-0000-0000000fb001', '00000000-0000-0000-0000-0000000fa001', 1,
-   'published', 'template', 'auto'),
+   'published', 'template', 'auto', now()),
   ('00000000-0000-0000-0000-0000000fb002', '00000000-0000-0000-0000-0000000fa002', 1,
-   'draft', 'template', 'auto');
+   'draft', 'template', 'auto', null);
 
 -- Article 105 of the Family Code, watched by the service on sale.
 insert into public.law_norms (id, source, act_id, act_title, article, source_url, canonical_url) values
@@ -313,8 +314,9 @@ begin
   raise notice '% 13a. while only a draft depends on it, the stored interval stands (%)',
     case when v_effective = interval '30 days' then 'PASS' else 'FAIL' end, v_effective;
 
-  insert into public.service_versions (service_id, version, status, generation_mode, review_mode)
-  values ('00000000-0000-0000-0000-0000000fa002', 2, 'published', 'template', 'auto');
+  insert into public.service_versions
+    (service_id, version, status, generation_mode, review_mode, released_at)
+  values ('00000000-0000-0000-0000-0000000fa002', 2, 'published', 'template', 'auto', now());
 
   select probe_interval into v_interval from public.law_norms
   where id = '00000000-0000-0000-0000-0000000fc004';

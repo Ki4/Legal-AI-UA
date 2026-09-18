@@ -265,6 +265,10 @@ describe("choosing the current version", () => {
       published_at: "2026-08-01T00:00:00.000Z",
       published_by: "usr-admin",
       created_at: "2026-07-31T00:00:00.000Z",
+      created_by: "usr-olena",
+      released_at: "2026-07-31T12:00:00.000Z",
+      released_by: "usr-taras",
+      self_released: false,
     });
 
     const forwards = (await mockServicesApi.get("svc-divorce")).currentVersion?.version;

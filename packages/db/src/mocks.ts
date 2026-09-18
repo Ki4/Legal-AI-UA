@@ -266,6 +266,10 @@ export const mockServiceVersions: ServiceVersionRow[] = [
     published_at: "2026-05-20T09:00:00.000Z",
     published_by: "usr-admin",
     created_at: "2026-05-12T09:20:00.000Z",
+    created_by: "usr-olena",
+    released_at: "2026-05-19T15:30:00.000Z",
+    released_by: "usr-taras",
+    self_released: false,
   },
   {
     id: "sv-divorce-2",
@@ -277,6 +281,10 @@ export const mockServiceVersions: ServiceVersionRow[] = [
     published_at: "2026-07-30T14:05:00.000Z",
     published_by: "usr-admin",
     created_at: "2026-07-20T10:00:00.000Z",
+    created_by: "usr-olena",
+    released_at: "2026-07-29T11:10:00.000Z",
+    released_by: "usr-taras",
+    self_released: false,
   },
   {
     id: "sv-alimony-1",
@@ -288,6 +296,10 @@ export const mockServiceVersions: ServiceVersionRow[] = [
     published_at: null,
     published_by: null,
     created_at: "2026-06-02T11:00:00.000Z",
+    created_by: "usr-taras",
+    released_at: null,
+    released_by: null,
+    self_released: false,
   },
   {
     id: "sv-poa-1",
@@ -299,6 +311,12 @@ export const mockServiceVersions: ServiceVersionRow[] = [
     published_at: "2026-06-25T12:00:00.000Z",
     published_by: "usr-admin",
     created_at: "2026-06-19T16:30:00.000Z",
+    // The one signatory of civil law signed their own work — the founding case
+    // ADR-0027 flags rather than forbids.
+    created_by: "usr-taras",
+    released_at: "2026-06-24T09:00:00.000Z",
+    released_by: "usr-taras",
+    self_released: true,
   },
 ];
 

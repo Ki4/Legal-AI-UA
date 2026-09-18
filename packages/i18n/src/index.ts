@@ -7,7 +7,7 @@ export {
   type Locale,
 } from "./locales";
 
-export { translate, translatePlural, type TranslationParams } from "./translate";
+export { translate, translatePlural, TRANSLATION_KEYS, type TranslationParams } from "./translate";
 
 export { I18nProvider, useI18n, type I18nValue } from "./react";
 

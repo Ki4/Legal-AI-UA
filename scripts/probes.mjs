@@ -825,4 +825,16 @@ export const PROBES = [
     from: `        "Somebody changed the schema by hand, and that change exists nowhere it can be reproduced from. " +`,
     to: `        "The repository describes a schema the cloud does not have. " +`,
   },
+  // The first draft of `extractArticle` measured the whole slice, and the
+  // heading is in the slice, so "blank" could never be seen: the assertion was
+  // unfailable, which is the same as absent. This probe restores that draft.
+  // The test that caught it on its first run must catch it again.
+  {
+    id: "blank-article-measured-with-its-heading",
+    what: "measures the article's text with the heading in it, so no article is ever blank",
+    file: "packages/law-refs/src/rada.ts",
+    test: "packages/law-refs/src/rada.test.ts",
+    from: `  const body = toText(printHtml.slice(heading.end, to));`,
+    to: `  const body = toText(printHtml.slice(from, to));`,
+  },
 ];

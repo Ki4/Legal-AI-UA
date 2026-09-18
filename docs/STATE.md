@@ -13,12 +13,14 @@ Four debts closed in one unattended hour (#80–#83) — all of them local; the 
 
 ## In flight
 
-- Nothing unmerged. `main` green on CI. **The cloud hook has minted no token anyone has read yet**
+- **Q28 answered (ADR-0027)**: publication is three acts — author, head-of-practice release, admin
+  sale — and a live service that goes wrong is a pause with a reason (§5.7). ADM-31 is unblocked
+  behind ADM-71; the pause register is ADM-72.
+- `main` green on CI. **The cloud hook has minted no token anyone has read yet**
   — a sign-in to the cloud console that shows `admin` closes that.
 
 ## Blocking — the question, and what it stops
 
-- **Q28** → who publishes a service version. Fell out of ADR-0026, blocks ADM-31, touches §13.
 - **Q27** → where a block's approval lives: in the trace at the cost of a `trace_version` bump
   across three runtimes, or beside it in a console table. Belongs with ADM-65.
 - **Q22–Q24** are commercial; the last — does the PoC charge — puts `entitlements` on the path.

@@ -113,6 +113,8 @@ Features import only from `packages/*` and `shared/` — never from a sibling fe
   remembering. A probe names a test file and is watched by Vitest; a probe naming a package in
   `typecheck` is watched by that package's `tsc` instead, for assertions written as types — which
   Vitest transpiles away. A drift case demonstrated in a PR description is a case nothing re-runs.
+  A new probe sits beside the probes for the same file, not at the end of the list: three parallel
+  PRs that each appended one would have conflicted pairwise (2026-09-18).
 - `pnpm docs:check` runs on every push (git pre-push) and in CI: broken relative links, section
   cross-references pointing at sections that no longer exist, backlog ids cited without a defining
   row. It reports orphaned ADRs as notes without failing. It checks only what is decidable without

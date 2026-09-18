@@ -10,6 +10,25 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the gates got a test that can fail (2026-09-18b)
+
+**PRs #80–#83**: four debts closed in one unattended hour, none of them needing the cloud.
+
+- **A fixture narrowed to what one reader selects cannot catch that reader selecting wrong.** The
+  order events carried `after: { status }` because only `status` was queried; the projection that
+  read `after->>status` on every update agreed with the fixture and disagreed with `to_jsonb(new)`.
+  `packages/db/src/mocks.test.ts` now reads the trigger's own SQL for its rules — shape, not width.
+- **A gate reported green is not a gate that ran, and typecheck had two ways to be green for
+  nothing.** A tsconfig `include` with a character class resolves to no file; a package outside
+  `pnpm-workspace.yaml` has a `typecheck` script turbo never visits. `check-typecheck-reach.mjs`
+  asks TypeScript which files each project resolves to, before turbo runs.
+- **The table is walked, not listed.** `routes.test.tsx` renders every route in `routes.tsx` as
+  both roles in both languages and holds each to four things: settled, arrived, rendered, silent.
+  Its first run passed 60 of 68; the eight were the test's own mistake (`/login` has no `<main>`),
+  which is what a test that can fail looks like on day one.
+- **Three probes appended to the end of one array conflict pairwise.** A probe sits beside the
+  probes for the same file. Written into the root `CLAUDE.md`.
+
 ## Done — the screens were looked at (2026-09-18)
 
 **PR #78**: the first browser walkthrough of the console, three weeks after the debt was recorded.
@@ -47,27 +66,6 @@ cloud-ledger gate was parked on purpose.
   manual discipline written where a migration is applied.
 - **The gate caught its author first.** `check:sql` rule 4 refuses `roles_available` outside the
   hook; its first catch was the header comment of the migration that introduced it.
-
-## Done — a set of roles that activates one (2026-09-07b)
-
-**PR #71 merged and PR #72**: ADM-44's first half reached `main`, and Q25 got an answer that costs
-the 88 sites nothing.
-
-- **A ledger disagreement has three branches, and the cheap one was not the case.**
-  `20260907120000` had been applied through the SQL editor completely and correctly and recorded
-  nowhere, so `db push` died on an index that already existed. `migration repair` was right, and
-  finding that out cost a Docker start and a `db dump --linked` — which is also the command that
-  could have printed the answer without being asked.
-- **A union is not the only way to make roles plural, and it is the expensive way.** Four of the 88
-  `jwt_role()` sites are guards where `= 'lawyer'` means _only_ a lawyer; under a union an advocate
-  who also holds `admin` is refused a change they are entitled to make, with valid SQL and green
-  tests. Holding a set and activating one role leaves all 88 alone.
-- **An append-only column cannot be rescued afterwards.** `audit_events.actor_role` records the role
-  at the moment of the write, and ADR-0010 means it is never restated. A set in the token gives it
-  nothing to record, so the shape had to be chosen before the first row rather than after.
-- **An answer can collide with a decision already recorded.** Asked who should publish a service,
-  the product owner's answer was the senior-versus-junior split §13 had explicitly rejected. It
-  became Q28 with a recommended answer, not a silent rewrite of §13.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -127,8 +125,9 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits
   on Q20 — whether a competence records the certificate behind it, which turns an internal opinion
   into a claim the firm makes about a person, with a retention question attached.
-- Component tests for the screens that do not have one. Eight of twelve are covered; the four
-  without are `AccountPage`, `DesignKitPage`, `ServiceDetailPage` and `TeamPage`.
+- Component tests for the screens that do not have one. Nine of twelve are covered; the three
+  without are `AccountPage`, `DesignKitPage` and `ServiceDetailPage` (`TeamPage` got its own on
+  2026-08-27). All twelve are walked by `routes.test.tsx` since #83 — composition, not states.
 - Edge Function gateway skeleton: JWT check → rights check → audit → core call.
 - Core: LangGraph pipeline behind the frozen contract (the core zone).
 

@@ -10,6 +10,23 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the screens were looked at (2026-09-18)
+
+**PR #78**: the first browser walkthrough of the console, three weeks after the debt was recorded.
+Nothing was broken; one thing was wrong.
+
+- **A mock shaped unlike the database hides exactly the bug the database shows.** The order
+  timeline read `after->>status` on every event. In Postgres `after` is `to_jsonb(new)` — the whole
+  row — so an update that touched only `human_review_requested` rendered as a second "generating".
+  The fixture's matching event carried `after: {}`, and every test passed against it.
+- **The seed is the first real data a screen meets.** Four mock events could not produce the row
+  the seed produced on the first order card opened. A walkthrough is not a substitute for a test;
+  it is the thing that tells you which test is missing.
+- **A screen's copy says what the screen cannot know.** The anatomy subtitle named the service by
+  its uuid because the trace does not carry a title. The honest subtitle names nothing and links.
+- **Roles stay raw, entities stay unnamed, and both are decisions.** The walkthrough read them as
+  defects; the DoD (§6) and the history screen's own header (§6.4) had already said why not.
+
 ## Done — the roles have a table, and the token has a hook (2026-09-17)
 
 **PR #74, #75, #76**: ADR-0026 phase 1 reached `main` and the cloud on the same day; the
@@ -51,31 +68,6 @@ the 88 sites nothing.
 - **An answer can collide with a decision already recorded.** Asked who should publish a service,
   the product owner's answer was the senior-versus-junior split §13 had explicitly rejected. It
   became Q28 with a recommended answer, not a silent rewrite of §13.
-
-## Done — the register says what is due (2026-09-07)
-
-**PR #70 merged and PR #71 opened**: the migration reached the cloud before the merge, and ADM-44's
-first half — the batch query, and the sweeper that walks it — landed on a branch.
-
-- **A cadence counts attempts; an alarm counts successes.** `20260815140000` named the scheduler's
-  reader in three comments and sorted its index on `last_verified_at`. That column is right about
-  staleness and wrong about due-ness: a schedule driven by it re-probes an unreachable norm on every
-  sweep forever, hammering a publisher that is already down and starving the batch behind it. The
-  two timestamps exist because they are two facts, and this is the first caller that had to choose.
-- **An exclusion can be load-bearing.** Act-scoped norms cannot be checked, so their
-  `last_checked_at` stays null — and null sorts first. A handful of them would occupy the head of
-  every batch permanently, and the symptom would be a register that quietly stops being swept.
-- **A shared decision is shared by import or it is not shared.** `observe` was split into a value
-  and the status code that wraps it, so the sweeper runs the same `checkNorm` a lawyer's form does.
-  The alternative was the function parsing its own JSON back, or a second copy of §9.7.
-- **A gate that prints the fix costs a minute; one that prints a complaint costs a session.** The
-  new function made `database.types.ts` stale and Docker was down, so `pnpm db:types` could not run.
-  The SQL job printed its own regeneration diff into the log, and it was applied verbatim rather
-  than guessed at.
-- **Two halves were deferred out loud.** No cron, because the cloud holds no edge-function secret
-  and a schedule that 401s hourly is worse than none; no cheap tier, because the act's redaction
-  date has nowhere to be stored. Both are debts with today's date, so the absence reads as a
-  decision.
 
 ## Now — wave 1 (parallel, no file overlap)
 

@@ -135,8 +135,10 @@ begin
   --------------------------------------- 2b. nor from one that has been paused
   -- Pausing is what a service does when it stops accepting orders. If an order
   -- could still be placed against a paused version, pausing would mean nothing.
-  update public.service_versions set status = 'paused'
-  where id = '00000000-0000-0000-0000-00000000abc1';
+  -- A pause is a row since §5.7; the status follows it, and closing the row
+  -- as `resumed` puts the version back on sale.
+  insert into public.service_pauses (id, service_version_id, reason)
+  values ('00000000-0000-0000-0000-00000000ab2b', '00000000-0000-0000-0000-00000000abc1', 'commercial');
   begin
     insert into public.orders (client_id, service_version_id)
     values ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-00000000abc1');
@@ -144,8 +146,8 @@ begin
   exception when others then
     raise notice 'PASS 2b. a paused version accepts no new orders';
   end;
-  update public.service_versions set status = 'published'
-  where id = '00000000-0000-0000-0000-00000000abc1';
+  update public.service_pauses set closed_at = now(), resolution = 'resumed'
+  where id = '00000000-0000-0000-0000-00000000ab2b';
 
   ----------------------------------- 3. the pin does not move, ever
   begin

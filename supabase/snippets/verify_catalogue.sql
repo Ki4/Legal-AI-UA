@@ -63,9 +63,10 @@ begin
   end;
 
   ------------------------------------------- 3. lifecycle may still move (pause)
+  -- A pause is a row since §5.7; the status follows it.
   begin
-    update public.service_versions set status = 'paused'
-    where id = '00000000-0000-0000-0000-0000000000c1';
+    insert into public.service_pauses (service_version_id, reason)
+    values ('00000000-0000-0000-0000-0000000000c1', 'commercial');
     raise notice 'PASS 3. status may still move after publication';
   exception when others then
     raise notice 'FAIL 3. pause was rejected: %', sqlerrm;

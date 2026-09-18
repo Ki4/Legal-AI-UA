@@ -814,6 +814,73 @@ export type Database = {
           },
         ];
       };
+      service_pauses: {
+        Row: {
+          closed_at: string | null;
+          closed_by: string | null;
+          holders_notified_at: string | null;
+          id: string;
+          note: string | null;
+          opened_at: string;
+          opened_by: string | null;
+          reason: Database["public"]["Enums"]["pause_reason"];
+          replaced_by: string | null;
+          resolution: Database["public"]["Enums"]["pause_resolution"] | null;
+          service_version_id: string;
+          signal_id: string | null;
+        };
+        Insert: {
+          closed_at?: string | null;
+          closed_by?: string | null;
+          holders_notified_at?: string | null;
+          id?: string;
+          note?: string | null;
+          opened_at?: string;
+          opened_by?: string | null;
+          reason: Database["public"]["Enums"]["pause_reason"];
+          replaced_by?: string | null;
+          resolution?: Database["public"]["Enums"]["pause_resolution"] | null;
+          service_version_id: string;
+          signal_id?: string | null;
+        };
+        Update: {
+          closed_at?: string | null;
+          closed_by?: string | null;
+          holders_notified_at?: string | null;
+          id?: string;
+          note?: string | null;
+          opened_at?: string;
+          opened_by?: string | null;
+          reason?: Database["public"]["Enums"]["pause_reason"];
+          replaced_by?: string | null;
+          resolution?: Database["public"]["Enums"]["pause_resolution"] | null;
+          service_version_id?: string;
+          signal_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_pauses_replaced_by_fkey";
+            columns: ["replaced_by"];
+            isOneToOne: false;
+            referencedRelation: "service_versions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_pauses_service_version_id_fkey";
+            columns: ["service_version_id"];
+            isOneToOne: false;
+            referencedRelation: "service_versions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_pauses_signal_id_fkey";
+            columns: ["signal_id"];
+            isOneToOne: false;
+            referencedRelation: "law_signals";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       service_version_prices: {
         Row: {
           amount_minor: number;
@@ -1039,6 +1106,10 @@ export type Database = {
       };
       signs_for_area: { Args: { target_area: string }; Returns: boolean };
       version_is_frozen: { Args: { target_version: string }; Returns: boolean };
+      version_known_wrong: {
+        Args: { target_version: string };
+        Returns: boolean;
+      };
       version_service: { Args: { target_version: string }; Returns: string };
     };
     Enums: {
@@ -1061,6 +1132,8 @@ export type Database = {
         | "delivered"
         | "cancelled"
         | "abandoned";
+      pause_reason: "law_impact" | "defect" | "generation" | "no_reviewer" | "commercial";
+      pause_resolution: "new_version" | "resumed" | "archived";
       personal_data_basis:
         | "consent"
         | "contract"
@@ -1238,6 +1311,8 @@ export const Constants = {
         "cancelled",
         "abandoned",
       ],
+      pause_reason: ["law_impact", "defect", "generation", "no_reviewer", "commercial"],
+      pause_resolution: ["new_version", "resumed", "archived"],
       personal_data_basis: [
         "consent",
         "contract",

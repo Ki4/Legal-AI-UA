@@ -623,7 +623,10 @@ export const mockOrderEvents: AuditEventRow[] = [
     entity_id: "ord-1",
     changed_columns: ["reviewer_id", "updated_at"],
     before: null,
-    after: {},
+    // The whole row, the way the trigger stores it (`to_jsonb(new)`): `status`
+    // is here even though this event did not move it. An `after` of `{}` once
+    // hid exactly that from the projection.
+    after: { status: "submitted", reviewer_id: "usr-departed" },
   },
 ];
 

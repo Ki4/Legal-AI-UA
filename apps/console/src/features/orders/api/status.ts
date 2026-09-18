@@ -2,7 +2,7 @@
 // implementations need it and neither may reach the other: the fixture one must
 // not import the Supabase one, which builds a client at import time.
 
-import { ORDER_STATUSES, type OrderStatus } from "@legal-ai/db";
+import { ORDER_STATUSES, type AuditAction, type OrderStatus } from "@legal-ai/db";
 
 /**
  * The state an event left the order in, or null when it left it alone.
@@ -17,4 +17,21 @@ export function toStatusAfter(value: unknown): OrderStatus | null {
   return typeof value === "string" && (ORDER_STATUSES as readonly string[]).includes(value)
     ? (value as OrderStatus)
     : null;
+}
+
+/**
+ * The state an event moved the order to, or null when the event did not move it.
+ *
+ * `after` is the whole row (`to_jsonb(new)` in the audit trigger), so
+ * `after->>status` is present on every update whether or not `status` changed.
+ * Reading it alone made an update to `human_review_requested` render as a
+ * second "generating" — a state the order was already in. The log says which
+ * columns moved; an insert moved all of them.
+ */
+export function statusMovedTo(
+  action: AuditAction,
+  changedColumns: readonly string[],
+  value: unknown,
+): OrderStatus | null {
+  return action === "insert" || changedColumns.includes("status") ? toStatusAfter(value) : null;
 }

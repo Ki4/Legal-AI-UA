@@ -30,3 +30,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Playwright MCP writes snapshots and screenshots here during a browser walkthrough.
+.playwright-mcp/

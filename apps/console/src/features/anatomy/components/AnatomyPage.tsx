@@ -7,7 +7,7 @@ import {
   Spinner,
   type ProvenanceState,
 } from "@legal-ai/ui";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import type { BlockTrust, ToolOutcome } from "../api";
 import { useTrace } from "../hooks/useTrace";
 
@@ -45,8 +45,19 @@ export function AnatomyPage() {
 
   return (
     <section className="max-w-3xl space-y-4">
-      <h1 className="text-2xl font-semibold">{t("anatomy.title")}</h1>
-      <p className="text-sm text-inkSoft">{t("anatomy.subtitle", { service: serviceId ?? "" })}</p>
+      <div>
+        <h1 className="text-2xl font-semibold">{t("anatomy.title")}</h1>
+        {/* The subtitle used to name the service by its id. A UUID is not a
+            name to anyone reading the screen, and the title is not in the
+            trace — it lives with the service, one link away. */}
+        <p className="mt-1 text-sm text-inkSoft">{t("anatomy.subtitle")}</p>
+        <Link
+          to={`/services/${serviceId}`}
+          className="mt-2 inline-block text-sm text-brand hover:underline"
+        >
+          {t("anatomy.backToService")}
+        </Link>
+      </div>
       {loading ? (
         // Spinner is aria-hidden by design, so the wrapper carries the
         // announcement — otherwise a screen reader hears nothing at all.

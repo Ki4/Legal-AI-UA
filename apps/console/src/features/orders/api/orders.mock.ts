@@ -26,7 +26,7 @@ import {
   serviceRows,
   serviceVersionRows,
 } from "../../../shared/api/fixture-store";
-import { toStatusAfter } from "./status";
+import { statusMovedTo } from "./status";
 import type { OrdersApi } from "./contract";
 import type {
   OrderCard,
@@ -136,7 +136,7 @@ function toEvent(row: (typeof orderEventRows)[number], names: ActorNames): Order
     occurredAt: row.occurred_at,
     action: row.action,
     changedColumns: row.changed_columns ?? [],
-    statusAfter: toStatusAfter(after?.status),
+    statusAfter: statusMovedTo(row.action, row.changed_columns ?? [], after?.status),
     actor: actorFrom(row, names),
   };
 }

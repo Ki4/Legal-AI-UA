@@ -21,6 +21,7 @@ export const uk = {
   "nav.account": "Профіль",
   "nav.design": "Дизайн-система",
   "route.notFound": "Сторінку не знайдено",
+  "route.notFound.back": "До каталогу послуг",
   "shell.role": "Роль: {role}",
   "shell.roleNone": "немає",
 
@@ -503,7 +504,7 @@ export const uk = {
   "serviceLaw.add.error.network": "Не вдалося зʼєднатися із сервером. Запис не додано.",
   "serviceLaw.add.error.save": "Не вдалося додати посилання.",
   // Questionnaire fields — §4.4 ------------------------------------------------
-  "card.fields": "Поля анкети",
+  "card.fields": "Поля анкети →",
   "serviceFields.title": "Поля анкети",
   "serviceFields.subtitle":
     "Що послуга запитує в клієнта. Ключ незмінний — на нього посилаються блоки шаблона.",
@@ -635,8 +636,8 @@ export const uk = {
   // source, not about the reader, so the copy is written for the lawyer who
   // will read the real one.
   "anatomy.title": "Анатомія документа",
-  "anatomy.subtitle":
-    "Послуга {service} — з яких блоків складено документ і на що спирається кожен.",
+  "anatomy.subtitle": "З яких блоків складено документ і на що спирається кожен.",
+  "anatomy.backToService": "До послуги",
   "anatomy.loading": "Завантажуємо анатомію документа",
   "anatomy.empty": "Для цієї послуги ще немає згенерованого документа.",
   "anatomy.questionnaireFields": "Поля анкети: {fields}",

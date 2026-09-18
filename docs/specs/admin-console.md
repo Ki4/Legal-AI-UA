@@ -165,22 +165,42 @@ version, pause, reassign.
   possible and takes a reason (§5.6).
 - As the accountable lawyer, I add a colleague as cover before going away, without waiting for an
   admin.
-- As an admin, I pause a service, so it stops accepting orders without being deleted.
+- As an admin, I pause a service, so it stops accepting orders without being deleted. The pause
+  takes a reason, and the reason decides who may lift it (§5.7).
+- As a signatory of the practice area or the accountable lawyer, I pause a service for a professional
+  reason — a defect, a doubt, no one to review — without waiting for an admin. Stopping is open to
+  everyone accountable; starting is not.
 
 ### 4.3 Versions — `/services/:id/versions`
 
-Table: number, status, generation and review mode, price, bound template version, who published
-and when. Archive hidden behind a toggle, off by default.
+Table: number, status, generation and review mode, price, bound template version, who authored
+it, who released it and when, who put it on sale and when. Archive hidden behind a toggle, off by
+default.
 
-- As an admin, I see every version with dates and publishers, so I can reconstruct what changed.
-- As an admin, I create a new version from the current one, so I can edit without touching what is
-  live.
-- As an admin, I publish a version and the previous one is archived automatically, so exactly one
-  version is ever live.
-- As an admin, I cannot publish a service version whose template is not published.
+Publication is three acts by three columns, not one button (ADR-0027): the assigned lawyer authors
+a version, a signatory of the service's practice area **releases** it as professionally correct, and
+an admin **puts it on sale**. No technical person's name appears under the professional act, and
+nothing reaches a client that a lawyer has not signed.
+
+- As any staff member, I see every version with its three names and dates, so I can reconstruct who
+  wrote it, who signed it and who sold it.
+- As the assigned lawyer, I create a new version from the current one and edit it, including its
+  review mode, without waiting on anyone — and when it is ready I move it to `in_review`. I cannot
+  release it, put it on sale, price it, or reassign it.
+- As a signatory of the practice area — its head or a release reviewer the head appointed — I
+  release a version that is `in_review`, and my name goes on it. I cannot release a version I
+  authored myself, unless nobody else signs for this area, in which case I can and the audit row says
+  so (`self_released`).
+- As a signatory, when I or anyone edits a released version's content, the release is withdrawn
+  automatically. My signature stood under one text.
+- As the head of a practice area, I appoint a release reviewer for my area, so a version I authored
+  has somebody else to sign it — and I remove one the same way.
+- As an admin, I put a released version on sale and the previous live one is archived by the same
+  act, so exactly one version is ever live. I cannot put on sale a version nobody has released, or
+  one whose template is not frozen.
 - As an admin, the archive is hidden by default, so it does not crowd the list.
-- As the assigned lawyer, I create and edit a draft version of my own service, including its
-  review mode, without waiting on an admin — but I cannot publish it, price it, or reassign it.
+- As an admin, I see how many of an area's releases were self-releases, because that is the count
+  of times the four-eyes rule could not be applied (§4.7).
 
 ### 4.4 Questionnaire fields — `/services/:id/fields`
 
@@ -477,6 +497,92 @@ Three things this is deliberately not:
 
 A service carries its area on `services` rather than on a version: the area is what the service
 _is_, and one that changes area is a different service.
+
+**An area has signatories.** `practice_area_signatories` names the lawyers who sign for the area:
+the ones who may release a service version as professionally correct before an admin may sell it
+(ADR-0027, §4.3). Exactly one of them is the **head**, set by an admin and recorded like an
+assignment, because who heads an area is an organisational fact. The rest are **release reviewers**,
+and appointing them is the head's own act — judging who is fit to check a colleague's work is the
+expert judgement this whole arrangement keeps away from the technical owner, and it mirrors the
+accountable lawyer arranging their own cover (§4.2). An admin may appoint too, through the picker
+above, competent lawyers first and anyone else with a reason. An area without a signatory can hold
+drafts and cannot release one, which is the right failure — it says out loud that nobody has taken
+responsibility for that branch of law yet. None of this is seniority: there is no ordering of lawyers
+anywhere, a reviewer is an appointment in one area and not a rank, and the head of family law is
+nobody's superior in litigation. A lawyer who should sign everywhere is a signatory of every area —
+rows, not a role. A lawyer who has just joined authors from day one and signs when appointed, which
+is the ordinary shape of joining a firm.
+
+### 5.7 A problem with a live service
+
+A service that is on sale will, at some point, be wrong. The law changes under it (§9.16 already
+handles that), or the text was wrong from the start and a court, a registry or a client says so, or
+the AI assembled something a reviewer should not have let through, or nobody is there to review an
+order that needs a lawyer. This section is what happens then, and it has one shape for all of them,
+because a firm cannot run four incident procedures.
+
+**A pause is a row, not a status flip.** `service_pauses`: the version, a `reason`, a free-text
+note, who opened it and when, who closed it and when, and a `resolution`. At most one open pause per
+version; the version's `paused` status follows the row. The reasons are an enum because the reason
+decides three things — who may open it, who may close it, and whose question it is afterwards:
+
+| Reason        | Opened by                                     | Closed by                             | Whose question                         |
+| ------------- | --------------------------------------------- | ------------------------------------- | -------------------------------------- |
+| `law_impact`  | the system (ADM-53), or a lawyer              | a signatory, or the fix going on sale | nobody's — monitoring did its job      |
+| `defect`      | signatory, accountable lawyer, admin          | a signatory, or the fix going on sale | the author's **and** the releaser's    |
+| `generation`  | signatory, accountable lawyer, order reviewer | a signatory, or the fix going on sale | the core's, and the review that passed |
+| `no_reviewer` | signatory, accountable lawyer, admin          | a signatory, once cover exists        | assignment's — cover was not arranged  |
+| `commercial`  | admin                                         | admin                                 | not a problem; a decision              |
+
+Stopping is open to everyone accountable and starting is not: a professional pause is lifted by the
+area's signatories or by publishing the fix, never by an admin, and a commercial one is the admin's
+alone. A
+`resolution` is one of `new_version` (with the id of the version that replaced it), `resumed` (the
+same version goes back on sale — a false alarm, or a `no_reviewer` pause once cover is arranged) or
+`archived` (the service is withdrawn). A pause without a resolution is open by definition.
+
+**What the pause does at once.**
+
+1. New orders are refused — the existing guard, a `paused` version cannot be ordered from.
+2. Orders in flight on that version: for `defect`, `law_impact` and `generation`, none is delivered
+   unreviewed. Whatever the version's `review_mode`, every open order goes to the review queue
+   (ADM-67) and the reviewer sees the pause reason beside it. A document from a version known to be
+   wrong does not leave the building on autopilot. `no_reviewer` and `commercial` change nothing for
+   orders already open.
+3. Holders of issued documents: a `law_impact` pause tells them at once (Q6). A `defect` pause does
+   not automatically — whether the defect touches their document is a signatory's call, the reverse
+   index (§8.1) names the affected clients, and the decision either way is recorded on the pause
+   (`holders_notified_at`, or the note saying why not). Mirrors Q8: a human decides what reaches a
+   client who already has a document.
+4. The shop window speaks (Q5). The intake bot says the service is temporarily unavailable, gives
+   the client-safe sentence for the reason — a dictionary key per reason, never the internal note —
+   and offers a lawyer directly or a wait. A `commercial` pause is simply not on the shelf.
+
+**The fix is always a new version** (ADR-0009: a published version is frozen), and it walks the whole
+pipeline of §4.3 — authored, moved to review, released by a signatory, put on sale by an admin. The
+same four-eyes rule applies: whoever signs the fix may not be its author, where the area has two
+signatories. Putting the fix on sale archives the paused version and closes the pause with `new_version` in
+one act, so a service is never both paused and replaced.
+
+**The people.** The product's answer is names, not sanctions. Every version carries three —
+who wrote it, who signed it, who sold it — and every pause carries its reason and who opened it.
+§4.7 shows, per service, pauses by reason and how long each stayed open; the lawyer's cabinet shows,
+per lawyer, versions authored, versions released, self-releases and `defect` pauses on versions they
+authored or signed. What the product does **not** do is block, score or demote anybody on those
+numbers. What the partners may do with them is already on the screens: move accountability for a
+service (§4.2), change the head of an area or its reviewers (§5.6), withdraw a competence (§5.6) —
+each recorded, each reversible.
+
+Two readings of those numbers are worth writing down. A `defect` on a version is a question to the
+author and to the releaser **both** — the signature is what the release means, and a signature that
+never carries a question is decoration. And a releaser whose signed versions keep pausing is first a
+question about the process, not the person: look at the self-release count before anything else,
+because a signatory signing their own drafts is the four-eyes rule not being applied, and the remedy
+for that is a second signatory in the area — one appointment — not a reprimand.
+
+**Afterwards.** §4.8 shows versions and pauses on one timeline, so a service's operating history is
+one read. A service paused twice for `defect` in a year wants re-authoring, not a third patch; that
+is a judgement, and the timeline is what makes it visible in time to be one.
 
 ## 6. Audit
 
@@ -1302,11 +1408,13 @@ to retrofit it into. Three things it settled that the bullets did not reach:
 
 ### Publication
 
-| ID     | Task                       | Depends       | Size |
-| ------ | -------------------------- | ------------- | ---- |
-| ADM-30 | Publish a template version | ADM-1         | M    |
-| ADM-31 | Publish a service version  | ADM-9, ADM-30 | S    |
-| ADM-32 | Pause and archive          | ADM-9         | S    |
+| ID     | Task                                                                                                                  | Depends        | Size |
+| ------ | --------------------------------------------------------------------------------------------------------------------- | -------------- | ---- |
+| ADM-30 | Freeze a template version (the author's act, ADR-0027)                                                                | ADM-1          | M    |
+| ADM-71 | Practice-area signatories — head and release reviewers — and the release RPC with its four-eyes rule (§5.6, ADR-0027) | ADM-9, ADM-30  | M    |
+| ADM-31 | Put a released service version on sale; refuse an unreleased one                                                      | ADM-71         | S    |
+| ADM-32 | Pause and archive                                                                                                     | ADM-9          | S    |
+| ADM-72 | Pause register: reasons, who may open and close, resolution, in-flight orders to review (§5.7)                        | ADM-32, ADM-67 | M    |
 
 ### Access
 
@@ -1509,10 +1617,16 @@ mocks, and both write screens in parallel; swapping mocks for Supabase later tou
 - "Nothing exists", "nothing matches your filter" and "the request failed" are three screens, not
   one (§4.1).
 - Inside the catalogue the split is commercial versus professional, not senior versus junior. An
-  admin decides what is on sale, at what price, and when it is published; the assigned lawyer owns
-  the draft of their own service, `review_mode` included, because they are the only person who can
-  judge whether a document needs a lawyer in the loop (ADR-0005, §4.3). Q28 asks whether the last of those —
-  publication — is one act or two, and the split itself is not what is in question.
+  admin decides what is on sale, at what price, and when; the assigned lawyer owns the draft of
+  their own service, `review_mode` included, because they are the only person who can judge whether
+  a document needs a lawyer in the loop (ADR-0005, §4.3). **Publication is three acts, not one**
+  (Q28, ADR-0027): the lawyer authors, a signatory of the practice area releases — a signature on
+  two columns, never by the author where the area has two signatories — and an admin puts on sale
+  what has been released. An area's signatories are one head (set by an admin) and the release
+  reviewers the head appoints. No technical person's name appears under the professional act.
+- A problem with a live service is a pause with a reason, and the reason decides who may open it,
+  who may close it and whose question it is afterwards (§5.7). Stopping is open to everyone
+  accountable; starting is not. The fix is always a new version through the same three acts.
 - A client is two tables, not one: `clients` is a pseudonymous anchor holding no personal data, and
   `client_identities` is the mapping ADR-0010 requires to live in exactly one place. Everything
   client-bearing keys on the anchor, so it can be read, joined and counted without touching a
@@ -1662,28 +1776,6 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   The trust surface is the product's flagship claim (`VISION.md`), which is what makes this a
   question rather than a detail.
 
-- **Q28. Who publishes a service version?** Opened on 2026-09-07 by the answer to Q25, and it is
-  not the same question. §13 records a decision in one line: "inside the catalogue the split is
-  commercial versus professional, **not senior versus junior**" — an admin decides what is on sale,
-  at what price and when, and the assigned lawyer owns the draft including `review_mode`, because
-  only they can judge whether a document needs a lawyer in the loop (ADR-0005, §4.3). The product
-  owner's position is that a lawyer should be accountable for a service entering the catalogue at
-  all, because the domain expertise is theirs — but not every lawyer, which is why the co-owners are
-  advocates. Read literally that is the senior-versus-junior split §13 rejected, and it would want a
-  third role.
-
-  It probably does not, and the recommended answer is that **publication is two acts, not one**: the
-  accountable lawyer releases a version as professionally ready, and an admin puts it on sale. §13's
-  line survives intact — the split stays commercial versus professional — and nothing reaches a
-  client that a lawyer has not released. "Not every lawyer" is then carried by **assignment**, which
-  already exists, is already audited and is already the axis ADR-0014 uses, rather than by seniority,
-  which the schema has no word for and would need a role to acquire.
-
-  What it costs is that publishing stops being one button in §4.3 and becomes two rights on two
-  columns, and three user stories there are rewritten. What deciding late costs is ADM-31 built
-  against the wrong owner. It blocks ADM-31 and nothing else; ADR-0026 is deliberately written so
-  that either answer changes the publish site alone.
-
 **Already answered, listed so they stop being reopened**
 
 - **Q5–Q8** — answered together on 2026-08-30, because they are one policy seen from four angles:
@@ -1747,6 +1839,17 @@ reference to "Q9" written six months ago still points at the same question. Ids 
   The held set lives in a `user_roles` table rather than a jsonb array, which closes the missing
   audit row ADR-0018 recorded. Switching roles is explicit. Who may publish turned out to be a
   separate question and is Q28.
+- **Q28** — publication is **three acts and no new role** (ADR-0027, 2026-09-18). The product
+  owner's position was that approving a legal service is an expert judgement a technical admin
+  should not own, and that a lawyer of the firm has to answer for what enters the catalogue. That is
+  not the senior-versus-junior split §13 rejected: it is the shape every liable-content domain uses
+  — a sign-off designated **by area**, by a person other than the author, separate from the sale.
+  So `practice_area_signatories` names who signs — one head set by an admin, and the release
+  reviewers the head appoints — `released_by/at` on the version is the signature, and
+  `published_at` stays the admin's and refuses an unreleased version. Where an area has one
+  signatory they self-release and the audit row is flagged, which is a count of how often four eyes
+  were not available rather than a switch anybody has to flip; the remedy is one appointment. §4.3 rewritten, §5.7 added
+  for what happens when a live service is wrong.
 
 - One-off versus subscription — both (§8).
 - Currency — UAH (§8). The amounts themselves are still open.

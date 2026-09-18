@@ -1,19 +1,19 @@
-# State — 2026-09-17, the roles have a table and the token has a hook
+# State — 2026-09-18, the screens were looked at
 
-Written at `01b029f` on `main`, nothing unmerged. If `git log` shows commits after it, this file is
+Written at `0186536` on `fix/screen-walkthrough`, one branch unmerged. If `git log` shows commits after it, this file is
 behind: trust git.
 
 Tier 1: **the only document a session reads to orient.** `pnpm docs:check` caps it at 60 lines.
 
 ## Wave
 
-Wave 1. PR #74 is ADR-0026 phase 1: `user_roles`, the access token hook, `approve_user` on the
-table, ADR-0018's missing audit row, `check:sql` rule 4. In the cloud by hand, complete, hook on.
+Wave 1. ADR-0026 phase 1 (#74) is in the cloud by hand, hook on. The ten screens were walked on
+09-18 as three roles, two languages, two themes: nothing broken, six things fixed on the branch.
 
 ## In flight
 
-- Nothing unmerged. `main` green on CI and SQL. **The cloud hook has minted no token anyone has
-  read yet** — the product owner signing in to the cloud console and seeing `admin` closes that.
+- `fix/screen-walkthrough`, one commit, gates green, PR to open. **The cloud hook has minted no
+  token anyone has read yet** — a sign-in to the cloud console that shows `admin` closes that.
 
 ## Blocking — the question, and what it stops
 
@@ -29,8 +29,8 @@ table, ADR-0018's missing audit row, `check:sql` rule 4. In the cloud by hand, c
 
 - **`cloud-ledger` is parked (`if: false` in `sql.yml`)** — 2026-09-17. Fine-grained tokens cannot
   mint the login role; the way back is a DB password in CI. Until then: `migration repair` by hand.
-- **The hook's minting is proved only by a hand sign-in** — 2026-09-17. The SQL job runs GoTrue;
-  one `curl` and a decoded claim after `db reset` would make it a gate.
+- **The hook's minting is proved by a script nothing runs** — 2026-09-17. Four sandbox claims
+  decoded right on 09-18; the SQL job runs GoTrue, so the same request there is the gate.
 - **No edge-function secrets in the cloud** — 2026-09-01. A cron on `law-sweep` would 401 hourly.
 - **Nothing runs or deploys an edge function automatically** — 2026-09-02. No `deno check` in CI,
   and nothing notices a function that is in the repository and not in the cloud.
@@ -41,18 +41,18 @@ table, ADR-0018's missing audit row, `check:sql` rule 4. In the cloud by hand, c
 - **Nothing compares the cloud's schema against its migration** — 2026-09-02; `db dump --linked`
   would print the answer `check-cloud-ledger.mjs` only points at — 2026-09-07.
 - **The CI token is wider than the gate it serves** — 2026-09-02. Read-write for a job that reads.
-- **No screen has been looked at since it changed** — 2026-08-28. Neither a task nor a decision.
 - **Two from 2026-08-28**: nothing compares the domain tables against `seed.sql`; `law_norms`
   carries per-watcher judgement on a shared row.
+- **A history row does not name the field or norm it touched** — 2026-09-18. Needs `after`,
+  which §6.4 keeps off the screen; a feature, not a fix.
 - The access-control review is **a standing condition, not a debt** — 2026-08-04. #74 joins its list.
 
 ## Next candidates
 
-1. **Walk the ten screens in a browser** — the 08-28 debt. Sandbox accounts are in `supabase/README.md`.
-2. **A service-role secret in the cloud, then deploy both functions and schedule the sweep.**
+1. **A service-role secret in the cloud, then deploy both functions and schedule the sweep.**
    ADM-44's second half, and the oldest thing now blocking work.
-3. **ADR-0026 phase 2** — `active_role`, the switcher, `orders.sql:282` onto the held set. Rule 4
-   already waits for the hook that mints the second claim.
+2. **The token-hook gate in `sql.yml`** — the 09-17 debt; the request and the decode exist.
+3. **ADR-0026 phase 2** — `active_role`, the switcher, `orders.sql:282` onto the held set.
 
 ## Detail lives in
 

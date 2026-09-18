@@ -74,6 +74,39 @@ export const PROBES = [
     from: `<EmptyState title={t("team.failed.title")} hint={t("team.failed.hint")} />`,
     to: `<EmptyState title={t("team.empty.title")} hint={t("team.empty.hint")} />`,
   },
+  // The route walk (`routes.test.tsx`) renders every route as every role.
+  // Three probes, one per kind of defect it exists to see: a guard opened to a
+  // role it was not meant for, a React complaint on mount, and a sentence
+  // whose parameter the screen stopped passing.
+  {
+    id: "team-guard-admits-a-lawyer",
+    what: "opens the admin-only team screen to lawyers",
+    file: "apps/console/src/features/team/index.tsx",
+    test: "apps/console/src/app/routes.test.tsx",
+    from: `      <RequireAuth roles={["admin"]}>
+        <TeamPage />`,
+    to: `      <RequireAuth roles={["admin", "lawyer"]}>
+        <TeamPage />`,
+  },
+  {
+    id: "shell-nav-loses-its-keys",
+    what: "renders the nav list without keys, which React reports on every mount",
+    file: "apps/console/src/app/AppShell.tsx",
+    test: "apps/console/src/app/routes.test.tsx",
+    from: `            <NavLink
+              key={item.to}
+              to={item.to}`,
+    to: `            <NavLink
+              to={item.to}`,
+  },
+  {
+    id: "shell-role-sentence-loses-its-param",
+    what: "stops passing the role into its sentence, leaving `{role}` on every screen",
+    file: "apps/console/src/app/AppShell.tsx",
+    test: "apps/console/src/app/routes.test.tsx",
+    from: `{t("shell.role", { role: role ?? t("shell.roleNone") })}`,
+    to: `{t("shell.role")}`,
+  },
   {
     id: "retention-empty-box-reads-as-zero",
     what: "stops telling an unanswered retention period from an answered zero",

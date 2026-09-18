@@ -13,6 +13,13 @@ const PLURAL_DICTIONARIES: Record<Locale, PluralDictionary> = { uk: ukPlurals, e
 export type TranslationParams = Record<string, string | number>;
 
 /**
+ * Every key, for a test that asks about keys by shape — "each `*.failed.*`
+ * sentence" — rather than by name. `uk` defines the set (ADR-0006), so this
+ * is its key list and not a union of the dictionaries.
+ */
+export const TRANSLATION_KEYS: readonly TranslationKey[] = Object.keys(uk) as TranslationKey[];
+
+/**
  * `{name}` placeholders, replaced from `params`.
  *
  * A placeholder with no matching parameter is left standing rather than

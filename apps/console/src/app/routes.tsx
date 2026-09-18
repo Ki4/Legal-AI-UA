@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter, Navigate, type RouteObject } from "react-router";
 import { accountRoutes } from "../features/account";
 import { anatomyRoutes } from "../features/anatomy";
 import { ordersRoutes } from "../features/orders";
@@ -17,7 +17,11 @@ import { RequireAuth } from "./RequireAuth";
 
 // This route table is the ONLY shared file between parallel feature tracks.
 // Each feature contributes exactly one import and one spread line — nothing else.
-export const router = createBrowserRouter([
+//
+// The table is exported apart from the router so that `routes.test.tsx` can
+// walk every path in it under a memory router: a route added here is walked
+// without anybody adding it to a list of routes to walk.
+export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
   {
@@ -41,4 +45,6 @@ export const router = createBrowserRouter([
       { path: "*", element: <NotFound /> },
     ],
   },
-]);
+];
+
+export const router = createBrowserRouter(routes);

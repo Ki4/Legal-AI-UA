@@ -825,4 +825,24 @@ export const PROBES = [
     from: `        "Somebody changed the schema by hand, and that change exists nowhere it can be reproduced from. " +`,
     to: `        "The repository describes a schema the cloud does not have. " +`,
   },
+  // The fixture that hid #78: an order event whose `after` was the one field
+  // the timeline selected, so the projection reading `after->>status` on every
+  // update agreed with the fixture and disagreed with the trigger. This puts
+  // that narrowing back on one row; the test that must object reads the rules
+  // off the trigger's own SQL rather than carrying a copy.
+  {
+    id: "audit-fixture-narrowed-to-what-one-screen-reads",
+    what: "narrows an order event's `after` to the one column the timeline selects",
+    file: "packages/db/src/mocks.ts",
+    test: "packages/db/src/mocks.test.ts",
+    from: `    after: {
+      id: "ord-1",
+      service_version_id: "sv-divorce-2",
+      status: "submitted",
+      reviewer_id: "usr-departed",
+      submitted_at: "2026-08-10T09:40:00.000Z",
+      updated_at: "2026-08-10T10:05:00.000Z",
+    },`,
+    to: `    after: { status: "submitted" },`,
+  },
 ];

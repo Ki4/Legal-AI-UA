@@ -63,6 +63,26 @@ insert into public.service_version_prices values
   ('30000000-0000-0000-0000-000000000001', 'UAH', 480000),
   ('30000000-0000-0000-0000-000000000002', 'UAH', 520000);
 
+-- Olena heads family law and has appointed Taras as a release reviewer — the
+-- arrangement ADR-0027 exists for: she authors, he signs, four eyes.
+insert into public.practice_area_signatories (practice_area, lawyer_id, is_head) values
+  ('family', '10000000-0000-0000-0000-000000000001', true),
+  ('family', '10000000-0000-0000-0000-000000000002', false);
+
+update public.service_versions
+set created_by = '10000000-0000-0000-0000-000000000001'
+where service_id = '20000000-0000-0000-0000-000000000001';
+
+-- A version goes on sale only once a signatory has released it. Written
+-- directly rather than through the RPC because a seed runs as postgres, with
+-- no JWT for the RPC to read; the guard lets a session outside a request
+-- through for exactly this reason.
+update public.service_versions
+set status = 'in_review',
+    released_at = now() - interval '1 day',
+    released_by = '10000000-0000-0000-0000-000000000002'
+where id in ('30000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002');
+
 -- Publishing v1 then v2 archives v1, which is the state we want on screen.
 update public.service_versions set status = 'published'
 where id = '30000000-0000-0000-0000-000000000001';

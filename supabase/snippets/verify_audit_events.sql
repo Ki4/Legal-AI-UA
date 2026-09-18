@@ -66,6 +66,13 @@ begin
   -- Before publishing: prices freeze with the version (ADR-0009).
   insert into public.service_version_prices
   values ('00000000-0000-0000-0000-0000000000c1', 'UAH', 550000);
+  -- Sale requires a signature (ADR-0027). Stamped with no claims in the
+  -- session — a seed's path — and the admin's claims put back for the sale,
+  -- because the sale is the event this scenario is about.
+  perform set_config('request.jwt.claims', '', true);
+  update public.service_versions set released_at = now()
+  where id = '00000000-0000-0000-0000-0000000000c1';
+  set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","app_metadata":{"role":"admin"}}';
   update public.service_versions set status = 'published'
   where id = '00000000-0000-0000-0000-0000000000c1';
 

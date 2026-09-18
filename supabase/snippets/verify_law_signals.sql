@@ -61,10 +61,10 @@ insert into public.service_assignments (service_id, lawyer_id, is_primary)
 values ('00000000-0000-0000-0000-0000000d1001', '00000000-0000-0000-0000-0000000d001b', true);
 
 insert into public.service_versions
-  (id, service_id, version, status, generation_mode, review_mode)
+  (id, service_id, version, status, generation_mode, review_mode, released_at)
 values
   ('00000000-0000-0000-0000-0000000d2001', '00000000-0000-0000-0000-0000000d1001', 1,
-   'published', 'template', 'auto');
+   'published', 'template', 'auto', now());
 
 -- Two norms: one behind the published service, one behind nothing at all.
 insert into public.law_norms (id, source, act_id, act_title, article, source_url, canonical_url)

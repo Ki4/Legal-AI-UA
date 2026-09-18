@@ -578,6 +578,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      practice_area_signatories: {
+        Row: {
+          appointed_at: string;
+          appointed_by: string | null;
+          is_head: boolean;
+          lawyer_id: string;
+          practice_area: string;
+        };
+        Insert: {
+          appointed_at?: string;
+          appointed_by?: string | null;
+          is_head?: boolean;
+          lawyer_id: string;
+          practice_area: string;
+        };
+        Update: {
+          appointed_at?: string;
+          appointed_by?: string | null;
+          is_head?: boolean;
+          lawyer_id?: string;
+          practice_area?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "practice_area_signatories_lawyer_id_fkey";
+            columns: ["lawyer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "practice_area_signatories_practice_area_fkey";
+            columns: ["practice_area"];
+            isOneToOne: false;
+            referencedRelation: "practice_areas";
+            referencedColumns: ["code"];
+          },
+        ];
+      };
       practice_areas: {
         Row: {
           code: string;
@@ -804,41 +843,67 @@ export type Database = {
       service_versions: {
         Row: {
           created_at: string;
+          created_by: string | null;
           generation_mode: Database["public"]["Enums"]["generation_mode"];
           id: string;
           published_at: string | null;
           published_by: string | null;
+          released_at: string | null;
+          released_by: string | null;
           review_mode: Database["public"]["Enums"]["review_mode"];
+          self_released: boolean;
           service_id: string;
           status: Database["public"]["Enums"]["service_status"];
           version: number;
         };
         Insert: {
           created_at?: string;
+          created_by?: string | null;
           generation_mode: Database["public"]["Enums"]["generation_mode"];
           id?: string;
           published_at?: string | null;
           published_by?: string | null;
+          released_at?: string | null;
+          released_by?: string | null;
           review_mode: Database["public"]["Enums"]["review_mode"];
+          self_released?: boolean;
           service_id: string;
           status?: Database["public"]["Enums"]["service_status"];
           version: number;
         };
         Update: {
           created_at?: string;
+          created_by?: string | null;
           generation_mode?: Database["public"]["Enums"]["generation_mode"];
           id?: string;
           published_at?: string | null;
           published_by?: string | null;
+          released_at?: string | null;
+          released_by?: string | null;
           review_mode?: Database["public"]["Enums"]["review_mode"];
+          self_released?: boolean;
           service_id?: string;
           status?: Database["public"]["Enums"]["service_status"];
           version?: number;
         };
         Relationships: [
           {
+            foreignKeyName: "service_versions_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "service_versions_published_by_fkey";
             columns: ["published_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_versions_released_by_fkey";
+            columns: ["released_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -935,6 +1000,7 @@ export type Database = {
         Returns: undefined;
       };
       is_assigned_to: { Args: { target_service: string }; Returns: boolean };
+      is_head_of: { Args: { target_area: string }; Returns: boolean };
       is_primary_for: { Args: { target_service: string }; Returns: boolean };
       jwt_role: { Args: never; Returns: string };
       law_norms_due_for_probe: {
@@ -959,10 +1025,19 @@ export type Database = {
         Args: { target_norm: string };
         Returns: string;
       };
+      release_service_version: {
+        Args: { target_version: string };
+        Returns: undefined;
+      };
+      set_area_head: {
+        Args: { new_head: string; target_area: string };
+        Returns: undefined;
+      };
       set_primary_lawyer: {
         Args: { new_lawyer: string; target_service: string };
         Returns: undefined;
       };
+      signs_for_area: { Args: { target_area: string }; Returns: boolean };
       version_is_frozen: { Args: { target_version: string }; Returns: boolean };
       version_service: { Args: { target_version: string }; Returns: string };
     };

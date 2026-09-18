@@ -13,6 +13,7 @@ export const en: Dictionary = {
   "nav.account": "Account",
   "nav.design": "Design system",
   "route.notFound": "Page not found",
+  "route.notFound.back": "Back to the service catalogue",
   "shell.role": "Role: {role}",
   "shell.roleNone": "none",
 
@@ -438,7 +439,7 @@ export const en: Dictionary = {
   "serviceLaw.add.error.network": "Could not reach the server. The entry was not added.",
   "serviceLaw.add.error.save": "Could not add the reference.",
   // Questionnaire fields — §4.4 ------------------------------------------------
-  "card.fields": "Questionnaire fields",
+  "card.fields": "Questionnaire fields →",
   "serviceFields.title": "Questionnaire fields",
   "serviceFields.subtitle":
     "What the service asks a client. The key is immutable — template blocks reference it.",
@@ -567,8 +568,8 @@ export const en: Dictionary = {
 
   // Document anatomy (§8) ------------------------------------------------------
   "anatomy.title": "Document anatomy",
-  "anatomy.subtitle":
-    "Service {service} — which blocks the document is made of, and what each one rests on.",
+  "anatomy.subtitle": "Which blocks the document is made of, and what each one rests on.",
+  "anatomy.backToService": "Back to the service",
   "anatomy.loading": "Loading the document anatomy",
   "anatomy.empty": "Nothing has been generated for this service yet.",
   "anatomy.questionnaireFields": "Questionnaire fields: {fields}",

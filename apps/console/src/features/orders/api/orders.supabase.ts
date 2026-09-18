@@ -16,7 +16,7 @@ import { namesOf } from "../../../shared/api/actor-names";
 import { actorFrom, actorIdsOf, type ActorNames } from "../../../shared/audit";
 import { AppError } from "../../../shared/api/errors";
 import type { OrdersApi } from "./contract";
-import { toStatusAfter } from "./status";
+import { statusMovedTo } from "./status";
 import type {
   OrderCard,
   OrderEntitlement,
@@ -232,7 +232,7 @@ export function toOrderEvent(row: TimelineQueryRow, names: ActorNames): OrderEve
     occurredAt: row.occurred_at,
     action: row.action,
     changedColumns: row.changed_columns ?? [],
-    statusAfter: toStatusAfter(row.status),
+    statusAfter: statusMovedTo(row.action, row.changed_columns ?? [], row.status),
     actor: actorFrom(row, names),
   };
 }

@@ -126,8 +126,11 @@ export function NormsTable({
               <TableCell>
                 <div className="space-y-1">
                   <p>{tCount(cadence.key, cadence.count)}</p>
+                  {/* Ghost, like the row actions on the service card: a bordered
+                      button repeated on every row was the heaviest thing in a
+                      table whose subject is the norms, not the editing of them. */}
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     onClick={() => onEdit(norm)}
                     disabled={savingNormId !== null}
                   >

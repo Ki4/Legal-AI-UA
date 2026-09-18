@@ -13,7 +13,7 @@ import {
   toReviewer,
   type OrderQueryRow,
 } from "./orders.supabase";
-import { toStatusAfter } from "./status";
+import { statusMovedTo, toStatusAfter } from "./status";
 
 // `app/supabase.ts` builds its client at import time and throws when the env
 // vars are absent, which they are under Vitest. So the client is replaced here
@@ -247,5 +247,25 @@ describe("toStatusAfter", () => {
     expect(toStatusAfter("nonsense")).toBeNull();
     expect(toStatusAfter(undefined)).toBeNull();
     expect(toStatusAfter(7)).toBeNull();
+  });
+});
+
+describe("statusMovedTo", () => {
+  it("names the state when the event changed it", () => {
+    expect(statusMovedTo("update", ["status", "submitted_at"], "submitted")).toBe("submitted");
+  });
+
+  it("names the state an insert created the order in", () => {
+    // An insert has no `changed_columns` — every column is new.
+    expect(statusMovedTo("insert", [], "intake")).toBe("intake");
+  });
+
+  it("stays silent when the state was merely present", () => {
+    // `after` is the whole row, so `status` is there on every update. Seen on a
+    // real card: a client asking for a human review rendered as a second
+    // "generating", a state the order had been in all along.
+    expect(
+      statusMovedTo("update", ["human_review_requested", "updated_at"], "generating"),
+    ).toBeNull();
   });
 });

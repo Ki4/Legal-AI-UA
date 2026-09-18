@@ -706,6 +706,18 @@ export const PROBES = [
     from: `    (heading) => heading.number.ok && heading.number.article === wanted.article,`,
     to: `    (heading) => heading.number.ok,`,
   },
+  // The first draft of `extractArticle` measured the whole slice, and the
+  // heading is in the slice, so "blank" could never be seen: the assertion was
+  // unfailable, which is the same as absent. This probe restores that draft.
+  // The test that caught it on its first run must catch it again.
+  {
+    id: "blank-article-measured-with-its-heading",
+    what: "measures the article's text with the heading in it, so no article is ever blank",
+    file: "packages/law-refs/src/rada.ts",
+    test: "packages/law-refs/src/rada.test.ts",
+    from: `  const body = toText(printHtml.slice(heading.end, to));`,
+    to: `  const body = toText(printHtml.slice(from, to));`,
+  },
   {
     id: "parser-welds-an-article-into-one-line",
     what: "strips tags before turning block ends into newlines, so the stored text loses every paragraph break",

@@ -132,8 +132,9 @@ clause with no second human.
 | `20260907120000_law_norms_due_for_probe`         | the sweeper's batch query, as a grant                             | `verify_law_due.sql`                   |
 | `20260917120000_user_roles_and_token_hook`       | ADR-0026 phase 1: the held set, and the hook that mints the claim | `verify_approve_user.sql`              |
 | `20260918120000_practice_area_signatories`       | ADR-0027: who signs for an area, and the release the sale needs   | `verify_practice_area_signatories.sql` |
+| `20260918130000_service_pauses`                  | §5.7: a pause is a row; the reason says who opens and who closes  | `verify_service_pauses.sql`            |
 
-Twenty migrations and the scripts between them — which is the substitute doing its job and is
+Twenty-one migrations and the scripts between them — which is the substitute doing its job and is
 **not** the review. Five of the rows were added on 2026-09-17, a month after the last one added in
 step: nothing holds this table to `supabase/migrations/`, and it had quietly stopped. What a script cannot ask is the question a reviewer asks: not
 "does this policy do what it says", but "is this the right policy, and what does it let through that

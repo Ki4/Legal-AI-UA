@@ -124,6 +124,24 @@ export const PROBES = [
     from: `  rmSync(target, { recursive: true, force: true });`,
     to: `  mkdirSync(target, { recursive: true });`,
   },
+  // The gate on the typecheck gate. If the empty-project rule stops firing,
+  // a tsconfig that resolves to nothing is green again and nothing says so.
+  {
+    id: "empty-project-typechecks-clean",
+    what: "lets a tsconfig that resolves to no source file of its own pass",
+    file: "scripts/check-typecheck-reach.mjs",
+    test: "scripts/check-typecheck-reach.test.mjs",
+    from: `      if (own.length === 0) {`,
+    to: `      if (false) {`,
+  },
+  {
+    id: "unlisted-package-typechecks-nowhere",
+    what: "lets a typecheck script outside pnpm-workspace.yaml go unmentioned",
+    file: "scripts/check-typecheck-reach.mjs",
+    test: "scripts/check-typecheck-reach.test.mjs",
+    from: `    if (!inWorkspace.has(slash(resolve(dir)))) {`,
+    to: `    if (false) {`,
+  },
   {
     id: "job-status-enum-drifts-from-its-bridge",
     what: "adds a status to the schema that the TypeScript union has never heard of",

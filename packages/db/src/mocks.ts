@@ -321,6 +321,14 @@ export const mockServiceVersionPrices: ServiceVersionPriceRow[] = [
 // redaction, and the ids are a monotonic bigint rather than a uuid. Every one
 // of the actor states the screen has to tell apart appears at least once —
 // a person, an actor whose profile cannot be read, and no actor at all.
+//
+// "Whole rows" is held by `mocks.test.ts` against the trigger's own text, and
+// the rules are the trigger's: an update carries both sides with the same
+// keys, every changed column is in them and differs, the columns the trigger
+// derives the entity from are present. Not every column of the table — the
+// test holds the shape, not the width — but a payload of `{}` or a `before` of
+// null on an update is a row the trigger cannot write, and one of those hid a
+// projection bug on 2026-09-18 (#78).
 export const mockAuditEvents: AuditEventRow[] = [
   {
     id: 1,
@@ -363,7 +371,7 @@ export const mockAuditEvents: AuditEventRow[] = [
     entity_id: "sv-divorce-2",
     changed_columns: null,
     before: null,
-    after: { id: "sv-divorce-2", version: 2, status: "draft" },
+    after: { id: "sv-divorce-2", service_id: "svc-divorce", version: 2, status: "draft" },
   },
   {
     id: 4,
@@ -375,8 +383,20 @@ export const mockAuditEvents: AuditEventRow[] = [
     entity_table: "service_versions",
     entity_id: "sv-divorce-2",
     changed_columns: ["published_at", "published_by", "status"],
-    before: { id: "sv-divorce-2", status: "in_review", published_at: null },
-    after: { id: "sv-divorce-2", status: "published", published_at: "2026-07-30T14:05:00.000Z" },
+    before: {
+      id: "sv-divorce-2",
+      service_id: "svc-divorce",
+      status: "in_review",
+      published_at: null,
+      published_by: null,
+    },
+    after: {
+      id: "sv-divorce-2",
+      service_id: "svc-divorce",
+      status: "published",
+      published_at: "2026-07-30T14:05:00.000Z",
+      published_by: "usr-admin",
+    },
   },
   // An actor with no profile this caller can read: a deactivated account, or a
   // colleague RLS hides. Distinct from the row below, where nobody acted at
@@ -407,13 +427,15 @@ export const mockAuditEvents: AuditEventRow[] = [
     entity_table: "service_version_prices",
     entity_id: "sv-divorce-2",
     changed_columns: ["amount_minor"],
-    before: { amount_minor: 500000 },
-    after: { amount_minor: 520000 },
+    before: { service_version_id: "sv-divorce-2", currency: "UAH", amount_minor: 500000 },
+    after: { service_version_id: "sv-divorce-2", currency: "UAH", amount_minor: 520000 },
   },
   // A table with no word for it yet. Not hypothetical: any migration that adds
   // an audit trigger to a new service-bearing table produces exactly this row
   // before anybody adds it to `AUDITED_TABLES`, and the screen has to render
-  // something honest in the meantime.
+  // something honest in the meantime. The migration gave the trigger its
+  // mapping — it raises otherwise — so the row is still an insert with a
+  // payload; what is missing is the console's word for it, not the database's.
   {
     id: 7,
     occurred_at: "2026-08-02T12:00:00.000Z",
@@ -425,7 +447,7 @@ export const mockAuditEvents: AuditEventRow[] = [
     entity_id: "ref-ck-105",
     changed_columns: null,
     before: null,
-    after: null,
+    after: { id: "ref-ck-105", service_id: "svc-divorce" },
   },
   // svc-alimony has a history of its own, so filtering by service is something
   // a test can actually observe. svc-poa has none at all: a service older than
@@ -581,9 +603,13 @@ export const mockEntitlements: EntitlementRow[] = [
  * (ADR-0010: the order has no event table of its own). Ordered oldest first
  * here; the api layer sorts, because nothing depends on fixture order (DoD §5).
  *
- * `after` carries the whole row live. Only `status` is kept here, because only
- * `status` is selected — the timeline asks for the field it renders rather than
- * the payload it would have to pick through.
+ * `before`/`after` carry the row the way the trigger stores it (`to_jsonb(new)`),
+ * even though the timeline selects only `after->>status`: the query narrows,
+ * the fixture does not, because a fixture narrowed to what one screen reads is
+ * a fixture that cannot catch the screen reading it wrong. `status` is on the
+ * third event although that event did not move it, and an `after` of `{}`
+ * there once hid exactly that from the projection (#78). The rules are in
+ * `mocks.test.ts`.
  */
 export const mockOrderEvents: AuditEventRow[] = [
   {
@@ -597,7 +623,14 @@ export const mockOrderEvents: AuditEventRow[] = [
     entity_id: "ord-1",
     changed_columns: null,
     before: null,
-    after: { status: "intake" },
+    after: {
+      id: "ord-1",
+      service_version_id: "sv-divorce-2",
+      status: "intake",
+      reviewer_id: null,
+      submitted_at: null,
+      updated_at: "2026-08-10T09:15:00.000Z",
+    },
   },
   {
     id: 102,
@@ -609,8 +642,22 @@ export const mockOrderEvents: AuditEventRow[] = [
     entity_table: "orders",
     entity_id: "ord-1",
     changed_columns: ["status", "submitted_at", "updated_at"],
-    before: null,
-    after: { status: "submitted" },
+    before: {
+      id: "ord-1",
+      service_version_id: "sv-divorce-2",
+      status: "intake",
+      reviewer_id: null,
+      submitted_at: null,
+      updated_at: "2026-08-10T09:15:00.000Z",
+    },
+    after: {
+      id: "ord-1",
+      service_version_id: "sv-divorce-2",
+      status: "submitted",
+      reviewer_id: null,
+      submitted_at: "2026-08-10T09:40:00.000Z",
+      updated_at: "2026-08-10T09:40:00.000Z",
+    },
   },
   {
     id: 103,
@@ -622,11 +669,22 @@ export const mockOrderEvents: AuditEventRow[] = [
     entity_table: "orders",
     entity_id: "ord-1",
     changed_columns: ["reviewer_id", "updated_at"],
-    before: null,
-    // The whole row, the way the trigger stores it (`to_jsonb(new)`): `status`
-    // is here even though this event did not move it. An `after` of `{}` once
-    // hid exactly that from the projection.
-    after: { status: "submitted", reviewer_id: "usr-departed" },
+    before: {
+      id: "ord-1",
+      service_version_id: "sv-divorce-2",
+      status: "submitted",
+      reviewer_id: null,
+      submitted_at: "2026-08-10T09:40:00.000Z",
+      updated_at: "2026-08-10T09:40:00.000Z",
+    },
+    after: {
+      id: "ord-1",
+      service_version_id: "sv-divorce-2",
+      status: "submitted",
+      reviewer_id: "usr-departed",
+      submitted_at: "2026-08-10T09:40:00.000Z",
+      updated_at: "2026-08-10T10:05:00.000Z",
+    },
   },
 ];
 

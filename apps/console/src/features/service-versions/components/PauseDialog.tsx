@@ -6,7 +6,7 @@
 // options until opened; a radio group lays them out with a line each.
 
 import { useState } from "react";
-import { useI18n } from "@legal-ai/i18n";
+import { useI18n, type TranslationKey } from "@legal-ai/i18n";
 import { Button, Dialog, FormField, RadioGroup, Textarea } from "@legal-ai/ui";
 import { pauseReasonKey } from "../../../shared/vocabulary";
 import type { PauseInput, PauseReason, VersionItem } from "../api";
@@ -18,6 +18,7 @@ export function PauseDialog({
   version,
   reasons,
   busy,
+  errorKey,
   onConfirm,
   onCancel,
 }: {
@@ -25,6 +26,12 @@ export function PauseDialog({
   /** What the viewer may pick — an admin's list includes `commercial`, a lawyer's does not. */
   reasons: readonly PauseReason[];
   busy: boolean;
+  /**
+   * A refusal that arrived while this dialog was open. Rendered here, because
+   * a native modal makes the page behind it inert — a sentence out there is a
+   * sentence nobody reads.
+   */
+  errorKey: TranslationKey | null;
   onConfirm: (input: PauseInput) => void;
   onCancel: () => void;
 }) {
@@ -88,6 +95,11 @@ export function PauseDialog({
             onChange={(event) => setNote(event.target.value)}
           />
         </FormField>
+        {errorKey !== null && (
+          <p className="text-sm text-danger-ink" role="alert">
+            {t(errorKey)}
+          </p>
+        )}
       </div>
     </Dialog>
   );

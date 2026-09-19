@@ -128,7 +128,7 @@ export function ServiceVersionsPage() {
             areaLabel={page.service.practiceArea?.labels[locale] ?? page.service.practiceAreaCode}
           />
 
-          {actErrorKey !== null && (
+          {actErrorKey !== null && dialog === null && (
             <p className="text-sm text-danger-ink" role="alert">
               {t(actErrorKey)}
             </p>
@@ -167,6 +167,7 @@ export function ServiceVersionsPage() {
           version={dialog.version}
           reasons={dialog.reasons}
           busy={acting?.kind === "pause"}
+          errorKey={actErrorKey}
           onCancel={() => setDialog(null)}
           onConfirm={(input) => {
             void state.pause(dialog.version.id, input).then((done) => {
@@ -179,6 +180,7 @@ export function ServiceVersionsPage() {
         <LiftDialog
           version={dialog.version}
           busy={acting?.kind === "lift"}
+          errorKey={actErrorKey}
           onCancel={() => setDialog(null)}
           onConfirm={(resolution) => {
             void state.lift(dialog.pauseId, resolution).then((done) => {

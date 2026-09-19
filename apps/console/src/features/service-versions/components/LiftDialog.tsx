@@ -4,18 +4,25 @@
 // and lose the link between the pause and its fix.
 
 import { useState } from "react";
-import { useI18n } from "@legal-ai/i18n";
+import { useI18n, type TranslationKey } from "@legal-ai/i18n";
 import { Button, Dialog, RadioGroup } from "@legal-ai/ui";
 import type { LiftResolution, VersionItem } from "../api";
 
 export function LiftDialog({
   version,
   busy,
+  errorKey,
   onConfirm,
   onCancel,
 }: {
   version: VersionItem;
   busy: boolean;
+  /**
+   * A refusal that arrived while this dialog was open. Rendered here, because
+   * a native modal makes the page behind it inert — a sentence out there is a
+   * sentence nobody reads.
+   */
+  errorKey: TranslationKey | null;
   onConfirm: (resolution: LiftResolution) => void;
   onCancel: () => void;
 }) {
@@ -71,6 +78,11 @@ export function LiftDialog({
           disabled={busy}
         />
         <p className="text-sm text-inkSoft">{t("versions.liftDialog.newVersionNote")}</p>
+        {errorKey !== null && (
+          <p className="text-sm text-danger-ink" role="alert">
+            {t(errorKey)}
+          </p>
+        )}
       </div>
     </Dialog>
   );

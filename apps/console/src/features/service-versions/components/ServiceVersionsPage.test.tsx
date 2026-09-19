@@ -334,6 +334,36 @@ describe("the acts", () => {
     );
   });
 
+  it("a refusal while the pause dialog is open is read inside the dialog, which stays open", async () => {
+    api.listForService.mockResolvedValue(
+      page([
+        version({
+          status: "published",
+          release: {
+            kind: "signed",
+            by: TARAS,
+            at: "2026-09-02T00:00:00.000Z",
+            selfReleased: false,
+          },
+          sale: { by: IRYNA, at: "2026-09-03T00:00:00.000Z" },
+        }),
+      ]),
+    );
+    api.pause.mockRejectedValue(new AppError("conflict", "already paused"));
+    renderPage();
+
+    fireEvent.click(await screen.findByText(text("versions.action.pause")));
+    const dialog = within(screen.getByRole("dialog"));
+    fireEvent.click(dialog.getByLabelText(text("pause.reason.defect")));
+    fireEvent.click(dialog.getByText(text("versions.pauseDialog.confirm")));
+
+    expect(await dialog.findByRole("alert")).toHaveProperty(
+      "textContent",
+      text("versions.act.error.conflict"),
+    );
+    expect(screen.getByRole("dialog")).toBeTruthy();
+  });
+
   it("a lawyer's pause dialog does not offer the commercial reason", async () => {
     signIn(TARAS, "lawyer");
     api.listForService.mockResolvedValue(

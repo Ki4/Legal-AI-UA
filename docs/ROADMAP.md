@@ -10,6 +10,27 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the sale needs a signature (2026-09-18c)
+
+**PRs #85–#87**: Q28 answered as ADR-0027 and put in the schema the same evening — ADM-71 and
+ADM-72, both in the cloud by hand.
+
+- **Asked who approves a service, the answer looked like seniority; it was not.** Every domain that
+  publishes content it is liable for — document control, medical-legal review, CODEOWNERS, an
+  editorial CMS — has the same shape and none expresses it as rank: sign-off designated by area,
+  author ≠ signatory, sign-off ≠ sale. Three acts on three columns, no new role.
+- **A signature is two columns, not a status.** A status walks back to `draft` and nobody knows
+  who signed; `released_by / released_at` is a fact, and any content edit clears it.
+- **Four eyes, enforced when there are four.** A head may not release what they authored — unless
+  the area has nobody else, then allowed and stamped `self_released`. The flag counts the times the
+  rule could not apply, and the remedy is one appointment away.
+- **A pause is a row with a reason, and the reason says who opens and who closes.** Stopping is open
+  to everyone accountable; starting is not. A status flip to `paused` with no row behind it is
+  refused from anywhere, the seed included — an invariant, not a right.
+- **A rule tightened after the fixtures were written finds every fixture that assumed the old
+  world.** Seven older scripts published without a release and broke — the 2026-08-12 case, caught
+  by the runner this time rather than a reader.
+
 ## Done — the gates got a test that can fail (2026-09-18b)
 
 **PRs #80–#83**: four debts closed in one unattended hour, none of them needing the cloud.
@@ -45,27 +66,6 @@ Nothing was broken; one thing was wrong.
   its uuid because the trace does not carry a title. The honest subtitle names nothing and links.
 - **Roles stay raw, entities stay unnamed, and both are decisions.** The walkthrough read them as
   defects; the DoD (§6) and the history screen's own header (§6.4) had already said why not.
-
-## Done — the roles have a table, and the token has a hook (2026-09-17)
-
-**PR #74, #75, #76**: ADR-0026 phase 1 reached `main` and the cloud on the same day; the
-cloud-ledger gate was parked on purpose.
-
-- **A hook rewrites the claim, not the user.** GoTrue builds `session.user.app_metadata` from the
-  jsonb, so a console reading the role there saw "no role" for an admin whose token said `admin`.
-  The claims are what every policy reads, so the console now reads them too (`claims.ts`).
-- **A config file has a scope, and `config push` does not know it.** `supabase/config.toml` is the
-  local stack's configuration. Pushed to enable one hook, it carried `site_url`, the redirect list
-  and MFA with it, then failed on a paid-tier storage feature — and it applied `[auth]` before the
-  prompt, because stdin was not a terminal. Cloud auth settings are dashboard clicks.
-- **`db reset` restarts the database, not the auth container.** A `[auth.*]` change in
-  `config.toml` needs `supabase stop` and `start`, or every token minted afterwards is stale.
-- **A gate that is red for the wrong reason is worse than a parked one.** Fine-grained access
-  tokens cannot mint the login role `migration list --linked` needs; rather than a `main` that is
-  red while the ledger agrees, the job is `if: false` with a dated comment, a dated debt, and the
-  manual discipline written where a migration is applied.
-- **The gate caught its author first.** `check:sql` rule 4 refuses `roles_available` outside the
-  hook; its first catch was the header comment of the migration that introduced it.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -118,8 +118,10 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
 
 - Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
   service card (ADM-58) and the assignment editor on it (ADM-10), and now the orders list and card
-  (ADM-66) are there. Still unbuilt — the versions tab with pause/resume (ADM-32), and the per-order
-  review queue (ADM-67), which ADM-66 has unblocked and Q15 decides the urgency of.
+  (ADM-66) are there. Still unbuilt — the versions tab (ADM-32), which since 2026-09-18 is a screen
+  over rows that exist: release for a signatory, sale for an admin, a pause with its reason
+  (ADM-71, ADM-72); and the per-order review queue (ADM-67), which ADM-66 has unblocked and Q15
+  decides the urgency of.
   Every feature reaches its data through its own `api/` layer, `anatomy` included.
 - Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits

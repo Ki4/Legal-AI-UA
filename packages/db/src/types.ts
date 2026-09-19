@@ -48,6 +48,8 @@ export type EntitlementKind = Enums["entitlement_kind"];
 export type LawSource = Enums["law_source"];
 export type LawNormScope = Enums["law_norm_scope"];
 export type LawNormState = Enums["law_norm_state"];
+export type PauseReason = Enums["pause_reason"];
+export type PauseResolution = Enums["pause_resolution"];
 
 /**
  * The same values at runtime, for narrowing a state that arrives as loose text.
@@ -71,6 +73,30 @@ export const ORDER_STATUSES = [
   "cancelled",
   "abandoned",
 ] as const satisfies readonly OrderStatus[];
+
+/**
+ * The reasons a version is paused, in the order §5.7 lists them — which is the
+ * order a dialog offers them, so the list lives here rather than in a screen.
+ * `pauseReasonKey` in the console's `shared/vocabulary.ts` is the other half:
+ * a reason added in a migration fails to compile there until it has a word.
+ */
+export const PAUSE_REASONS = [
+  "law_impact",
+  "defect",
+  "generation",
+  "no_reviewer",
+  "commercial",
+] as const satisfies readonly PauseReason[];
+
+/**
+ * How a pause ended. `new_version` is here for completeness and for the
+ * vocabulary map; nobody types it — the fix going on sale writes it (§5.7).
+ */
+export const PAUSE_RESOLUTIONS = [
+  "new_version",
+  "resumed",
+  "archived",
+] as const satisfies readonly PauseResolution[];
 
 /**
  * Not an enum in the database: `profiles.role` is `text`, and a row can carry
@@ -142,6 +168,14 @@ export type LawNormRow = Tables["law_norms"]["Row"];
 export type ServiceLawRefRow = Tables["service_law_refs"]["Row"];
 
 /**
+ * Who signs for a practice area (ADR-0027): one head, any number of release
+ * reviewers. A row is an appointment, not a rank.
+ */
+export type PracticeAreaSignatoryRow = Tables["practice_area_signatories"]["Row"];
+/** Why a version is off sale, who stopped it and who may start it (§5.7). */
+export type ServicePauseRow = Tables["service_pauses"]["Row"];
+
+/**
  * The tables a per-service history can show a change to (spec §4.8).
  *
  * `audit_events.entity_table` is `text`, not an enum — the log records the
@@ -183,6 +217,8 @@ export const AUDITED_TABLES = [
   "plan_services",
   "orders",
   "service_law_refs",
+  "practice_area_signatories",
+  "service_pauses",
 ] as const satisfies readonly (keyof Tables)[];
 
 export type AuditedTable = (typeof AUDITED_TABLES)[number];

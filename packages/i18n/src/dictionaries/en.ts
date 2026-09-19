@@ -134,6 +134,7 @@ export const en: Dictionary = {
   "card.anatomy": "Document anatomy →",
   "card.history": "Change history →",
   "card.law": "The norms it rests on →",
+  "card.versions": "Versions →",
 
   // The history screen (§4.8) -----------------------------------------------
   "history.title": "Change history",
@@ -153,6 +154,8 @@ export const en: Dictionary = {
   "history.entity.plan_services": "Service in a plan",
   "history.entity.orders": "Order",
   "history.entity.service_law_refs": "Law reference",
+  "history.entity.practice_area_signatories": "Area signatory",
+  "history.entity.service_pauses": "Version pause",
   "history.entity.service_assignments": "Lawyer assignment",
   "history.actor.unnamed": "unknown user",
   "history.actor.system": "system",
@@ -249,6 +252,125 @@ export const en: Dictionary = {
   "order.timeline.what": "What happened",
   "order.timeline.empty.title": "Nothing recorded yet",
   "order.timeline.empty.hint": "The log records changes from the day it was added.",
+
+  // Versions (ADM-32, §4.3, §5.7) --------------------------------------------
+  "versions.title": "Versions",
+  "versions.subtitle":
+    "Every version carries three names: who wrote it, who signed it, who put it on sale.",
+  "versions.backToService": "Back to the service",
+  "versions.loading": "Loading versions",
+  "versions.notFound.title": "Service not found",
+  "versions.notFound.hint":
+    "Check the address. The service may have been deleted, or it is not yours.",
+  "versions.error.load": "Could not load the versions.",
+  "versions.error.forbidden": "Only the firm's staff can read a service's versions.",
+  "versions.error.network": "No connection to the server. Check the network and try again.",
+  "versions.failed.title": "The versions did not load",
+  "versions.failed.hint": "That does not mean there are none. Try again.",
+  "versions.empty.title": "No versions yet",
+  "versions.empty.hint":
+    "The assigned lawyer creates the first one in the document editor. It appears here at once.",
+  "versions.showArchived": "Show archive",
+  "versions.showArchivedHint": "Archived versions are hidden so they do not crowd the list.",
+  "versions.column.version": "Version",
+  "versions.column.status": "Status",
+  "versions.column.modes": "Modes",
+  "versions.column.price": "Price",
+  "versions.column.author": "Author",
+  "versions.column.released": "Released by",
+  "versions.column.sold": "Put on sale by",
+  "versions.column.actions": "Actions",
+  "versions.nameUnavailable": "Name unavailable",
+  "versions.noAuthor": "Author not recorded",
+  "versions.notReleased": "Not released",
+  "versions.releasedByNobody": "No signature — predates the rule",
+  "versions.notOnSale": "Not on sale",
+  "versions.selfReleased": "Self-released",
+  "versions.selfReleasedHint": "The signatory is the author. Nobody else signed for the area then.",
+
+  // Who signs for the area (§5.6, ADR-0027) ----------------------------------
+  "versions.signatories.title": "Who signs for {area}",
+  "versions.signatories.head": "head",
+  "versions.signatories.reviewer": "release reviewer",
+  "versions.signatories.none": "Nobody signs for this area.",
+  "versions.signatories.noneHint":
+    "Nothing can be released until an admin appoints the area's head.",
+
+  // The pause on a version row (§5.7) ----------------------------------------
+  "versions.pause.open": "Paused: {reason}",
+  "versions.pause.openedBy": "Opened by {name}, {date}",
+  "versions.pause.openedByUnnamed": "Opened {date}",
+  "versions.pause.closed": "Closed {date}: {resolution}",
+  "versions.pause.replacedBy": "Replaced by version {version}",
+  "versions.pause.note": "Note (internal)",
+
+  // Actions ------------------------------------------------------------------
+  "versions.action.submitForReview": "Send to review",
+  "versions.action.backToDraft": "Back to draft",
+  "versions.action.release": "Sign the release",
+  "versions.action.putOnSale": "Put on sale",
+  "versions.action.pause": "Pause",
+  "versions.action.lift": "Lift the pause",
+  "versions.action.none": "Nothing for you to do",
+
+  "versions.release.title": "Sign version {version}?",
+  "versions.release.description":
+    "Your name goes under this text. Any content edit after that withdraws the signature.",
+  "versions.release.selfDescription":
+    "You authored this version, and nobody else signs for the area. The signature will be marked as a self-release — visible in the log.",
+  "versions.release.confirm": "Sign",
+  "versions.release.cancel": "Cancel",
+
+  "versions.sale.title": "Put version {version} on sale?",
+  "versions.sale.description":
+    "The previous live version is archived by the same act. Only a signed version goes on sale.",
+  "versions.sale.confirm": "Put on sale",
+  "versions.sale.cancel": "Cancel",
+
+  "versions.pauseDialog.title": "Pause version {version}",
+  "versions.pauseDialog.reason": "Reason",
+  "versions.pauseDialog.reasonHint":
+    "The reason decides who may lift the pause: a commercial one an admin, a professional one a signatory of the area or the fix going on sale.",
+  "versions.pauseDialog.reviewNote":
+    "Orders in flight go to a lawyer's review, whatever the version's review mode.",
+  "versions.pauseDialog.note": "Note",
+  "versions.pauseDialog.noteHint":
+    "Internal. The client sees a separate sentence for the reason, never this text.",
+  "versions.pauseDialog.confirm": "Pause",
+  "versions.pauseDialog.cancel": "Cancel",
+  "versions.pauseDialog.close": "Close",
+  "versions.pauseDialog.reasonRequired": "Pick a reason.",
+
+  "versions.liftDialog.title": "Lift the pause on version {version}",
+  "versions.liftDialog.resolution": "How it ends",
+  "versions.liftDialog.resumed": "Resume sale",
+  "versions.liftDialog.resumedHint":
+    "The same version goes back on sale — a false alarm, or cover found.",
+  "versions.liftDialog.archived": "Withdraw",
+  "versions.liftDialog.archivedHint": "The version is archived. A fix is always a new version.",
+  "versions.liftDialog.newVersionNote":
+    "If a corrected version is ready, do not lift the pause here: putting it on sale closes this pause itself and names the fix.",
+  "versions.liftDialog.confirm": "Finish",
+  "versions.liftDialog.cancel": "Cancel",
+  "versions.liftDialog.close": "Close",
+  "versions.liftDialog.resolutionRequired": "Pick how it ends.",
+
+  "versions.act.error.forbidden": "You may not do this.",
+  "versions.act.error.refused":
+    "The database refused this step: the version's state or your rights are not what the rule requires. Reload the page.",
+  "versions.act.error.conflict": "Somebody changed this version first. Reload the page.",
+  "versions.act.error.network": "No connection to the server. Nothing was done.",
+  "versions.act.error.failed": "The action failed.",
+
+  // Pause reasons and resolutions (§5.7) -------------------------------------
+  "pause.reason.law_impact": "The law changed",
+  "pause.reason.defect": "Defect in the text",
+  "pause.reason.generation": "Generation went wrong",
+  "pause.reason.no_reviewer": "Nobody to review",
+  "pause.reason.commercial": "Commercial decision",
+  "pause.resolution.new_version": "replaced by a new version",
+  "pause.resolution.resumed": "sale resumed",
+  "pause.resolution.archived": "withdrawn from sale",
 
   // Who answers for a service (ADM-10) --------------------------------------
   "assignment.title": "Who answers for this service",
@@ -636,5 +758,9 @@ export const enPlurals: PluralDictionary = {
   "serviceFields.optionsCount": {
     one: "{count} choice",
     other: "{count} choices",
+  },
+  "versions.archivedHidden": {
+    one: "{count} archived version hidden",
+    other: "{count} archived versions hidden",
   },
 };

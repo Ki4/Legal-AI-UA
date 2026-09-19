@@ -167,6 +167,7 @@ export const uk = {
   "card.anatomy": "Анатомія документа →",
   "card.history": "Історія змін →",
   "card.law": "Норми, на які спирається →",
+  "card.versions": "Версії →",
 
   // The history screen (§4.8) -----------------------------------------------
   // Deliberately plain words. This screen is read when somebody is trying to
@@ -190,6 +191,8 @@ export const uk = {
   "history.entity.plan_services": "Послуга в тарифі",
   "history.entity.orders": "Замовлення",
   "history.entity.service_law_refs": "Посилання на норму",
+  "history.entity.practice_area_signatories": "Підписант галузі",
+  "history.entity.service_pauses": "Пауза версії",
   // Somebody acted and we have no name for them — not nobody, and not the
   // system. The sentence has to leave the reader knowing a person was involved.
   "history.actor.unnamed": "невідомий користувач",
@@ -290,6 +293,127 @@ export const uk = {
   "order.timeline.what": "Що сталося",
   "order.timeline.empty.title": "Подій ще немає",
   "order.timeline.empty.hint": "Журнал фіксує зміни з моменту, коли його додали.",
+
+  // Versions (ADM-32, §4.3, §5.7) --------------------------------------------
+  // Три акти на трьох колонках: хто написав, хто підписав, хто виставив на
+  // продаж. Жоден із них не «опублікував» — це слово ховає, чий саме це акт.
+  "versions.title": "Версії",
+  "versions.subtitle":
+    "Кожна версія несе три імені: хто написав, хто підписав, хто виставив на продаж.",
+  "versions.backToService": "До послуги",
+  "versions.loading": "Завантажуємо версії",
+  "versions.notFound.title": "Послугу не знайдено",
+  "versions.notFound.hint": "Перевірте адресу. Можливо, послугу видалено або вона не ваша.",
+  "versions.error.load": "Не вдалося завантажити версії.",
+  "versions.error.forbidden": "Версії послуг читають лише співробітники фірми.",
+  "versions.error.network": "Немає зв’язку з сервером. Перевірте мережу й спробуйте ще раз.",
+  "versions.failed.title": "Версії не завантажилися",
+  "versions.failed.hint": "Це не означає, що їх немає. Спробуйте ще раз.",
+  "versions.empty.title": "Версій ще немає",
+  "versions.empty.hint":
+    "Першу версію створює призначений юрист у редакторі документа. Тут вона з’явиться одразу.",
+  "versions.showArchived": "Показати архів",
+  "versions.showArchivedHint": "Архівні версії приховано, щоб не захаращувати список.",
+  "versions.column.version": "Версія",
+  "versions.column.status": "Статус",
+  "versions.column.modes": "Режими",
+  "versions.column.price": "Ціна",
+  "versions.column.author": "Автор",
+  "versions.column.released": "Підписав(ла)",
+  "versions.column.sold": "Виставив(ла) на продаж",
+  "versions.column.actions": "Дії",
+  "versions.nameUnavailable": "Ім’я недоступне",
+  "versions.noAuthor": "Автора не записано",
+  "versions.notReleased": "Не підписано",
+  "versions.releasedByNobody": "Без підпису — версія старша за правило",
+  "versions.notOnSale": "Не продається",
+  "versions.selfReleased": "Самопідпис",
+  "versions.selfReleasedHint": "Підписант — автор. За галузь тоді ніхто більше не підписував.",
+
+  // Хто підписує за галузь (§5.6, ADR-0027) ----------------------------------
+  "versions.signatories.title": "Хто підписує за галузь «{area}»",
+  "versions.signatories.head": "голова",
+  "versions.signatories.reviewer": "рецензент релізу",
+  "versions.signatories.none": "За цю галузь ніхто не підписує.",
+  "versions.signatories.noneHint":
+    "Реліз неможливий, поки адміністратор не призначить голову галузі.",
+
+  // Пауза на рядку версії (§5.7) ---------------------------------------------
+  "versions.pause.open": "На паузі: {reason}",
+  "versions.pause.openedBy": "Відкрив(ла) {name}, {date}",
+  "versions.pause.openedByUnnamed": "Відкрито {date}",
+  "versions.pause.closed": "Закрито {date}: {resolution}",
+  "versions.pause.replacedBy": "Замінено версією {version}",
+  "versions.pause.note": "Нотатка (внутрішня)",
+
+  // Дії ----------------------------------------------------------------------
+  "versions.action.submitForReview": "На перевірку",
+  "versions.action.backToDraft": "Повернути в чернетку",
+  "versions.action.release": "Підписати реліз",
+  "versions.action.putOnSale": "Виставити на продаж",
+  "versions.action.pause": "Зупинити",
+  "versions.action.lift": "Зняти паузу",
+  "versions.action.none": "Дій для вас немає",
+
+  "versions.release.title": "Підписати версію {version}?",
+  "versions.release.description":
+    "Ваше ім’я стане під цим текстом. Будь-яка правка змісту після цього зніме підпис.",
+  "versions.release.selfDescription":
+    "Ви автор цієї версії, і за галузь більше ніхто не підписує. Підпис буде позначено як самопідпис — це видно в журналі.",
+  "versions.release.confirm": "Підписати",
+  "versions.release.cancel": "Скасувати",
+
+  "versions.sale.title": "Виставити версію {version} на продаж?",
+  "versions.sale.description":
+    "Попередня жива версія піде в архів тим самим актом. Продається лише підписана версія.",
+  "versions.sale.confirm": "Виставити",
+  "versions.sale.cancel": "Скасувати",
+
+  "versions.pauseDialog.title": "Зупинити версію {version}",
+  "versions.pauseDialog.reason": "Причина",
+  "versions.pauseDialog.reasonHint":
+    "Причина вирішує, хто зможе зняти паузу: комерційну — адміністратор, професійну — підписант галузі або нова версія на продажу.",
+  "versions.pauseDialog.reviewNote":
+    "Замовлення в роботі підуть на перевірку юристом незалежно від режиму версії.",
+  "versions.pauseDialog.note": "Нотатка",
+  "versions.pauseDialog.noteHint":
+    "Внутрішня. Клієнт побачить окреме речення за причиною, а не цей текст.",
+  "versions.pauseDialog.confirm": "Зупинити",
+  "versions.pauseDialog.cancel": "Скасувати",
+  "versions.pauseDialog.close": "Закрити",
+  "versions.pauseDialog.reasonRequired": "Оберіть причину.",
+
+  "versions.liftDialog.title": "Зняти паузу з версії {version}",
+  "versions.liftDialog.resolution": "Як завершити",
+  "versions.liftDialog.resumed": "Відновити продаж",
+  "versions.liftDialog.resumedHint":
+    "Ця сама версія повертається на продаж — хибна тривога або заміну знайдено.",
+  "versions.liftDialog.archived": "Зняти з продажу",
+  "versions.liftDialog.archivedHint": "Версія йде в архів. Виправлення — завжди нова версія.",
+  "versions.liftDialog.newVersionNote":
+    "Якщо готова виправлена версія — не знімайте паузу тут: її вихід на продаж закриє цю паузу сам і назве себе.",
+  "versions.liftDialog.confirm": "Завершити",
+  "versions.liftDialog.cancel": "Скасувати",
+  "versions.liftDialog.close": "Закрити",
+  "versions.liftDialog.resolutionRequired": "Оберіть, як завершити.",
+
+  // Відмови. Ніколи не текст бази: він англійський і для стека, а не для людини.
+  "versions.act.error.forbidden": "Цю дію вам не дозволено.",
+  "versions.act.error.refused":
+    "База даних відхилила цей крок: стан версії або ваші права не ті, що вимагає правило. Оновіть сторінку.",
+  "versions.act.error.conflict": "Хтось уже змінив цю версію. Оновіть сторінку.",
+  "versions.act.error.network": "Немає зв’язку з сервером. Дію не виконано.",
+  "versions.act.error.failed": "Не вдалося виконати дію.",
+
+  // Причини й завершення пауз (§5.7) -----------------------------------------
+  "pause.reason.law_impact": "Змінилася норма",
+  "pause.reason.defect": "Дефект тексту",
+  "pause.reason.generation": "Збій генерації",
+  "pause.reason.no_reviewer": "Нікому перевіряти",
+  "pause.reason.commercial": "Комерційне рішення",
+  "pause.resolution.new_version": "замінено новою версією",
+  "pause.resolution.resumed": "продаж відновлено",
+  "pause.resolution.archived": "знято з продажу",
 
   // Who answers for a service (ADM-10) --------------------------------------
   "assignment.title": "Хто відповідає за цю послугу",
@@ -762,6 +886,12 @@ export const ukPlurals = {
     few: "{count} варіанти",
     many: "{count} варіантів",
     other: "{count} варіантів",
+  },
+  "versions.archivedHidden": {
+    one: "Приховано {count} архівну версію",
+    few: "Приховано {count} архівні версії",
+    many: "Приховано {count} архівних версій",
+    other: "Приховано {count} архівних версій",
   },
 } as const satisfies PluralDictionaryShape;
 

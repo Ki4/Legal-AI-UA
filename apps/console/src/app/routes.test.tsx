@@ -98,6 +98,12 @@ vi.mock("../features/service-history/api", async (importOriginal) => {
     await import("../features/service-history/api/service-history.mock");
   return { ...actual, serviceHistoryApi: mockServiceHistoryApi };
 });
+vi.mock("../features/service-versions/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../features/service-versions/api")>();
+  const { mockServiceVersionsApi } =
+    await import("../features/service-versions/api/service-versions.mock");
+  return { ...actual, serviceVersionsApi: mockServiceVersionsApi };
+});
 vi.mock("../features/services/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../features/services/api")>();
   const { mockServicesApi } = await import("../features/services/api/services.mock");

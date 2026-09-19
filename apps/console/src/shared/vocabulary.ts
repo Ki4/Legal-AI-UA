@@ -20,6 +20,8 @@ import type {
   LawNormState,
   LawSource,
   OrderStatus,
+  PauseReason,
+  PauseResolution,
   PersonalDataBasis,
   QuestionnaireFieldType,
   ReviewMode,
@@ -75,6 +77,28 @@ export const auditedTableKey: Record<AuditedTable, TranslationKey> = {
   plan_services: "history.entity.plan_services",
   orders: "history.entity.orders",
   service_law_refs: "history.entity.service_law_refs",
+  practice_area_signatories: "history.entity.practice_area_signatories",
+  service_pauses: "history.entity.service_pauses",
+};
+
+/**
+ * Why a version is off sale (§5.7). The reason decides who may open the pause,
+ * who may close it and whose question it is afterwards, so the word a lawyer
+ * reads has to be the one they would use in that conversation — not the enum.
+ */
+export const pauseReasonKey: Record<PauseReason, TranslationKey> = {
+  law_impact: "pause.reason.law_impact",
+  defect: "pause.reason.defect",
+  generation: "pause.reason.generation",
+  no_reviewer: "pause.reason.no_reviewer",
+  commercial: "pause.reason.commercial",
+};
+
+/** How a pause ended. `new_version` is read, never chosen — the fix writes it. */
+export const pauseResolutionKey: Record<PauseResolution, TranslationKey> = {
+  new_version: "pause.resolution.new_version",
+  resumed: "pause.resolution.resumed",
+  archived: "pause.resolution.archived",
 };
 
 /**

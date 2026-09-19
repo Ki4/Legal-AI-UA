@@ -7,6 +7,7 @@ import { lawRoutes } from "../features/law";
 import { serviceDetailRoutes } from "../features/service-detail";
 import { serviceFieldsRoutes } from "../features/service-fields";
 import { serviceHistoryRoutes } from "../features/service-history";
+import { serviceVersionsRoutes } from "../features/service-versions";
 import { servicesRoutes } from "../features/services";
 import { teamRoutes } from "../features/team";
 import { AppShell } from "./AppShell";
@@ -36,6 +37,7 @@ export const routes: RouteObject[] = [
       ...serviceDetailRoutes,
       ...serviceFieldsRoutes,
       ...serviceHistoryRoutes,
+      ...serviceVersionsRoutes,
       ...ordersRoutes,
       ...lawRoutes,
       ...anatomyRoutes,

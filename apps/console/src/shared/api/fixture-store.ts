@@ -20,10 +20,12 @@ import {
   mockOrderEvents,
   mockOrders,
   mockPracticeAreas,
+  mockPracticeAreaSignatories,
   mockProfiles,
   mockQuestionnaireFields,
   mockServiceAssignments,
   mockServiceLawRefs,
+  mockServicePauses,
   mockServices,
   mockServiceVersionPrices,
   mockServiceVersions,
@@ -35,10 +37,12 @@ import type {
   LawNormRow,
   OrderRow,
   PracticeAreaRow,
+  PracticeAreaSignatoryRow,
   ProfileRow,
   QuestionnaireFieldRow,
   ServiceAssignmentRow,
   ServiceLawRefRow,
+  ServicePauseRow,
   ServiceRow,
   ServiceVersionPriceRow,
   ServiceVersionRow,
@@ -69,6 +73,12 @@ export const serviceAssignmentRows: ServiceAssignmentRow[] = mockServiceAssignme
 }));
 export const profileRows: ProfileRow[] = mockProfiles.map((row) => ({ ...row }));
 export const practiceAreaRows: PracticeAreaRow[] = mockPracticeAreas.map((row) => ({ ...row }));
+export const practiceAreaSignatoryRows: PracticeAreaSignatoryRow[] =
+  mockPracticeAreaSignatories.map((row) => ({ ...row }));
+// Mutable like the law rows below: opening and lifting a pause are contract
+// operations, and a version's status follows the row (§5.7) — so the versions
+// fixture writes both, the way the `service_pauses_apply` trigger does.
+export const servicePauseRows: ServicePauseRow[] = mockServicePauses.map((row) => ({ ...row }));
 export const auditEventRows: AuditEventRow[] = mockAuditEvents.map((row) => ({ ...row }));
 export const clientRows: ClientRow[] = mockClients.map((row) => ({ ...row }));
 export const orderRows: OrderRow[] = mockOrders.map((row) => ({ ...row }));

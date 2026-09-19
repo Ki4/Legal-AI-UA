@@ -17,6 +17,8 @@ import type {
   QuestionnaireFieldRow,
   ServiceAssignmentRow,
   ServiceLawRefRow,
+  PracticeAreaSignatoryRow,
+  ServicePauseRow,
   ServiceRow,
   ServiceVersionPriceRow,
   ServiceVersionRow,
@@ -317,6 +319,73 @@ export const mockServiceVersions: ServiceVersionRow[] = [
     released_at: "2026-06-24T09:00:00.000Z",
     released_by: "usr-taras",
     self_released: true,
+  },
+];
+
+// Who signs for an area (ADR-0027). Family law has the arrangement the ADR
+// exists for — Olena heads it and appointed Taras, so she authors and he
+// signs. Civil law has Taras alone, which is why `sv-poa-1` above is
+// self-released: the rule could not be applied, and the row says so. Labour
+// has nobody, so a version filed under it could not be released at all — the
+// state the versions screen has to explain rather than hide.
+export const mockPracticeAreaSignatories: PracticeAreaSignatoryRow[] = [
+  {
+    practice_area: "family",
+    lawyer_id: "usr-olena",
+    is_head: true,
+    appointed_by: "usr-admin",
+    appointed_at: "2026-05-01T09:00:00.000Z",
+  },
+  {
+    practice_area: "family",
+    lawyer_id: "usr-taras",
+    is_head: false,
+    appointed_by: "usr-olena",
+    appointed_at: "2026-05-15T09:00:00.000Z",
+  },
+  {
+    practice_area: "civil",
+    lawyer_id: "usr-taras",
+    is_head: true,
+    appointed_by: "usr-admin",
+    appointed_at: "2026-06-01T09:00:00.000Z",
+  },
+];
+
+// A pause is a row (§5.7), so the `paused` version above has one, open — a
+// `defect` its own signatory raised. The divorce service carries a closed one
+// on its archived predecessor: a `law_impact` pause that ended the only way a
+// professional pause ends without a signatory lifting it, the fix going on
+// sale and naming itself. Between them the screen meets an open pause, a
+// closed one with a successor, and a version that was never paused.
+export const mockServicePauses: ServicePauseRow[] = [
+  {
+    id: "pause-poa-1",
+    service_version_id: "sv-poa-1",
+    reason: "defect",
+    note: "Clause 4 names the wrong registry for a grantor abroad.",
+    signal_id: null,
+    opened_by: "usr-taras",
+    opened_at: "2026-07-04T10:15:00.000Z",
+    closed_by: null,
+    closed_at: null,
+    resolution: null,
+    replaced_by: null,
+    holders_notified_at: null,
+  },
+  {
+    id: "pause-divorce-1",
+    service_version_id: "sv-divorce-1",
+    reason: "law_impact",
+    note: null,
+    signal_id: null,
+    opened_by: "usr-olena",
+    opened_at: "2026-07-25T08:00:00.000Z",
+    closed_by: "usr-admin",
+    closed_at: "2026-07-30T14:05:00.000Z",
+    resolution: "new_version",
+    replaced_by: "sv-divorce-2",
+    holders_notified_at: "2026-07-25T09:30:00.000Z",
   },
 ];
 

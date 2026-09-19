@@ -204,6 +204,11 @@ Since ADR-0026 the held roles live in `public.user_roles` and a custom access to
   `select` on `user_roles` and a policy of its own. A table the hook comes to read in phase 2 needs
   the same three, and `verify_approve_user.sql` scenario 15b is where that is asserted from the ACL,
   because `postgres` cannot `set role` to the auth admin in a verification script.
+- **`config.toml` configures the local stack, and `config push` does not know that.** It carries
+  the whole file — `site_url`, redirects, MFA — and with stdin not a terminal it applies `[auth]`
+  before the prompt (2026-09-17). Cloud auth settings, the hook included, are dashboard clicks.
+  Locally, a `[auth.*]` change needs `supabase stop` and `start`: `db reset` restarts Postgres,
+  not GoTrue, and every token minted afterwards is stale.
 
 ## Every policy needs a verification scenario
 

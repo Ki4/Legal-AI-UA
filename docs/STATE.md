@@ -1,20 +1,20 @@
-# State — 2026-09-18c, the sale needs a signature and a pause is a row
+# State — 2026-09-19, the versions tab is the first screen ADR-0027 gets
 
-Written at `699c447` on `main`, nothing unmerged. If `git log` shows commits after it, this file is
+Written at `237206f` on `main`, nothing unmerged. If `git log` shows commits after it, this file is
 behind: trust git.
 
 Tier 1: **the only document a session reads to orient.** `pnpm docs:check` caps it at 60 lines.
 
 ## Wave
 
-Wave 1. Q28 answered on 09-18 (ADR-0027, #85): publication is three acts — the lawyer authors, a
-signatory of the practice area releases, an admin sells — and no new role. The schema followed the
-same evening: ADM-71 (#86) and ADM-72 (#87), both in the cloud by hand, ledger repaired, 22 of 22.
+Wave 1. ADM-32 (#89): `/services/:id/versions` — three names per version, the who-may-what of
+ADR-0027 and §5.7 as one pure function, a pause as a dialog with a reason. Walked on the local stack
+as admin and as a signatory, both themes; the walk found what the tests could not (ADM-31/32 shipped).
 
 ## In flight
 
-- **Publication has a schema and no screen.** ADM-31's refusal half shipped inside ADM-71; what is
-  left is the versions tab (ADM-32): release, sale, a pause with a reason, "released by / when".
+- **Publication has its screen and no way in.** Nothing in the console creates a version; the
+  author's act starts in an editor that does not exist (ADM-30 and the block editor).
 - **The cloud has no signatory.** The seed is local; nothing releases there before `set_area_head`.
 - `main` green on CI. **The cloud hook has minted no token anyone has read yet** — a sign-in there.
 
@@ -28,16 +28,17 @@ same evening: ADM-71 (#86) and ADM-72 (#87), both in the cloud by hand, ledger r
 
 ## Debts — carried since
 
+- **A screen's browser walk is a hand check** — 2026-09-19. The Playwright script that walked the
+  versions tab in both themes lives outside the repository; the DoD line stays a checklist line.
+- **Fixtures are held to shape, not to the schema's invariants** — 2026-09-18 (audit width), and on
+  2026-09-19 a version stood `paused` with no pause row, a state the schema refuses since ADM-72.
 - **Release does not check that the template is frozen** — 2026-09-18. Templates are not in the
   schema (ADM-1, ADM-30); ADR-0027 promises the check, the migration header records the gap.
-- **Audit fixtures are held to shape, not width** — 2026-09-18. `mocks.test.ts` knows the keys the
-  trigger reads, not a table's columns; a payload missing a column nothing reads still passes.
 - **A history row does not name the field or norm it touched** — 2026-09-18. §6.4 hides `after`.
 - **`cloud-ledger` is parked (`if: false` in `sql.yml`)** — 2026-09-17. Fine-grained tokens cannot
   mint the login role; the way back is a DB password in CI. Until then: `migration repair` by hand.
 - **The hook's minting is proved by a script nothing runs** — 2026-09-17. The SQL job runs GoTrue.
-- **The access-control queue in `CONTRIBUTING.md` is held to `migrations/` by nothing** —
-  2026-09-17. Twenty-one rows; the last two arrived in step, the five before them a month late.
+- **The access-control queue in `CONTRIBUTING.md` is held to `migrations/` by nothing** — 2026-09-17.
 - **No edge-function secret in the cloud** (2026-09-01) **and nothing deploys or checks a
   function** (2026-09-02). A cron on `law-sweep` would 401 hourly; a missing function goes unnoticed.
 - **The cheap tier of §9.7 has nowhere to be stored** — 2026-09-07. Its date needs an act-level row.
@@ -52,8 +53,7 @@ same evening: ADM-71 (#86) and ADM-72 (#87), both in the cloud by hand, ledger r
 
 1. **A service-role secret in the cloud, then deploy both functions and schedule the sweep.**
    ADM-44's second half, and the oldest thing now blocking work. Needs the cloud, so needs you.
-2. **The versions tab on the new schema (ADM-32)** — release, sale, a pause with its reason. The
-   first screen ADR-0027 gets; the DoD applies.
-3. **The token-hook gate in `sql.yml`** — the 09-17 debt; the request and the decode exist.
+2. **The token-hook gate in `sql.yml`** — the 09-17 debt; the request and the decode exist.
+3. **ADR-0026 phase 2** — `active_role`, the switcher, `orders.sql:282` onto the held set.
 
 Detail: `ROADMAP.md` · `VISION.md` · `history/` · `specs/admin-console.md` §9, §13, §14 · DoD · `adr/`.

@@ -10,6 +10,26 @@ The last three sessions only. Older sections live in [history/2026-Q3.md](histor
 read on request — `pnpm docs:check` fails if this file grows past three of them, because a map that
 accumulates its own changelog stops being a map and starts being read out of habit.
 
+## Done — the first screen ADR-0027 gets (2026-09-19)
+
+**PR #88, #89**: the previous session's close, one day late, and ADM-32 — the versions tab.
+
+- **Who-may-what is one pure function, and the schema is what refuses.** `availableActions` is the
+  table of ADR-0027 and §5.7 with an assertion per line; the buttons only avoid offering an act the
+  database would refuse, and a refusal reaches the reader as our sentence, never the guard's.
+- **A refusal under a native modal is a sentence nobody reads.** `showModal()` makes the page
+  inert, so the alert beside the table was invisible while the dialog that caused it stayed open.
+  Found by racing two pauses against the real database — not by any of 56 tests, because a jsdom
+  alert is "in the document" whether or not a person can see it.
+- **A fixture can stand in a state the schema refuses, and nothing says so.** `sv-poa-1` was
+  `paused` with no pause row for a day after ADM-72 made that impossible. `mocks.test.ts` holds
+  fixtures to the audit trigger's shape; nothing holds them to an invariant between two tables.
+- **A closed pause naming its successor is worth a row in the fixtures.** The divorce service's
+  archived predecessor carries a `law_impact` pause closed as `new_version` — so the screen meets
+  open, closed-with-successor and never-paused on first render rather than in production.
+- **The extension could not screenshot; Playwright on the system Chrome could, in ten minutes.**
+  Eight shots, both themes, both languages, a clean console — from a script in a scratchpad.
+
 ## Done — the sale needs a signature (2026-09-18c)
 
 **PRs #85–#87**: Q28 answered as ADR-0027 and put in the schema the same evening — ADM-71 and
@@ -49,23 +69,6 @@ ADM-72, both in the cloud by hand.
   which is what a test that can fail looks like on day one.
 - **Three probes appended to the end of one array conflict pairwise.** A probe sits beside the
   probes for the same file. Written into the root `CLAUDE.md`.
-
-## Done — the screens were looked at (2026-09-18)
-
-**PR #78**: the first browser walkthrough of the console, three weeks after the debt was recorded.
-Nothing was broken; one thing was wrong.
-
-- **A mock shaped unlike the database hides exactly the bug the database shows.** The order
-  timeline read `after->>status` on every event. In Postgres `after` is `to_jsonb(new)` — the whole
-  row — so an update that touched only `human_review_requested` rendered as a second "generating".
-  The fixture's matching event carried `after: {}`, and every test passed against it.
-- **The seed is the first real data a screen meets.** Four mock events could not produce the row
-  the seed produced on the first order card opened. A walkthrough is not a substitute for a test;
-  it is the thing that tells you which test is missing.
-- **A screen's copy says what the screen cannot know.** The anatomy subtitle named the service by
-  its uuid because the trace does not carry a title. The honest subtitle names nothing and links.
-- **Roles stay raw, entities stay unnamed, and both are decisions.** The walkthrough read them as
-  defects; the DoD (§6) and the history screen's own header (§6.4) had already said why not.
 
 ## Now — wave 1 (parallel, no file overlap)
 
@@ -118,10 +121,10 @@ drift mechanism, the trace's move out of `packages/db`, the frozen field list, t
 
 - Console screens on real data: the catalogue with its filters and two views (ADM-7, ADM-61), the
   service card (ADM-58) and the assignment editor on it (ADM-10), and now the orders list and card
-  (ADM-66) are there. Still unbuilt — the versions tab (ADM-32), which since 2026-09-18 is a screen
-  over rows that exist: release for a signatory, sale for an admin, a pause with its reason
-  (ADM-71, ADM-72); and the per-order review queue (ADM-67), which ADM-66 has unblocked and Q15
-  decides the urgency of.
+  (ADM-66) are there, and so is the versions tab (ADM-32, 2026-09-19): release for a signatory,
+  sale for an admin, a pause with its reason. Still unbuilt — the per-order review queue (ADM-67),
+  which ADM-66 has unblocked and Q15 decides the urgency of; and the editor that creates a version
+  in the first place (ADM-30), without which the three acts have a screen and no way in.
   Every feature reaches its data through its own `api/` layer, `anatomy` included.
 - Lawyer competences and the picker that reads them (ADM-60). The picker offers every approved
   lawyer today, which is right for a firm with two and absurd for one with twenty. Its shape waits

@@ -62,6 +62,8 @@ jobs:
 
       - name: Any other status is a failure
         if: steps.status.outputs.status != 'INACTIVE' && steps.status.outputs.status != 'ACTIVE_HEALTHY'
+        env:
+          STATUS: ${{ steps.status.outputs.status }}
         run: |
-          echo "::error::Project $REF is ${{ steps.status.outputs.status }}; neither queried nor restored."
+          echo "::error::Project $REF is $STATUS; neither queried nor restored."
           exit 1

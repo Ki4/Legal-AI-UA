@@ -38,7 +38,9 @@ jobs:
         run: |
           test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::SUPABASE_ACCESS_TOKEN is not set"; exit 1; }
           test -n "$REF" || { echo "::error::vars.SUPABASE_PROJECT_REF is not set"; exit 1; }
-          status=$(curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "$API/projects/$REF" | jq -r .status)
+          body=$(curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "$API/projects/$REF") \
+            || { echo "::error::The Management API refused SUPABASE_ACCESS_TOKEN — expired or revoked? Mint a new one and 'gh secret set SUPABASE_ACCESS_TOKEN'."; exit 1; }
+          status=$(jq -r .status <<<"$body")
           echo "Project $REF is $status"
           echo "status=$status" >> "$GITHUB_OUTPUT"
 

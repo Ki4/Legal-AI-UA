@@ -1,0 +1,65 @@
+name: Keep alive
+
+# The cloud project is on the free tier, which pauses a project after a week
+# without activity. Nothing in this repository talks to the cloud on a schedule
+# yet (the law sweep is not deployed), so the project paused unnoticed — found
+# INACTIVE on 2026-10-10, three weeks after the last session.
+#
+# Every three days, well inside the week: one real query against the database,
+# through the Management API with the token CI already holds, so no database
+# password or API key is added. If the project is found paused anyway, the job
+# asks for a restore and fails — a restore is news, not a green tick.
+#
+# It also runs on the pull request that changes it, so the credential and the
+# endpoints are proved before the schedule depends on them. GitHub disables
+# scheduled workflows after 60 days without a commit; that is the one way this
+# can quietly stop.
+on:
+  schedule:
+    - cron: "17 6 */3 * *"
+  pull_request:
+    paths:
+      - ".github/workflows/keep-alive.yml"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      API: https://api.supabase.com/v1
+
+    steps:
+      - name: Project status
+        id: status
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::SUPABASE_ACCESS_TOKEN is not set"; exit 1; }
+          test -n "$REF" || { echo "::error::vars.SUPABASE_PROJECT_REF is not set"; exit 1; }
+          status=$(curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "$API/projects/$REF" | jq -r .status)
+          echo "Project $REF is $status"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Restore a paused project
+        if: steps.status.outputs.status == 'INACTIVE'
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "$API/projects/$REF/restore"
+          echo "::error::Project $REF was paused; a restore was requested. It takes a few minutes."
+          exit 1
+
+      - name: Query the database
+        if: steps.status.outputs.status == 'ACTIVE_HEALTHY'
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"select now() as alive"}' \
+            "$API/projects/$REF/database/query"
+
+      - name: Any other status is a failure
+        if: steps.status.outputs.status != 'INACTIVE' && steps.status.outputs.status != 'ACTIVE_HEALTHY'
+        run: |
+          echo "::error::Project $REF is ${{ steps.status.outputs.status }}; neither queried nor restored."
+          exit 1

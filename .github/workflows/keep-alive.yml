@@ -39,11 +39,14 @@ jobs:
           test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::SUPABASE_ACCESS_TOKEN is not set"; exit 1; }
           test -n "$REF" || { echo "::error::vars.SUPABASE_PROJECT_REF is not set"; exit 1; }
           code=$(curl -sS -o body.json -w '%{http_code}' -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "$API/projects/$REF")
+          # Only the API's `message`, on one line and capped: the log is public
+          # and a raw body could carry a newline that opens a workflow command.
+          reason=$(jq -r '.message // "no message"' body.json 2>/dev/null | tr -d '[:cntrl:]' | head -c 300)
           case "$code" in
             200) ;;
             401) echo "::error::401: SUPABASE_ACCESS_TOKEN is expired or revoked. Mint a new one and 'gh secret set SUPABASE_ACCESS_TOKEN'."; exit 1 ;;
-            403) echo "::error::403: the token is valid but may not read project $REF. $(cat body.json)"; exit 1 ;;
-            *) echo "::error::HTTP $code from the Management API. $(cat body.json)"; exit 1 ;;
+            403) echo "::error::403: the token is valid but may not read project $REF: $reason"; exit 1 ;;
+            *) echo "::error::HTTP $code from the Management API: $reason"; exit 1 ;;
           esac
           status=$(jq -r .status body.json)
           echo "Project $REF is $status"
